@@ -1,0 +1,40 @@
+# Exclude all parent directory access
+../../**
+../**
+
+# Source files - exclude TypeScript sources  
+src/**
+*.ts
+tsconfig.json
+tsup.config.ts
+
+# Development files
+node_modules/**
+.vscode/**
+.vscode-test/**
+**/*.map
+
+# Testing and validation files
+validate-*.js
+test*.js
+**/*.test.*
+**/__tests__/**
+
+# Documentation (not needed in extension package)
+PHASE*.md
+CONTEXT*.md
+INTEGRATION*.md
+
+# Build artifacts and temporary files
+.nyc_output/**
+coverage/**
+*.log
+*.tmp
+*.temp
+
+# Only include these essential files and directories
+!package.json
+!README.md
+!LICENSE*
+!dist/**
+!media/**
