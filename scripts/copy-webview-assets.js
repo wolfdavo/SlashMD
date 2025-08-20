@@ -36,7 +36,7 @@ function copyFile(srcFile, destFile) {
 function findBuildFiles(assetsDir) {
   if (!fs.existsSync(assetsDir)) {
     console.error(`Assets directory not found: ${assetsDir}`);
-    console.error('Make sure to run "pnpm build" in webview-ui package first');
+    console.error('Make sure to run "npm run build" in webview-ui package first');
     return { jsFile: null, cssFile: null };
   }
 

@@ -3,27 +3,27 @@
  * Renders blockquote content with proper styling
  */
 
-import { 
-  DecoratorNode, 
-  NodeKey, 
-  SerializedLexicalNode,
-  Spread
-} from 'lexical';
+import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread } from "lexical";
 
-import React from 'react';
-import type { QuoteContent } from '../../types/blocks';
+import React from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { QuoteContent } from "../../types/blocks";
 
-export interface SerializedQuoteNode extends Spread<{
-  content: QuoteContent;
-  blockId: string;
-}, SerializedLexicalNode> {}
+export interface SerializedQuoteNode
+  extends Spread<
+    {
+      content: QuoteContent;
+      blockId: string;
+    },
+    SerializedLexicalNode
+  > {}
 
 export class QuoteNode extends DecoratorNode<React.ReactElement> {
   __content: QuoteContent;
   __blockId: string;
 
   static getType(): string {
-    return 'quote-block';
+    return "quote-block";
   }
 
   static clone(node: QuoteNode): QuoteNode {
@@ -37,8 +37,8 @@ export class QuoteNode extends DecoratorNode<React.ReactElement> {
   }
 
   createDOM(): HTMLElement {
-    const element = document.createElement('div');
-    element.className = 'quote-block block-container';
+    const element = document.createElement("div");
+    element.className = "quote-block block-container";
     return element;
   }
 
@@ -52,10 +52,10 @@ export class QuoteNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedQuoteNode {
     return {
-      type: 'quote-block',
+      type: "quote-block",
       content: this.__content,
       blockId: this.__blockId,
-      version: 1,
+      version: 1
     };
   }
 
@@ -86,33 +86,55 @@ interface QuoteBlockComponentProps {
 }
 
 const QuoteBlockComponent: React.FC<QuoteBlockComponentProps> = ({ node }) => {
+  const [editor] = useLexicalComposerContext();
   const content = node.getContent();
   const blockId = node.getBlockId();
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const initializedRef = React.useRef(false);
+
+  React.useLayoutEffect(() => {
+    if (!initializedRef.current && contentRef.current) {
+      contentRef.current.innerHTML = content.text || "";
+      initializedRef.current = true;
+    }
+  }, [blockId]);
 
   const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
-    const text = event.currentTarget.textContent || '';
-    node.setContent({ ...content, text });
+    const text = event.currentTarget.textContent || "";
+    editor.update(() => {
+      node.setContent({ ...content, text });
+    });
+  };
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    const text = event.currentTarget.textContent || "";
+    editor.update(() => {
+      node.setContent({ ...content, text });
+    });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      console.log('Enter pressed - would create new paragraph');
+      console.log("Enter pressed - would create new paragraph");
     }
   };
 
   return (
     <div className="block-container quote-block" data-block-id={blockId}>
-      <div className="drag-handle" title="Drag to move">••</div>
+      <div className="drag-handle" title="Drag to move">
+        ••
+      </div>
       <blockquote className="quote-content">
         <div className="quote-marker">"</div>
         <div
           className="block-content quote-text"
           contentEditable
           suppressContentEditableWarning={true}
+          ref={contentRef}
           onInput={handleInput}
+          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          dangerouslySetInnerHTML={{ __html: content.text }}
           data-placeholder="Enter a quote..."
         />
       </blockquote>

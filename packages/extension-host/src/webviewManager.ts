@@ -1,15 +1,15 @@
 /**
  * WebView Security & Setup Manager for Phase 2
- * 
+ *
  * This class handles secure WebView initialization with:
- * - Strict Content Security Policy (CSP) 
+ * - Strict Content Security Policy (CSP)
  * - Cryptographic nonce generation
  * - Proper VS Code resource URI handling
  * - HTML template generation with security headers
  */
 
-import * as vscode from 'vscode';
-import * as crypto from 'crypto';
+import * as vscode from "vscode";
+import * as crypto from "crypto";
 
 export class WebViewManager {
   constructor(private readonly extensionUri: vscode.Uri) {}
@@ -20,7 +20,7 @@ export class WebViewManager {
   setupWebView(webview: vscode.Webview): string {
     // Generate cryptographic nonce for script security
     const nonce = this.generateNonce();
-    
+
     // Configure WebView options with security restrictions
     webview.options = {
       enableScripts: true,
@@ -28,19 +28,19 @@ export class WebViewManager {
       enableCommandUris: false,
       localResourceRoots: [this.extensionUri]
     };
-    
-    // Build Content Security Policy
-    const csp = this.buildCSP(nonce);
-    
+
+    // Build Content Security Policy including webview resource origin
+    const csp = this.buildCSP(webview, nonce);
+
     // Get WebView URIs for built React app resources
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, 'media', 'webview-bundle.js')
+      vscode.Uri.joinPath(this.extensionUri, "media", "webview-bundle.js")
     );
-    
+
     const stylesUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.extensionUri, 'media', 'webview-bundle.css')
+      vscode.Uri.joinPath(this.extensionUri, "media", "webview-bundle.css")
     );
-    
+
     // Return secure HTML content for React app
     return this.getHtmlContent(nonce, csp, scriptUri, stylesUri);
   }
@@ -49,32 +49,45 @@ export class WebViewManager {
    * Generate cryptographically secure nonce for CSP
    */
   private generateNonce(): string {
-    return crypto.randomBytes(32).toString('base64');
+    return crypto.randomBytes(32).toString("base64");
   }
 
   /**
    * Build strict Content Security Policy with nonce-based script allowlist
    */
-  private buildCSP(nonce: string): string {
+  private buildCSP(webview: vscode.Webview, nonce: string): string {
+    const cspSource = webview.cspSource;
     return [
-      "default-src 'none'",                    // Block everything by default
-      "img-src vscode-resource: data: blob:",  // Allow local images and data URIs
-      "style-src 'unsafe-inline'",             // Allow inline styles (required for VS Code theme vars)
-      `script-src 'nonce-${nonce}'`,           // Only allow scripts with matching nonce
-      "connect-src 'none'",                    // No network connections
-      "font-src vscode-resource:",             // Only local fonts
-      "form-action 'none'",                    // No form submissions
-      "frame-src 'none'",                      // No frames
-      "object-src 'none'",                     // No plugins
-      "base-uri 'none'",                       // No base URI changes
-      "media-src 'none'"                       // No media sources
-    ].join('; ');
+      "default-src 'none'",
+      // Allow VS Code webview resource host and data/blob for images
+      `img-src ${cspSource} https: data: blob:`,
+      // Allow loading stylesheets from the webview resource host and inline styles
+      `style-src ${cspSource} 'unsafe-inline'`,
+      // Only allow our bundled script via nonce
+      `script-src 'nonce-${nonce}'`,
+      // Disallow external network connections
+      "connect-src 'none'",
+      // Allow fonts from webview resource host
+      `font-src ${cspSource}`,
+      // Lock down other vectors
+      "form-action 'none'",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'none'",
+      // No media sources by default
+      "media-src 'none'"
+    ].join("; ");
   }
 
   /**
    * Generate secure HTML template for React app
    */
-  private getHtmlContent(nonce: string, csp: string, scriptUri: vscode.Uri, stylesUri?: vscode.Uri): string {
+  private getHtmlContent(
+    nonce: string,
+    csp: string,
+    scriptUri: vscode.Uri,
+    stylesUri?: vscode.Uri
+  ): string {
     return `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -82,7 +95,7 @@ export class WebViewManager {
     <meta http-equiv="Content-Security-Policy" content="${csp}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SlashMD Editor</title>
-    ${stylesUri ? `<link rel="stylesheet" href="${stylesUri}">` : ''}
+    ${stylesUri ? `<link rel="stylesheet" href="${stylesUri}">` : ""}
     <style>
       /* VS Code theme integration and basic styles */
       :root {
@@ -101,7 +114,7 @@ export class WebViewManager {
         padding: 0;
         height: 100vh;
         width: 100vw;
-        overflow: hidden;
+        overflow: auto;
       }
       
       #root {
@@ -168,18 +181,18 @@ export class WebViewManager {
   /**
    * Get the current VS Code theme
    */
-  getVSCodeTheme(): 'light' | 'dark' | 'high-contrast' {
+  getVSCodeTheme(): "light" | "dark" | "high-contrast" {
     const colorTheme = vscode.window.activeColorTheme;
-    
+
     switch (colorTheme.kind) {
       case vscode.ColorThemeKind.Light:
-        return 'light';
+        return "light";
       case vscode.ColorThemeKind.Dark:
-        return 'dark';
+        return "dark";
       case vscode.ColorThemeKind.HighContrast:
-        return 'high-contrast';
+        return "high-contrast";
       default:
-        return 'dark'; // Default fallback
+        return "dark"; // Default fallback
     }
   }
 }

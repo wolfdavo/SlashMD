@@ -3,8 +3,8 @@
  * Handles communication between React app and VS Code extension
  */
 
-import React, { useEffect, useCallback, useRef } from 'react';
-import type { Block } from '../types/shared';
+import React, { useEffect, useCallback, useRef } from "react";
+import type { Block } from "../types/shared";
 
 // VS Code API interface
 interface VSCodeAPI {
@@ -24,13 +24,21 @@ interface VSCodeBridgeProps {
   children: React.ReactNode;
   onBlocksReceived: (blocks: Block[]) => void;
   onBlocksChange: (blocks: Block[]) => void;
-  onAssetRequest: (dataUri: string, suggestedName?: string, targetBlockId?: string) => void;
+  onAssetRequest: (
+    dataUri: string,
+    suggestedName?: string,
+    targetBlockId?: string
+  ) => void;
 }
 
 // VS Code bridge context
 export const VSCodeBridgeContext = React.createContext<{
   sendMessage: (message: any) => void;
-  requestAsset: (dataUri: string, suggestedName?: string, targetBlockId?: string) => void;
+  requestAsset: (
+    dataUri: string,
+    suggestedName?: string,
+    targetBlockId?: string
+  ) => void;
   isVSCodeEnvironment: boolean;
 } | null>(null);
 
@@ -41,15 +49,17 @@ export const VSCodeBridge: React.FC<VSCodeBridgeProps> = ({
   onAssetRequest
 }) => {
   const vscodeApiRef = useRef<VSCodeAPI | null>(null);
-  const isVSCodeEnvironment = typeof (globalThis as any).acquireVsCodeApi === 'function';
+  const isVSCodeEnvironment =
+    typeof (globalThis as any).acquireVsCodeApi === "function";
+  const initRequestedRef = useRef(false);
 
   // Initialize VS Code API
   useEffect(() => {
     if (isVSCodeEnvironment) {
       vscodeApiRef.current = (globalThis as any).acquireVsCodeApi();
-      console.log('[VSCodeBridge] VS Code API acquired');
+      console.log("[VSCodeBridge] VS Code API acquired");
     } else {
-      console.log('[VSCodeBridge] Running in standalone mode');
+      console.log("[VSCodeBridge] Running in standalone mode");
     }
   }, [isVSCodeEnvironment]);
 
@@ -57,68 +67,88 @@ export const VSCodeBridge: React.FC<VSCodeBridgeProps> = ({
   const sendMessage = useCallback((message: any) => {
     if (vscodeApiRef.current) {
       vscodeApiRef.current.postMessage(message);
-      console.log('[VSCodeBridge] Sent message to VS Code:', message.type);
+      console.log("[VSCodeBridge] Sent message to VS Code:", message.type);
     } else {
-      console.log('[VSCodeBridge] Would send message (standalone mode):', message);
+      console.log(
+        "[VSCodeBridge] Would send message (standalone mode):",
+        message
+      );
     }
   }, []);
 
   // Request asset write
-  const requestAsset = useCallback((dataUri: string, suggestedName?: string, targetBlockId?: string) => {
-    sendMessage({
-      type: 'WRITE_ASSET',
-      payload: {
-        dataUri,
-        suggestedName,
-        targetBlockId
-      }
-    });
-    onAssetRequest(dataUri, suggestedName, targetBlockId);
-  }, [sendMessage, onAssetRequest]);
+  const requestAsset = useCallback(
+    (dataUri: string, suggestedName?: string, targetBlockId?: string) => {
+      sendMessage({
+        type: "WRITE_ASSET",
+        payload: {
+          dataUri,
+          suggestedName,
+          targetBlockId
+        }
+      });
+      onAssetRequest(dataUri, suggestedName, targetBlockId);
+    },
+    [sendMessage, onAssetRequest]
+  );
 
   // Handle messages from VS Code extension
   useEffect(() => {
     const handleMessage = (event: MessageEvent<VSCodeMessage>) => {
       const message = event.data;
-      console.log('[VSCodeBridge] Received message from VS Code:', message.type);
+      console.log(
+        "[VSCodeBridge] Received message from VS Code:",
+        message.type
+      );
 
       switch (message.type) {
-        case 'DOC_INIT':
+        case "DOC_INIT":
           onBlocksReceived(message.payload.blocks || []);
           break;
 
-        case 'DOC_CHANGED':
-          onBlocksReceived(message.payload.blocks || []);
+        case "DOC_CHANGED":
+          // Temporarily ignore DOC_CHANGED to avoid focus resets during typing
           break;
 
-        case 'ASSET_WRITTEN':
+        case "ASSET_WRITTEN":
           // Handle asset written confirmation
-          console.log('[VSCodeBridge] Asset written:', message.payload.relPath);
+          console.log("[VSCodeBridge] Asset written:", message.payload.relPath);
           // Could emit an event or update state here
           break;
 
-        case 'SETTINGS_CHANGED':
+        case "SETTINGS_CHANGED":
           // Handle settings changes
-          console.log('[VSCodeBridge] Settings changed:', message.payload.settings);
+          console.log(
+            "[VSCodeBridge] Settings changed:",
+            message.payload.settings
+          );
           break;
 
-        case 'ERROR':
-          console.error('[VSCodeBridge] VS Code error:', message.payload.message);
+        case "ERROR":
+          console.error(
+            "[VSCodeBridge] VS Code error:",
+            message.payload.message
+          );
           break;
 
         default:
-          console.warn('[VSCodeBridge] Unknown message type:', message.type);
+          console.warn("[VSCodeBridge] Unknown message type:", message.type);
       }
     };
 
     if (isVSCodeEnvironment) {
-      window.addEventListener('message', handleMessage);
-      
-      // Request initial document data
-      sendMessage({ type: 'REQUEST_INIT', payload: {} });
-      
+      window.addEventListener("message", handleMessage);
+      // Request initial document data only once per WebView lifetime
+      if (!initRequestedRef.current) {
+        // Delay init slightly to allow service worker/controller to settle
+        setTimeout(() => {
+          sendMessage({ type: "REQUEST_INIT", payload: {} });
+        }, 50);
+        initRequestedRef.current = true;
+      }
+
       return () => {
-        window.removeEventListener('message', handleMessage);
+        window.removeEventListener("message", handleMessage);
       };
     }
   }, [isVSCodeEnvironment, sendMessage, onBlocksReceived]);
@@ -130,7 +160,7 @@ export const VSCodeBridge: React.FC<VSCodeBridgeProps> = ({
     const handleBlocksChange = (blocks: Block[]) => {
       // Send blocks changes to VS Code
       sendMessage({
-        type: 'BLOCKS_CHANGED',
+        type: "BLOCKS_CHANGED",
         payload: { blocks }
       });
     };
@@ -144,7 +174,7 @@ export const VSCodeBridge: React.FC<VSCodeBridgeProps> = ({
 
     // Note: In a real implementation, we would listen to block changes here
     // For now, we rely on the parent component to call onBlocksChange
-    
+
     return () => {
       if (timeout) clearTimeout(timeout);
     };
@@ -167,7 +197,7 @@ export const VSCodeBridge: React.FC<VSCodeBridgeProps> = ({
 export const useVSCodeBridge = () => {
   const context = React.useContext(VSCodeBridgeContext);
   if (!context) {
-    throw new Error('useVSCodeBridge must be used within VSCodeBridge');
+    throw new Error("useVSCodeBridge must be used within VSCodeBridge");
   }
   return context;
 };

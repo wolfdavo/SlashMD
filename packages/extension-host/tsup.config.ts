@@ -1,14 +1,14 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ['src/extension.ts'],
-  format: ['cjs'],
-  target: 'node16',
-  outDir: 'dist',
+  entry: ["src/extension.ts"],
+  format: ["cjs"],
+  target: "node16",
+  outDir: "dist",
   clean: true,
   sourcemap: true,
-  external: ['vscode'],
-  noExternal: [],
+  external: ["vscode"],
+  noExternal: ["@slashmd/md-mapper"],
   minify: false,
-  splitting: false,
+  splitting: false
 });

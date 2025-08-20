@@ -88,7 +88,7 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
         this.assetService     // Pass asset service for image handling
       );
       
-      messageHandler.initialize(webviewPanel.webview, document);
+      messageHandler.initialize(webviewPanel, document);
 
       // Handle external document changes and notify WebView
       const changeSubscription = this.documentManager.onDocumentChange(event => {
@@ -209,7 +209,7 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
   /**
    * Notify WebView that document was saved
    */
-  private notifyDocumentSaved(messageHandler: MessageHandler): void {
+  private notifyDocumentSaved(messageHandler: IntegratedMessageHandler): void {
     // Send notification to WebView that document was saved
     // This can be used by the UI to show save indicators, clear dirty state, etc.
     const saveMessage: HostToUIMessage = {

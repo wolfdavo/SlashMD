@@ -3,31 +3,31 @@
  * Handles both ordered and unordered lists with proper nesting
  */
 
-import { 
-  DecoratorNode, 
-  NodeKey, 
-  SerializedLexicalNode,
-  Spread
-} from 'lexical';
+import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread } from "lexical";
 
-import React from 'react';
-import type { ListContent, ListItemContent } from '../../types/blocks';
+import React from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { ListContent, ListItemContent } from "../../types/blocks";
 
 // ============================================================================
 // LIST CONTAINER NODE
 // ============================================================================
 
-export interface SerializedListNode extends Spread<{
-  content: ListContent;
-  blockId: string;
-}, SerializedLexicalNode> {}
+export interface SerializedListNode
+  extends Spread<
+    {
+      content: ListContent;
+      blockId: string;
+    },
+    SerializedLexicalNode
+  > {}
 
 export class ListNode extends DecoratorNode<React.ReactElement> {
   __content: ListContent;
   __blockId: string;
 
   static getType(): string {
-    return 'list-block';
+    return "list-block";
   }
 
   static clone(node: ListNode): ListNode {
@@ -41,8 +41,8 @@ export class ListNode extends DecoratorNode<React.ReactElement> {
   }
 
   createDOM(): HTMLElement {
-    const element = document.createElement('div');
-    element.className = 'list-block block-container';
+    const element = document.createElement("div");
+    element.className = "list-block block-container";
     return element;
   }
 
@@ -56,10 +56,10 @@ export class ListNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedListNode {
     return {
-      type: 'list-block',
+      type: "list-block",
       content: this.__content,
       blockId: this.__blockId,
-      version: 1,
+      version: 1
     };
   }
 
@@ -86,20 +86,24 @@ export class ListNode extends DecoratorNode<React.ReactElement> {
 }
 
 // ============================================================================
-// LIST ITEM NODE  
+// LIST ITEM NODE
 // ============================================================================
 
-export interface SerializedListItemNode extends Spread<{
-  content: ListItemContent;
-  blockId: string;
-}, SerializedLexicalNode> {}
+export interface SerializedListItemNode
+  extends Spread<
+    {
+      content: ListItemContent;
+      blockId: string;
+    },
+    SerializedLexicalNode
+  > {}
 
 export class ListItemNode extends DecoratorNode<React.ReactElement> {
   __content: ListItemContent;
   __blockId: string;
 
   static getType(): string {
-    return 'list-item-block';
+    return "list-item-block";
   }
 
   static clone(node: ListItemNode): ListItemNode {
@@ -113,7 +117,7 @@ export class ListItemNode extends DecoratorNode<React.ReactElement> {
   }
 
   createDOM(): HTMLElement {
-    const element = document.createElement('div');
+    const element = document.createElement("div");
     element.className = `list-item-block block-container indent-${this.__content.indent}`;
     return element;
   }
@@ -128,10 +132,10 @@ export class ListItemNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedListItemNode {
     return {
-      type: 'list-item-block',
+      type: "list-item-block",
       content: this.__content,
       blockId: this.__blockId,
-      version: 1,
+      version: 1
     };
   }
 
@@ -166,30 +170,49 @@ interface ListBlockComponentProps {
 }
 
 const ListBlockComponent: React.FC<ListBlockComponentProps> = ({ node }) => {
+  const [editor] = useLexicalComposerContext();
   const content = node.getContent();
   const blockId = node.getBlockId();
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const initializedRef = React.useRef(false);
+
+  React.useLayoutEffect(() => {
+    if (!initializedRef.current && contentRef.current) {
+      contentRef.current.innerHTML = (content as any).text || "";
+      initializedRef.current = true;
+    }
+  }, [blockId]);
 
   const handleTypeToggle = () => {
-    node.setContent({ 
-      ...content, 
-      ordered: !content.ordered,
-      startNumber: content.ordered ? undefined : 1 
+    editor.update(() => {
+      node.setContent({
+        ...content,
+        ordered: !content.ordered,
+        startNumber: content.ordered ? undefined : 1
+      });
     });
   };
 
   return (
-    <div className={`block-container list-block ${content.ordered ? 'ordered' : 'unordered'}`} data-block-id={blockId}>
-      <div className="drag-handle" title="Drag to move">••</div>
+    <div
+      className={`block-container list-block ${
+        content.ordered ? "ordered" : "unordered"
+      }`}
+      data-block-id={blockId}
+    >
+      <div className="drag-handle" title="Drag to move">
+        ••
+      </div>
       <div className="list-controls">
-        <button 
+        <button
           className="list-type-toggle"
           onClick={handleTypeToggle}
-          title={`Switch to ${content.ordered ? 'unordered' : 'ordered'} list`}
+          title={`Switch to ${content.ordered ? "unordered" : "ordered"} list`}
         >
-          {content.ordered ? '1.' : '•'}
+          {content.ordered ? "1." : "•"}
         </button>
         <span className="list-label">
-          {content.ordered ? 'Ordered List' : 'Unordered List'}
+          {content.ordered ? "Ordered List" : "Unordered List"}
         </span>
       </div>
       <div className="list-content">
@@ -206,33 +229,58 @@ interface ListItemBlockComponentProps {
   node: ListItemNode;
 }
 
-const ListItemBlockComponent: React.FC<ListItemBlockComponentProps> = ({ node }) => {
+const ListItemBlockComponent: React.FC<ListItemBlockComponentProps> = ({
+  node
+}) => {
+  const [editor] = useLexicalComposerContext();
   const content = node.getContent();
   const blockId = node.getBlockId();
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const initializedRef = React.useRef(false);
+
+  React.useLayoutEffect(() => {
+    if (!initializedRef.current && contentRef.current) {
+      contentRef.current.innerHTML = content.text || "";
+      initializedRef.current = true;
+    }
+  }, [blockId]);
 
   const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
-    const text = event.currentTarget.textContent || '';
-    node.setContent({ ...content, text });
+    const text = event.currentTarget.textContent || "";
+    editor.update(() => {
+      node.setContent({ ...content, text });
+    });
+  };
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    const text = event.currentTarget.textContent || "";
+    editor.update(() => {
+      node.setContent({ ...content, text });
+    });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      console.log('Enter pressed - would create new list item');
+      console.log("Enter pressed - would create new list item");
     }
-    
-    if (event.key === 'Tab') {
+
+    if (event.key === "Tab") {
       event.preventDefault();
       // Increase indent
       const newIndent = Math.min(content.indent + 1, 3); // Max 3 levels
-      node.setContent({ ...content, indent: newIndent });
+      editor.update(() => {
+        node.setContent({ ...content, indent: newIndent });
+      });
     }
-    
-    if (event.key === 'Tab' && event.shiftKey) {
+
+    if (event.key === "Tab" && event.shiftKey) {
       event.preventDefault();
       // Decrease indent
       const newIndent = Math.max(content.indent - 1, 0);
-      node.setContent({ ...content, indent: newIndent });
+      editor.update(() => {
+        node.setContent({ ...content, indent: newIndent });
+      });
     }
   };
 
@@ -241,12 +289,14 @@ const ListItemBlockComponent: React.FC<ListItemBlockComponentProps> = ({ node })
   };
 
   return (
-    <div 
-      className={`block-container list-item-block indent-${content.indent}`} 
+    <div
+      className={`block-container list-item-block indent-${content.indent}`}
       data-block-id={blockId}
       style={indentStyle}
     >
-      <div className="drag-handle" title="Drag to move">••</div>
+      <div className="drag-handle" title="Drag to move">
+        ••
+      </div>
       <div className="list-item-marker">
         {/* Marker will be styled via CSS based on parent list type */}
       </div>
@@ -254,13 +304,19 @@ const ListItemBlockComponent: React.FC<ListItemBlockComponentProps> = ({ node })
         className="block-content list-item-content"
         contentEditable
         suppressContentEditableWarning={true}
+        ref={contentRef}
         onInput={handleInput}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        dangerouslySetInnerHTML={{ __html: content.text }}
         data-placeholder="List item..."
       />
     </div>
   );
 };
 
-export default { ListNode, ListItemNode, ListBlockComponent, ListItemBlockComponent };
+export default {
+  ListNode,
+  ListItemNode,
+  ListBlockComponent,
+  ListItemBlockComponent
+};

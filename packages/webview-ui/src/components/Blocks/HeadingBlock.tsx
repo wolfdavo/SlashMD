@@ -3,27 +3,27 @@
  * Renders editable heading content (H1, H2, H3) using Lexical
  */
 
-import { 
-  DecoratorNode, 
-  NodeKey, 
-  SerializedLexicalNode,
-  Spread
-} from 'lexical';
+import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread } from "lexical";
 
-import React from 'react';
-import type { HeadingContent } from '../../types/blocks';
+import React from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { HeadingContent } from "../../types/blocks";
 
-export interface SerializedHeadingNode extends Spread<{
-  content: HeadingContent;
-  blockId: string;
-}, SerializedLexicalNode> {}
+export interface SerializedHeadingNode
+  extends Spread<
+    {
+      content: HeadingContent;
+      blockId: string;
+    },
+    SerializedLexicalNode
+  > {}
 
 export class HeadingNode extends DecoratorNode<React.ReactElement> {
   __content: HeadingContent;
   __blockId: string;
 
   static getType(): string {
-    return 'heading-block';
+    return "heading-block";
   }
 
   static clone(node: HeadingNode): HeadingNode {
@@ -37,7 +37,7 @@ export class HeadingNode extends DecoratorNode<React.ReactElement> {
   }
 
   createDOM(): HTMLElement {
-    const element = document.createElement('div');
+    const element = document.createElement("div");
     element.className = `heading-block block-container level-${this.__content.level}`;
     return element;
   }
@@ -52,10 +52,10 @@ export class HeadingNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedHeadingNode {
     return {
-      type: 'heading-block',
+      type: "heading-block",
       content: this.__content,
       blockId: this.__blockId,
-      version: 1,
+      version: 1
     };
   }
 
@@ -85,43 +85,74 @@ interface HeadingBlockComponentProps {
   node: HeadingNode;
 }
 
-const HeadingBlockComponent: React.FC<HeadingBlockComponentProps> = ({ node }) => {
+const HeadingBlockComponent: React.FC<HeadingBlockComponentProps> = ({
+  node
+}) => {
+  const [editor] = useLexicalComposerContext();
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const content = node.getContent();
   const blockId = node.getBlockId();
+  // Using dangerouslySetInnerHTML for initial content to avoid ref typing complexity
 
   const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
-    const text = event.currentTarget.textContent || '';
-    node.setContent({ ...content, text });
+    const text = event.currentTarget.textContent || "";
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      editor.update(() => {
+        node.setContent({ ...content, text });
+      });
+    }, 150);
+  };
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    const text = event.currentTarget.textContent || "";
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    editor.update(() => {
+      node.setContent({ ...content, text });
+    });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     // Handle Enter key to create new paragraph
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       // This will be handled by the parent editor in later phases
-      console.log('Enter pressed - would create new paragraph');
+      console.log("Enter pressed - would create new paragraph");
     }
   };
 
   const getHeadingTag = () => {
     switch (content.level) {
-      case 1: return 'h1';
-      case 2: return 'h2';
-      case 3: return 'h3';
-      default: return 'h1';
+      case 1:
+        return "h1";
+      case 2:
+        return "h2";
+      case 3:
+        return "h3";
+      default:
+        return "h1";
     }
   };
 
   const HeadingTag = getHeadingTag() as keyof JSX.IntrinsicElements;
 
   return (
-    <div className={`block-container heading-block level-${content.level}`} data-block-id={blockId}>
-      <div className="drag-handle" title="Drag to move">••</div>
+    <div
+      className={`block-container heading-block level-${content.level}`}
+      data-block-id={blockId}
+    >
+      <div className="drag-handle" title="Drag to move">
+        ••
+      </div>
       <HeadingTag
         className="block-content"
         contentEditable
         suppressContentEditableWarning={true}
         onInput={handleInput as any}
+        onBlur={handleBlur as any}
         onKeyDown={handleKeyDown as any}
         dangerouslySetInnerHTML={{ __html: content.text }}
         data-placeholder={`Heading ${content.level}`}

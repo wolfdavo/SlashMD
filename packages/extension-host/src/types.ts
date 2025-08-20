@@ -14,5 +14,8 @@ export type {
   HostToUIMessage,
   SlashMDSettings,
   InlineFormatting,
-  DocumentChange
+  DocumentChange,
+  SyncEngine,
+  CustomEditorContext,
+  SyncConflictError
 } from '../../../SHARED_TYPES';

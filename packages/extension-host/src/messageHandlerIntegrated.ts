@@ -3,11 +3,18 @@
  * Integration Phase: Uses SyncEngine and sends Block[] data instead of raw text
  */
 
-import * as vscode from 'vscode';
-import { UIToHostMessage, HostToUIMessage, SlashMDSettings } from './types';
-import { DocumentManager } from './documentManager';
-import { AssetService } from './assetService';
-import { SyncEngine } from './syncEngine';
+import * as vscode from "vscode";
+import {
+  UIToHostMessage,
+  HostToUIMessage,
+  SlashMDSettings,
+  Block,
+  TextEdit
+} from "./types";
+import { DocumentManager } from "./documentManager";
+import { AssetService } from "./assetService";
+import { SyncEngine } from "./syncEngine";
+import { serializeBlocks } from "@slashmd/md-mapper";
 
 export class IntegratedMessageHandler {
   private webview: vscode.Webview | null = null;
@@ -25,27 +32,33 @@ export class IntegratedMessageHandler {
   }
 
   /**
-   * Initialize message handler with webview and document
+   * Initialize message handler with webview panel and document
    */
-  initialize(webview: vscode.Webview, document: vscode.TextDocument): void {
-    this.webview = webview;
+  initialize(
+    webviewPanel: vscode.WebviewPanel,
+    document: vscode.TextDocument
+  ): void {
+    this.webview = webviewPanel.webview;
     this.document = document;
 
-    // Initialize sync engine
+    // Initialize sync engine with full webview panel
     this.syncEngine.initialize({
       document,
-      webviewPanel: { webview } as any, // Type assertion for now
+      webviewPanel,
       extensionContext: this.context
     });
 
     // Set up message listener
-    webview.onDidReceiveMessage(
+    webviewPanel.webview.onDidReceiveMessage(
       (message: UIToHostMessage) => this.handleUIMessage(message),
       undefined,
       this.context.subscriptions
     );
 
-    console.log('[IntegratedMessageHandler] Initialized with SyncEngine for document:', document.uri.toString());
+    console.log(
+      "[IntegratedMessageHandler] Initialized with SyncEngine for document:",
+      document.uri.toString()
+    );
   }
 
   /**
@@ -53,38 +66,56 @@ export class IntegratedMessageHandler {
    */
   private async handleUIMessage(message: UIToHostMessage): Promise<void> {
     try {
-      console.log('[IntegratedMessageHandler] Received UI message:', message.type);
+      console.log(
+        "[IntegratedMessageHandler] Received UI message:",
+        message.type
+      );
 
       switch (message.type) {
-        case 'REQUEST_INIT':
+        case "REQUEST_INIT":
           await this.handleRequestInit();
           break;
 
-        case 'REQUEST_SETTINGS':
+        case "REQUEST_SETTINGS":
           await this.handleRequestSettings();
           break;
 
-        case 'APPLY_TEXT_EDITS':
+        case "APPLY_TEXT_EDITS":
           // Forward to sync engine for handling
           await this.syncEngine.handleUIChange(message);
           break;
 
-        case 'WRITE_ASSET':
+        case "BLOCKS_CHANGED":
+          await this.handleBlocksChanged(message.payload?.blocks as Block[]);
+          break;
+
+        case "WRITE_ASSET":
           await this.handleWriteAsset(message.payload);
           break;
 
-        case 'LOG_ERROR':
+        case "LOG_ERROR":
           this.handleLogError(message.payload);
           break;
 
         default:
-          console.warn('[IntegratedMessageHandler] Unknown UI message type:', (message as any).type);
-          this.sendErrorToUI(`Unknown message type: ${(message as any).type}`, true);
+          console.warn(
+            "[IntegratedMessageHandler] Unknown UI message type:",
+            (message as any).type
+          );
+          this.sendErrorToUI(
+            `Unknown message type: ${(message as any).type}`,
+            true
+          );
       }
     } catch (error) {
-      console.error('[IntegratedMessageHandler] Error handling UI message:', error);
+      console.error(
+        "[IntegratedMessageHandler] Error handling UI message:",
+        error
+      );
       this.sendErrorToUI(
-        `Failed to handle ${message.type}: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to handle ${message.type}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         true
       );
     }
@@ -95,17 +126,25 @@ export class IntegratedMessageHandler {
    */
   private async handleRequestInit(): Promise<void> {
     if (!this.document || !this.webview) {
-      this.sendErrorToUI('Document or WebView not available for initialization', false);
+      this.sendErrorToUI(
+        "Document or WebView not available for initialization",
+        false
+      );
       return;
     }
 
     try {
       // Use sync engine to send initial blocks
       await this.syncEngine.sendInitialBlocks();
-      console.log('[IntegratedMessageHandler] Sent initial blocks via SyncEngine');
+      console.log(
+        "[IntegratedMessageHandler] Sent initial blocks via SyncEngine"
+      );
     } catch (error) {
-      console.error('[IntegratedMessageHandler] Failed to send initial blocks:', error);
-      this.sendErrorToUI('Failed to initialize document blocks', false);
+      console.error(
+        "[IntegratedMessageHandler] Failed to send initial blocks:",
+        error
+      );
+      this.sendErrorToUI("Failed to initialize document blocks", false);
     }
   }
 
@@ -116,12 +155,53 @@ export class IntegratedMessageHandler {
     const settings = this.getSettings();
 
     const settingsMessage: HostToUIMessage = {
-      type: 'SETTINGS_CHANGED',
+      type: "SETTINGS_CHANGED",
       payload: { settings }
     };
 
     this.sendToUI(settingsMessage);
-    console.log('[IntegratedMessageHandler] Sent settings update');
+    console.log("[IntegratedMessageHandler] Sent settings update");
+  }
+
+  /**
+   * Apply block changes from UI as minimal text edits to avoid version conflicts
+   */
+  private async handleBlocksChanged(
+    blocks: Block[] | undefined
+  ): Promise<void> {
+    if (!this.document || !blocks || !this.documentManager) {
+      return;
+    }
+
+    try {
+      // Serialize new blocks to markdown
+      const newMarkdown = serializeBlocks(blocks);
+      const currentText = this.document.getText();
+
+      if (newMarkdown === currentText) {
+        return; // No-op
+      }
+
+      // Compute minimal edit (full replace for now; could diff later)
+      const edit: TextEdit = {
+        start: 0,
+        end: currentText.length,
+        newText: newMarkdown
+      };
+
+      await this.documentManager.applyTextEdits(
+        this.document,
+        [edit],
+        "blocks-changed",
+        []
+      );
+    } catch (error) {
+      console.error(
+        "[IntegratedMessageHandler] Failed to handle BLOCKS_CHANGED:",
+        error
+      );
+      this.sendErrorToUI("Failed to apply block changes", true);
+    }
   }
 
   /**
@@ -133,25 +213,27 @@ export class IntegratedMessageHandler {
     targetBlockId?: string;
   }): Promise<void> {
     if (!this.document) {
-      this.sendErrorToUI('No document available for asset write', true);
+      this.sendErrorToUI("No document available for asset write", true);
       return;
     }
 
     if (!this.assetService) {
-      this.sendErrorToUI('Asset service not available', false);
+      this.sendErrorToUI("Asset service not available", false);
       return;
     }
 
-    console.log('[IntegratedMessageHandler] Asset write requested:', {
-      dataUriPrefix: payload.dataUri.substring(0, 50) + '...',
+    console.log("[IntegratedMessageHandler] Asset write requested:", {
+      dataUriPrefix: payload.dataUri.substring(0, 50) + "...",
       suggestedName: payload.suggestedName,
       targetBlockId: payload.targetBlockId
     });
 
     try {
       // Get workspace folder for the document
-      const workspaceFolder = this.assetService.getWorkspaceFolder(this.document);
-      
+      const workspaceFolder = this.assetService.getWorkspaceFolder(
+        this.document
+      );
+
       // Use AssetService to write the asset
       const result = await this.assetService.writeAsset(
         {
@@ -162,7 +244,7 @@ export class IntegratedMessageHandler {
         workspaceFolder
       );
 
-      console.log('[IntegratedMessageHandler] Asset written successfully:', {
+      console.log("[IntegratedMessageHandler] Asset written successfully:", {
         relPath: result.relPath,
         fileSize: result.fileSize,
         wasDuplicate: result.wasDuplicate
@@ -170,7 +252,7 @@ export class IntegratedMessageHandler {
 
       // Send success response to WebView
       const assetResponse: HostToUIMessage = {
-        type: 'ASSET_WRITTEN',
+        type: "ASSET_WRITTEN",
         payload: {
           relPath: result.relPath,
           targetBlockId: payload.targetBlockId
@@ -183,17 +265,19 @@ export class IntegratedMessageHandler {
       const message = result.wasDuplicate
         ? `Asset already exists: ${result.relPath}`
         : `Asset saved: ${result.relPath}`;
-        
-      vscode.window.showInformationMessage(`SlashMD: ${message}`);
 
+      vscode.window.showInformationMessage(`SlashMD: ${message}`);
     } catch (error) {
-      console.error('[IntegratedMessageHandler] Failed to write asset:', error);
-      
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("[IntegratedMessageHandler] Failed to write asset:", error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.sendErrorToUI(`Failed to write asset: ${errorMessage}`, true);
-      
+
       // Show error to user
-      vscode.window.showErrorMessage(`SlashMD: Failed to save asset - ${errorMessage}`);
+      vscode.window.showErrorMessage(
+        `SlashMD: Failed to save asset - ${errorMessage}`
+      );
     }
   }
 
@@ -201,16 +285,24 @@ export class IntegratedMessageHandler {
    * Handle error logging from WebView
    */
   private handleLogError(payload: { error: string; context?: any }): void {
-    console.error('[IntegratedMessageHandler] WebView error:', payload.error);
-    
+    console.error("[IntegratedMessageHandler] WebView error:", payload.error);
+
     if (payload.context) {
-      console.error('[IntegratedMessageHandler] Error context:', payload.context);
+      console.error(
+        "[IntegratedMessageHandler] Error context:",
+        payload.context
+      );
     }
 
     // Show error in VS Code if it's serious
-    if (payload.error.includes('Failed to') || payload.error.includes('Error:')) {
+    if (
+      payload.error.includes("Failed to") ||
+      payload.error.includes("Error:")
+    ) {
       vscode.window.showWarningMessage(
-        `SlashMD WebView Error: ${payload.error.substring(0, 100)}${payload.error.length > 100 ? '...' : ''}`
+        `SlashMD WebView Error: ${payload.error.substring(0, 100)}${
+          payload.error.length > 100 ? "..." : ""
+        }`
       );
     }
   }
@@ -218,7 +310,9 @@ export class IntegratedMessageHandler {
   /**
    * Send document change notification to WebView (called from extension when document changes externally)
    */
-  async notifyDocumentChanged(preserveSelection: boolean = false): Promise<void> {
+  async notifyDocumentChanged(
+    preserveSelection: boolean = false
+  ): Promise<void> {
     if (!this.document || !this.webview) return;
 
     // Use sync engine to handle the document change
@@ -227,10 +321,15 @@ export class IntegratedMessageHandler {
       // For now, we'll trigger a force resync - in a more sophisticated version,
       // we would compute the actual changes and pass them to handleDocumentChange
       await this.syncEngine.forceResync();
-      console.log('[IntegratedMessageHandler] Document change handled via SyncEngine');
+      console.log(
+        "[IntegratedMessageHandler] Document change handled via SyncEngine"
+      );
     } catch (error) {
-      console.error('[IntegratedMessageHandler] Failed to handle document change:', error);
-      this.sendErrorToUI('Failed to sync document changes', true);
+      console.error(
+        "[IntegratedMessageHandler] Failed to handle document change:",
+        error
+      );
+      this.sendErrorToUI("Failed to sync document changes", true);
     }
   }
 
@@ -241,12 +340,14 @@ export class IntegratedMessageHandler {
     const settings = this.getSettings();
 
     const settingsMessage: HostToUIMessage = {
-      type: 'SETTINGS_CHANGED',
+      type: "SETTINGS_CHANGED",
       payload: { settings }
     };
 
     this.sendToUI(settingsMessage);
-    console.log('[IntegratedMessageHandler] Sent SETTINGS_CHANGED notification');
+    console.log(
+      "[IntegratedMessageHandler] Sent SETTINGS_CHANGED notification"
+    );
   }
 
   /**
@@ -254,12 +355,14 @@ export class IntegratedMessageHandler {
    */
   private sendToUI(message: HostToUIMessage): void {
     if (!this.webview) {
-      console.error('[IntegratedMessageHandler] Cannot send message - no webview available');
+      console.error(
+        "[IntegratedMessageHandler] Cannot send message - no webview available"
+      );
       return;
     }
 
     this.webview.postMessage(message);
-    console.log('[IntegratedMessageHandler] Sent message to UI:', message.type);
+    console.log("[IntegratedMessageHandler] Sent message to UI:", message.type);
   }
 
   /**
@@ -267,29 +370,29 @@ export class IntegratedMessageHandler {
    */
   private sendErrorToUI(message: string, recoverable: boolean): void {
     const errorMessage: HostToUIMessage = {
-      type: 'ERROR',
+      type: "ERROR",
       payload: { message, recoverable }
     };
 
     this.sendToUI(errorMessage);
-    console.error('[IntegratedMessageHandler] Sent error to UI:', message);
+    console.error("[IntegratedMessageHandler] Sent error to UI:", message);
   }
 
   /**
    * Get current VS Code theme
    */
-  private getVSCodeTheme(): 'light' | 'dark' | 'high-contrast' {
+  private getVSCodeTheme(): "light" | "dark" | "high-contrast" {
     const colorTheme = vscode.window.activeColorTheme;
-    
+
     switch (colorTheme.kind) {
       case vscode.ColorThemeKind.Light:
-        return 'light';
+        return "light";
       case vscode.ColorThemeKind.Dark:
-        return 'dark';
+        return "dark";
       case vscode.ColorThemeKind.HighContrast:
-        return 'high-contrast';
+        return "high-contrast";
       default:
-        return 'dark';
+        return "dark";
     }
   }
 

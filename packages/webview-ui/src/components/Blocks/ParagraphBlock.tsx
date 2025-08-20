@@ -3,27 +3,27 @@
  * Renders editable paragraph content using Lexical
  */
 
-import { 
-  DecoratorNode, 
-  NodeKey, 
-  SerializedLexicalNode,
-  Spread
-} from 'lexical';
+import { DecoratorNode, NodeKey, SerializedLexicalNode, Spread } from "lexical";
 
-import React from 'react';
-import type { ParagraphContent } from '../../types/blocks';
+import React from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { ParagraphContent } from "../../types/blocks";
 
-export interface SerializedParagraphNode extends Spread<{
-  content: ParagraphContent;
-  blockId: string;
-}, SerializedLexicalNode> {}
+export interface SerializedParagraphNode
+  extends Spread<
+    {
+      content: ParagraphContent;
+      blockId: string;
+    },
+    SerializedLexicalNode
+  > {}
 
 export class ParagraphNode extends DecoratorNode<React.ReactElement> {
   __content: ParagraphContent;
   __blockId: string;
 
   static getType(): string {
-    return 'paragraph-block';
+    return "paragraph-block";
   }
 
   static clone(node: ParagraphNode): ParagraphNode {
@@ -37,8 +37,8 @@ export class ParagraphNode extends DecoratorNode<React.ReactElement> {
   }
 
   createDOM(): HTMLElement {
-    const element = document.createElement('div');
-    element.className = 'paragraph-block block-container';
+    const element = document.createElement("div");
+    element.className = "paragraph-block block-container";
     return element;
   }
 
@@ -52,10 +52,10 @@ export class ParagraphNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedParagraphNode {
     return {
-      type: 'paragraph-block',
+      type: "paragraph-block",
       content: this.__content,
       blockId: this.__blockId,
-      version: 1,
+      version: 1
     };
   }
 
@@ -85,34 +85,66 @@ interface ParagraphBlockComponentProps {
   node: ParagraphNode;
 }
 
-const ParagraphBlockComponent: React.FC<ParagraphBlockComponentProps> = ({ node }) => {
+const ParagraphBlockComponent: React.FC<ParagraphBlockComponentProps> = ({
+  node
+}) => {
+  const [editor] = useLexicalComposerContext();
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const content = node.getContent();
   const blockId = node.getBlockId();
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const initializedRef = React.useRef(false);
+
+  React.useLayoutEffect(() => {
+    if (!initializedRef.current && contentRef.current) {
+      contentRef.current.innerHTML = content.text || "";
+      initializedRef.current = true;
+    }
+  }, [blockId]);
 
   const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
-    const text = event.currentTarget.textContent || '';
-    node.setContent({ ...content, text });
+    const text = event.currentTarget.textContent || "";
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      editor.update(() => {
+        node.setContent({ ...content, text });
+      });
+    }, 150);
+  };
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    const text = event.currentTarget.textContent || "";
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    editor.update(() => {
+      node.setContent({ ...content, text });
+    });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     // Handle Enter key to create new paragraph
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       // This will be handled by the parent editor in later phases
-      console.log('Enter pressed - would create new paragraph');
+      console.log("Enter pressed - would create new paragraph");
     }
   };
 
   return (
     <div className="block-container paragraph-block" data-block-id={blockId}>
-      <div className="drag-handle" title="Drag to move">••</div>
+      <div className="drag-handle" title="Drag to move">
+        ••
+      </div>
       <div
         className="block-content"
         contentEditable
         suppressContentEditableWarning={true}
+        ref={contentRef}
         onInput={handleInput}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        dangerouslySetInnerHTML={{ __html: content.text }}
         data-placeholder="Type something..."
       />
     </div>
