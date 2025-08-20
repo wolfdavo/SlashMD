@@ -6,16 +6,15 @@
   "workspaces": [
     "packages/*"
   ],
-  "packageManager": "pnpm@8.0.0",
   "scripts": {
-    "build": "pnpm build:packages && pnpm build:integration",
-    "build:packages": "pnpm --filter md-mapper build && pnpm --filter webview-ui build && pnpm --filter extension-host build",
+    "build": "npm run build:packages && npm run build:integration",
+    "build:packages": "npm run build --workspace=packages/md-mapper && npm run build --workspace=packages/webview-ui && npm run build --workspace=packages/extension-host",
     "build:integration": "node scripts/copy-webview-assets.js",
-    "dev": "pnpm --filter md-mapper dev & pnpm --filter webview-ui dev & pnpm --filter extension-host dev",
-    "test": "pnpm --recursive test",
-    "lint": "pnpm --recursive lint",
-    "clean": "pnpm --recursive clean && rm -rf packages/extension-host/media/webview-bundle.*",
-    "package": "pnpm build && cd packages/extension-host && pnpm package",
+    "dev": "npm run dev --workspace=packages/md-mapper & npm run dev --workspace=packages/webview-ui & npm run dev --workspace=packages/extension-host",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present", 
+    "clean": "npm run clean --workspaces --if-present && rm -rf packages/extension-host/media/webview-bundle.*",
+    "package": "npm run build && cd packages/extension-host && npm run package",
     "validate": "node scripts/validate-integration.js"
   },
   "devDependencies": {

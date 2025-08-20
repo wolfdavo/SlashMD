@@ -4,6 +4,7 @@
  */
 
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock VS Code API for tests
 Object.defineProperty(window, 'acquireVsCodeApi', {

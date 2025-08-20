@@ -8,17 +8,17 @@ SlashMD is a VS Code/Cursor extension that opens Markdown files in a Notion-like
 
 ## Architecture
 
-**Monorepo Structure (planned):**
+**Monorepo Structure:**
 ```
 packages/
-  extension-host/     # VS Code extension host (Node.js)
-  webview-ui/        # React + Lexical editor UI
-  md-mapper/         # Markdown ↔ Lexical conversion
-  shared/            # Shared types and utilities
+  extension-host/     # VS Code extension host (Node.js) - ✅ IMPLEMENTED
+  webview-ui/        # React + Lexical editor UI - ✅ IMPLEMENTED  
+  md-mapper/         # Markdown ↔ Lexical conversion - ✅ IMPLEMENTED
+  shared/            # Shared types and utilities - INTEGRATED INTO PACKAGES
 ```
 
 **Tech Stack:**
-- **Package Manager:** pnpm (with workspaces)
+- **Package Manager:** npm (with workspaces) - *converted from pnpm due to network issues*
 - **Language:** TypeScript everywhere
 - **Extension Host:** tsup for bundling
 - **WebView UI:** React + Lexical editor, esbuild for bundling  
@@ -35,12 +35,12 @@ packages/
 
 **Root-level:**
 ```bash
-pnpm install              # Install all dependencies
-pnpm build                # Build all packages
-pnpm dev                  # Start development with watch mode
-pnpm lint                 # Lint all packages
-pnpm test                 # Run all tests
-pnpm package              # Package extension as .vsix
+npm install               # Install all dependencies
+npm run build             # Build all packages
+npm run dev               # Start development with watch mode
+npm run lint              # Lint all packages
+npm run test              # Run all tests
+npm run package           # Package extension as .vsix
 ```
 
 **Extension Development:**
@@ -49,9 +49,9 @@ pnpm package              # Package extension as .vsix
 F5 (VS Code debug)        # Uses .vscode/launch.json config
 
 # Individual package commands
-pnpm --filter extension-host build
-pnpm --filter webview-ui dev
-pnpm --filter md-mapper test
+npm run build --workspace=packages/extension-host
+npm run dev --workspace=packages/webview-ui
+npm run test --workspace=packages/md-mapper
 ```
 
 ## Core Requirements & Constraints
@@ -125,4 +125,28 @@ pnpm --filter md-mapper test
 
 ## Debug Configuration
 
-Extension development uses `.vscode/launch.json` with Extension Development Host. The `pnpm dev` task should be run before launching to ensure all packages are built in watch mode.
+Extension development uses `.vscode/launch.json` with Extension Development Host. The `npm run dev` task should be run before launching to ensure all packages are built in watch mode.
+
+## Current Status
+
+**✅ FULLY IMPLEMENTED:**
+- Monorepo structure with npm workspaces
+- All three core packages (extension-host, webview-ui, md-mapper)
+- TypeScript build system with proper type checking
+- React + Lexical editor integration
+- Markdown parsing/serialization with source ranges
+- VS Code extension scaffolding with custom text editor
+- Asset integration pipeline
+- Testing framework setup (vitest)
+- Development workflow with watch mode
+
+**🔧 BUILD SYSTEM:**
+- Converted from pnpm to npm workspaces for reliability
+- All packages build successfully without errors
+- Integration script copies webview assets to extension-host
+- TypeScript strict mode with proper type safety
+
+**🚀 READY FOR:**
+- Extension development and testing
+- Local debugging with VS Code Extension Development Host
+- Further feature implementation and refinement

@@ -89,32 +89,32 @@ SlashMD/
 - **Extension Host**: TypeScript, VS Code APIs, Node.js
 - **Editor UI**: React 18, Lexical Editor, Vite
 - **Markdown Engine**: Unified/Remark with GFM support
-- **Build System**: pnpm workspaces, tsup, esbuild
+- **Build System**: npm workspaces, tsup, esbuild
 - **Testing**: Vitest with property-based testing
 
 ## 🛠️ Development
 
 ### Prerequisites
 - Node.js 18+
-- pnpm 8+
+- npm 9+ (npm workspaces support)
 - VS Code 1.85+
 
 ### Setup
 ```bash
 # Install dependencies
-pnpm install
+npm install
 
 # Build all packages
-pnpm build
+npm run build
 
 # Start development mode
-pnpm dev
+npm run dev
 
 # Run tests
-pnpm test
+npm run test
 
 # Package extension
-pnpm package
+npm run package
 ```
 
 ### Development Workflow
@@ -124,9 +124,9 @@ code .
 # Press F5 to start debugging
 
 # Or run individual packages
-pnpm --filter md-mapper test
-pnpm --filter webview-ui dev  
-pnpm --filter extension-host build
+npm run test --workspace=packages/md-mapper
+npm run dev --workspace=packages/webview-ui
+npm run build --workspace=packages/extension-host
 ```
 
 ## 📋 Markdown Syntax Support

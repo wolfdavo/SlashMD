@@ -13,6 +13,7 @@ export function sharedToUIBlock(sharedBlock: SharedBlock): UIBlock {
   const uiBlock: UIBlock = {
     id: sharedBlock.id,
     type: sharedBlock.type as UIBlock['type'], // Type assertion for now
+    sourceRange: sharedBlock.sourceRange,
     content: convertSharedContent(sharedBlock),
     children: sharedBlock.children?.map(sharedToUIBlock) || []
   };
@@ -157,92 +158,104 @@ function convertUIContent(uiBlock: UIBlock): any {
   // Similar conversion in reverse
   switch (uiBlock.type) {
     case 'paragraph':
+      const paragraphContent = uiBlock.content as import('../types/blocks').ParagraphContent;
       return {
-        text: uiBlock.content.text || '',
-        formatting: uiBlock.content.formatting || []
+        text: paragraphContent.text || '',
+        formatting: paragraphContent.formatting || []
       };
 
     case 'heading':
+      const headingContent = uiBlock.content as import('../types/blocks').HeadingContent;
       return {
-        level: uiBlock.content.level || 1,
-        text: uiBlock.content.text || '',
-        formatting: uiBlock.content.formatting || []
+        level: headingContent.level || 1,
+        text: headingContent.text || '',
+        formatting: headingContent.formatting || []
       };
 
     case 'list':
+      const listContent = uiBlock.content as import('../types/blocks').ListContent;
       return {
-        ordered: uiBlock.content.ordered || false,
-        startNumber: uiBlock.content.startNumber
+        ordered: listContent.ordered || false,
+        startNumber: listContent.startNumber
       };
 
     case 'listItem':
+      const listItemContent = uiBlock.content as import('../types/blocks').ListItemContent;
       return {
-        text: uiBlock.content.text || '',
-        formatting: uiBlock.content.formatting || [],
-        indent: uiBlock.content.indent || 0
+        text: listItemContent.text || '',
+        formatting: listItemContent.formatting || [],
+        indent: listItemContent.indent || 0
       };
 
     case 'taskList':
       return {}; // No content
 
     case 'taskItem':
+      const taskItemContent = uiBlock.content as import('../types/blocks').TaskItemContent;
       return {
-        checked: uiBlock.content.checked || false,
-        text: uiBlock.content.text || '',
-        formatting: uiBlock.content.formatting || [],
-        indent: uiBlock.content.indent || 0
+        checked: taskItemContent.checked || false,
+        text: taskItemContent.text || '',
+        formatting: taskItemContent.formatting || [],
+        indent: taskItemContent.indent || 0
       };
 
     case 'quote':
+      const quoteContent = uiBlock.content as import('../types/blocks').QuoteContent;
       return {
-        text: uiBlock.content.text || '',
-        formatting: uiBlock.content.formatting || []
+        text: quoteContent.text || '',
+        formatting: quoteContent.formatting || []
       };
 
     case 'code':
+      const codeContent = uiBlock.content as import('../types/blocks').CodeContent;
       return {
-        language: uiBlock.content.language || '',
-        code: uiBlock.content.code || '',
-        showLineNumbers: uiBlock.content.showLineNumbers || false
+        language: codeContent.language || '',
+        code: codeContent.code || '',
+        showLineNumbers: codeContent.showLineNumbers || false
       };
 
     case 'divider':
       return {}; // No content
 
     case 'table':
+      const tableContent = uiBlock.content as import('../types/blocks').TableContent;
       return {
-        headers: uiBlock.content.headers || [],
-        rows: uiBlock.content.rows || [],
-        alignments: uiBlock.content.alignments || []
+        headers: tableContent.headers || [],
+        rows: tableContent.rows || [],
+        alignments: tableContent.alignments || []
       };
 
     case 'image':
+      const imageContent = uiBlock.content as import('../types/blocks').ImageContent;
       return {
-        src: uiBlock.content.src || '',
-        alt: uiBlock.content.alt || '',
-        title: uiBlock.content.title,
-        dimensions: uiBlock.content.dimensions
+        src: imageContent.src || '',
+        alt: imageContent.alt || '',
+        title: imageContent.title,
+        dimensions: imageContent.dimensions
       };
 
     case 'link':
+      const linkContent = uiBlock.content as import('../types/blocks').LinkContent;
       return {
-        text: uiBlock.content.text || '',
-        href: uiBlock.content.href || '',
-        title: uiBlock.content.title
+        text: linkContent.text || '',
+        href: linkContent.href || '',
+        title: linkContent.title
       };
 
     case 'callout':
+      const calloutContent = uiBlock.content as import('../types/blocks').CalloutContent;
       return {
-        type: uiBlock.content.type || 'info',
-        title: uiBlock.content.title,
-        text: uiBlock.content.text || '',
-        formatting: uiBlock.content.formatting || []
+        type: calloutContent.type || 'info',
+        title: calloutContent.title,
+        text: calloutContent.text || '',
+        formatting: calloutContent.formatting || []
       };
 
     case 'toggle':
+      const toggleContent = uiBlock.content as import('../types/blocks').ToggleContent;
       return {
-        summary: uiBlock.content.summary || '',
-        collapsed: uiBlock.content.collapsed || false
+        summary: toggleContent.summary || '',
+        collapsed: toggleContent.collapsed || false
       };
 
     default:

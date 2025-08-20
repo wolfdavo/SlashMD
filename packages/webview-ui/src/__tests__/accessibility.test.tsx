@@ -18,7 +18,7 @@ const TestComponent: React.FC<{ options?: any }> = ({ options }) => {
   } = useAccessibility(options);
 
   return (
-    <div ref={focusTrapRef} data-testid="container">
+    <div ref={focusTrapRef as React.RefObject<HTMLDivElement>} data-testid="container">
       <button
         onClick={() => announce('Test announcement')}
         {...getAriaAttributes('button', { pressed: false })}

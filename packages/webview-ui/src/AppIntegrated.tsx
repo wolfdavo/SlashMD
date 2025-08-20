@@ -17,7 +17,7 @@ import { installMockVSCodeAPI } from './mocks/vscode-api';
 import { comprehensiveSampleDocument } from './mocks/sample-data';
 import type { Block } from './types/blocks';
 import type { Theme } from './types/editor';
-import type { ExportFormat } from './hooks/useExport';
+// import type { ExportFormat } from './hooks/useExport';
 import type { Block as SharedBlock } from './types/shared';
 
 // Install mock VS Code API for standalone development (if not in VS Code)

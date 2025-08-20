@@ -21,25 +21,31 @@ export const useExport = () => {
     return blocks.map(block => {
       switch (block.type) {
         case 'heading':
-          const level = '#'.repeat(block.content.level || 1);
-          return `${level} ${block.content.text}\n`;
+          const headingContent = block.content as import('../types/blocks').HeadingContent;
+          const level = '#'.repeat(headingContent.level || 1);
+          return `${level} ${headingContent.text}\n`;
         
         case 'paragraph':
-          return `${block.content.text}\n`;
+          const paragraphContent = block.content as import('../types/blocks').ParagraphContent;
+          return `${paragraphContent.text}\n`;
         
         case 'quote':
-          return `> ${block.content.text}\n`;
+          const quoteContent = block.content as import('../types/blocks').QuoteContent;
+          return `> ${quoteContent.text}\n`;
         
         case 'code':
-          return `\`\`\`${block.content.language || ''}\n${block.content.code}\n\`\`\`\n`;
+          const codeContent = block.content as import('../types/blocks').CodeContent;
+          return `\`\`\`${codeContent.language || ''}\n${codeContent.code}\n\`\`\`\n`;
         
         case 'list':
           if (block.children) {
-            const marker = block.content.ordered ? '1.' : '-';
+            const listContent = block.content as import('../types/blocks').ListContent;
+            const marker = listContent.ordered ? '1.' : '-';
             return block.children.map((child, index) => {
-              const itemMarker = block.content.ordered ? `${index + 1}.` : marker;
-              const indent = '  '.repeat(child.content.indent || 0);
-              return `${indent}${itemMarker} ${child.content.text}`;
+              const itemMarker = listContent.ordered ? `${index + 1}.` : marker;
+              const childContent = child.content as import('../types/blocks').ListItemContent;
+              const indent = '  '.repeat(childContent.indent || 0);
+              return `${indent}${itemMarker} ${childContent.text}`;
             }).join('\n') + '\n';
           }
           return '';
@@ -47,9 +53,10 @@ export const useExport = () => {
         case 'taskList':
           if (block.children) {
             return block.children.map(child => {
-              const checkbox = child.content.checked ? '[x]' : '[ ]';
-              const indent = '  '.repeat(child.content.indent || 0);
-              return `${indent}- ${checkbox} ${child.content.text}`;
+              const taskContent = child.content as import('../types/blocks').TaskItemContent;
+              const checkbox = taskContent.checked ? '[x]' : '[ ]';
+              const indent = '  '.repeat(taskContent.indent || 0);
+              return `${indent}- ${checkbox} ${taskContent.text}`;
             }).join('\n') + '\n';
           }
           return '';
@@ -58,10 +65,11 @@ export const useExport = () => {
           return '---\n';
         
         case 'table':
-          if (block.content.headers && block.content.rows) {
-            const headers = block.content.headers.map(h => h.text).join(' | ');
-            const separator = block.content.headers.map(() => '---').join(' | ');
-            const rows = block.content.rows.map(row => 
+          const tableContent = block.content as import('../types/blocks').TableContent;
+          if (tableContent.headers && tableContent.rows) {
+            const headers = tableContent.headers.map(h => h.text).join(' | ');
+            const separator = tableContent.headers.map(() => '---').join(' | ');
+            const rows = tableContent.rows.map(row => 
               row.map(cell => cell.text).join(' | ')
             ).join('\n');
             return `| ${headers} |\n| ${separator} |\n| ${rows.split('\n').join(' |\n| ')} |\n`;
@@ -69,22 +77,25 @@ export const useExport = () => {
           return '';
         
         case 'image':
-          const title = block.content.title ? ` "${block.content.title}"` : '';
-          return `![${block.content.alt}](${block.content.src}${title})\n`;
+          const imageContent = block.content as import('../types/blocks').ImageContent;
+          const title = imageContent.title ? ` "${imageContent.title}"` : '';
+          return `![${imageContent.alt}](${imageContent.src}${title})\n`;
         
         case 'callout':
+          const calloutContent = block.content as import('../types/blocks').CalloutContent;
           const emoji = {
             note: '📝',
             tip: '💡',
             warning: '⚠️',
             danger: '🚨',
             info: 'ℹ️'
-          }[block.content.type];
-          const title = block.content.title ? ` ${block.content.title}` : '';
-          return `> ${emoji}${title}\n>\n> ${block.content.text}\n`;
+          }[calloutContent.type];
+          const calloutTitle = calloutContent.title ? ` ${calloutContent.title}` : '';
+          return `> ${emoji}${calloutTitle}\n>\n> ${calloutContent.text}\n`;
         
         case 'toggle':
-          const summary = block.content.summary || 'Details';
+          const toggleContent = block.content as import('../types/blocks').ToggleContent;
+          const summary = toggleContent.summary || 'Details';
           return `<details>\n<summary>${summary}</summary>\n\n<!-- Toggle content would go here -->\n\n</details>\n`;
         
         default:
@@ -98,35 +109,41 @@ export const useExport = () => {
     const htmlBlocks = blocks.map(block => {
       switch (block.type) {
         case 'heading':
-          const level = block.content.level || 1;
-          return `<h${level}>${block.content.text}</h${level}>`;
+          const headingContent = block.content as import('../types/blocks').HeadingContent;
+          const level = headingContent.level || 1;
+          return `<h${level}>${headingContent.text}</h${level}>`;
         
         case 'paragraph':
-          return `<p>${block.content.text}</p>`;
+          const paragraphContent = block.content as import('../types/blocks').ParagraphContent;
+          return `<p>${paragraphContent.text}</p>`;
         
         case 'quote':
-          return `<blockquote>${block.content.text}</blockquote>`;
+          const quoteContent = block.content as import('../types/blocks').QuoteContent;
+          return `<blockquote>${quoteContent.text}</blockquote>`;
         
         case 'code':
-          return `<pre><code class="language-${block.content.language}">${block.content.code}</code></pre>`;
+          const codeContent = block.content as import('../types/blocks').CodeContent;
+          return `<pre><code class="language-${codeContent.language}">${codeContent.code}</code></pre>`;
         
         case 'divider':
           return '<hr>';
         
         case 'image':
-          return `<img src="${block.content.src}" alt="${block.content.alt}" title="${block.content.title || ''}" />`;
+          const imageContent = block.content as import('../types/blocks').ImageContent;
+          return `<img src="${imageContent.src}" alt="${imageContent.alt}" title="${imageContent.title || ''}" />`;
         
         case 'callout':
+          const calloutContent = block.content as import('../types/blocks').CalloutContent;
           const emoji = {
             note: '📝',
             tip: '💡',
             warning: '⚠️',
             danger: '🚨',
             info: 'ℹ️'
-          }[block.content.type];
-          return `<div class="callout callout-${block.content.type}">
-            <div class="callout-header">${emoji} ${block.content.title || block.content.type}</div>
-            <div class="callout-content">${block.content.text}</div>
+          }[calloutContent.type];
+          return `<div class="callout callout-${calloutContent.type}">
+            <div class="callout-header">${emoji} ${calloutContent.title || calloutContent.type}</div>
+            <div class="callout-content">${calloutContent.text}</div>
           </div>`;
         
         default:
