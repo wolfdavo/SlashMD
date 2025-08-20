@@ -1,0 +1,38 @@
+{
+  "name": "slashmd-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SlashMD - Notion-like Markdown editor for VS Code",
+  "workspaces": [
+    "packages/*"
+  ],
+  "packageManager": "pnpm@8.0.0",
+  "scripts": {
+    "build": "pnpm build:packages && pnpm build:integration",
+    "build:packages": "pnpm --filter md-mapper build && pnpm --filter webview-ui build && pnpm --filter extension-host build",
+    "build:integration": "node scripts/copy-webview-assets.js",
+    "dev": "pnpm --filter md-mapper dev & pnpm --filter webview-ui dev & pnpm --filter extension-host dev",
+    "test": "pnpm --recursive test",
+    "lint": "pnpm --recursive lint",
+    "clean": "pnpm --recursive clean && rm -rf packages/extension-host/media/webview-bundle.*",
+    "package": "pnpm build && cd packages/extension-host && pnpm package",
+    "validate": "node scripts/validate-integration.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/slashmd.git"
+  },
+  "author": "SlashMD Team",
+  "license": "MIT",
+  "keywords": [
+    "markdown",
+    "editor",
+    "vscode",
+    "extension",
+    "lexical",
+    "notion"
+  ]
+}

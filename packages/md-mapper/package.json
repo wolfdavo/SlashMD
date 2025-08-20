@@ -1,0 +1,52 @@
+{
+  "name": "@slashmd/md-mapper",
+  "version": "0.4.0",
+  "description": "Standalone Markdown to structured block conversion library with source range tracking",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "markdown",
+    "parser",
+    "block",
+    "remark",
+    "unified"
+  ],
+  "author": "SlashMD",
+  "license": "MIT",
+  "dependencies": {
+    "unified": "^11.0.4",
+    "remark-parse": "^11.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-stringify": "^11.0.0",
+    "remark-frontmatter": "^5.0.0",
+    "mdast-util-to-string": "^4.0.0",
+    "mdast-util-from-markdown": "^2.0.0",
+    "mdast-util-to-markdown": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0",
+    "vitest": "^1.0.0"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ]
+}
