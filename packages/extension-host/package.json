@@ -1,0 +1,111 @@
+{
+  "name": "slashmd",
+  "displayName": "SlashMD — Block-Based Markdown",
+  "description": "A Notion-like block-based WYSIWYG editor for Markdown files",
+  "publisher": "slashmd",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "slashmd.editor",
+        "displayName": "SlashMD — Block-Based Markdown",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          },
+          {
+            "filenamePattern": "*.markdown"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "slashmd.openAsText",
+        "title": "Open as Raw Markdown",
+        "category": "SlashMD"
+      },
+      {
+        "command": "slashmd.insertBlock",
+        "title": "Insert Block…",
+        "category": "SlashMD"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "slashmd.openAsText",
+          "when": "activeCustomEditorId == slashmd.editor",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "SlashMD",
+      "properties": {
+        "slashmd.assets.folder": {
+          "type": "string",
+          "default": "assets",
+          "description": "Relative folder for pasted/dragged images."
+        },
+        "slashmd.format.wrap": {
+          "type": "integer",
+          "default": 0,
+          "description": "Markdown wrap width (0 = no wrap)."
+        },
+        "slashmd.callouts.style": {
+          "type": "string",
+          "enum": [
+            "admonition",
+            "emoji"
+          ],
+          "default": "admonition",
+          "description": "Style for callout blocks."
+        },
+        "slashmd.toggles.syntax": {
+          "type": "string",
+          "enum": [
+            "details",
+            "list"
+          ],
+          "default": "details",
+          "description": "Syntax for toggle blocks."
+        },
+        "slashmd.math.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable math block support."
+        },
+        "slashmd.mermaid.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Mermaid diagram support."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup src/extension.ts --format cjs --dts --outDir dist --external vscode",
+    "dev": "tsup src/extension.ts --format cjs --watch --outDir dist --external vscode",
+    "lint": "eslint src",
+    "package": "vsce package --no-dependencies",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {}
+}

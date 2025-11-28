@@ -1,0 +1,35 @@
+{
+  "name": "@slashmd/webview-ui",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs --watch",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@lexical/code": "^0.14.0",
+    "@lexical/link": "^0.14.0",
+    "@lexical/list": "^0.14.0",
+    "@lexical/markdown": "^0.14.0",
+    "@lexical/react": "^0.14.0",
+    "@lexical/rich-text": "^0.14.0",
+    "@lexical/selection": "^0.14.0",
+    "@lexical/table": "^0.14.0",
+    "@lexical/utils": "^0.14.0",
+    "lexical": "^0.14.0",
+    "prismjs": "^1.29.0",
+    "mdast-util-from-markdown": "^2.0.0",
+    "mdast-util-gfm": "^3.0.0",
+    "mdast-util-to-markdown": "^2.1.0",
+    "micromark-extension-gfm": "^3.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.4.0"
+  }
+}

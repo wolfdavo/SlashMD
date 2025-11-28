@@ -1,0 +1,23 @@
+{
+  "$schema": "vscode://schemas/launch",
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run SlashMD Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/extension-host"],
+      "outFiles": ["${workspaceFolder}/packages/extension-host/dist/**/*.js"]
+    },
+    {
+      "name": "Run SlashMD Extension (with build)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/extension-host"],
+      "outFiles": ["${workspaceFolder}/packages/extension-host/dist/**/*.js"],
+      "preLaunchTask": "npm: build"
+    }
+  ]
+}
