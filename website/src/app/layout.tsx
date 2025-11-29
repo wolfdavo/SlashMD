@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: 'A Notion-like WYSIWYG editor for Markdown files. Edit your docs with blocks, slash commands, and drag-and-drop — all while keeping plain Markdown.',
   keywords: ['markdown', 'vscode', 'cursor', 'wysiwyg', 'notion', 'block editor', 'markdown editor'],
   authors: [{ name: 'SlashMD' }],
+  icons: {
+    icon: '/favicon.ico',
+  },
   openGraph: {
     title: 'SlashMD — Block-Based Markdown Editor',
     description: 'A Notion-like WYSIWYG editor for Markdown files in VS Code and Cursor.',
