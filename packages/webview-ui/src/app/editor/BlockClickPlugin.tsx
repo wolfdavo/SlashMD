@@ -47,21 +47,16 @@ export function BlockClickPlugin() {
       // Find which block element the click Y coordinate corresponds to
       const targetBlock = findBlockAtY(rootElement, clickY);
       if (!targetBlock) {
-        console.log('[BlockClick] No target block found at Y:', clickY);
         return;
       }
 
       const blockRect = targetBlock.getBoundingClientRect();
-      console.log('[BlockClick] Block found:', targetBlock.className, 'blockRect.right:', blockRect.right, 'clickX:', clickX);
 
       // Check if click is to the RIGHT of the block's actual content
       // (not inside the block itself)
       if (clickX <= blockRect.right) {
-        console.log('[BlockClick] Click is inside block, not to the right');
         return;
       }
-
-      console.log('[BlockClick] Click is to the right of block!');
 
       // We clicked in the empty space to the right of the block
       event.preventDefault();
@@ -70,10 +65,7 @@ export function BlockClickPlugin() {
       // Use Lexical's method to find the node from DOM element
       editor.update(() => {
         const node = $getNearestNodeFromDOMNode(targetBlock);
-        console.log('[BlockClick] Lexical node from DOM:', node?.getType(), node?.getKey());
-
         if (!node) {
-          console.log('[BlockClick] Could not find Lexical node');
           return;
         }
 
@@ -84,8 +76,6 @@ export function BlockClickPlugin() {
         while (topLevelNode && topLevelNode.getParent() !== root) {
           topLevelNode = topLevelNode.getParent();
         }
-
-        console.log('[BlockClick] Top-level node:', topLevelNode?.getType(), topLevelNode?.getKey());
 
         if (topLevelNode) {
           selectAfterNode(topLevelNode);
@@ -199,7 +189,6 @@ function getNodeKeyFromElement(element: HTMLElement): NodeKey | null {
     if (key) return key;
   }
 
-  console.log('[BlockClick] Could not find node key. Element:', element.outerHTML.slice(0, 200));
   return null;
 }
 
@@ -212,5 +201,4 @@ function selectAfterNode(node: LexicalNode): void {
   const paragraph = $createParagraphNode();
   node.insertAfter(paragraph);
   paragraph.select();
-  console.log('[BlockClick] Inserted paragraph after node and selected it');
 }

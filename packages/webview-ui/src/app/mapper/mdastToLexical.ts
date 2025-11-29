@@ -87,6 +87,13 @@ function preprocessDetailsBlocks(children: Content[]): (Content | ToggleContentM
     if (node.type === 'html') {
       const html = node.value.trim();
 
+      // Early exit: skip regex if doesn't start with <details
+      if (!html.startsWith('<details') && !html.startsWith('</details')) {
+        result.push(node);
+        i++;
+        continue;
+      }
+
       // Check for opening details tag
       const openingMatch = html.match(/<details(?:\s+open)?>\s*<summary>([\s\S]*?)<\/summary>/i);
       if (openingMatch) {

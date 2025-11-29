@@ -11,57 +11,73 @@ import {
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { getSelectedNode } from './utils';
 
+// Consolidated toolbar state to batch updates
+interface ToolbarState {
+  isVisible: boolean;
+  isBold: boolean;
+  isItalic: boolean;
+  isStrikethrough: boolean;
+  isCode: boolean;
+  isLink: boolean;
+  position: { top: number; left: number };
+}
+
+const initialToolbarState: ToolbarState = {
+  isVisible: false,
+  isBold: false,
+  isItalic: false,
+  isStrikethrough: false,
+  isCode: false,
+  isLink: false,
+  position: { top: 0, left: 0 },
+};
+
 export function Toolbar() {
   const [editor] = useLexicalComposerContext();
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isStrikethrough, setIsStrikethrough] = useState(false);
-  const [isCode, setIsCode] = useState(false);
-  const [isLink, setIsLink] = useState(false);
-  const [showToolbar, setShowToolbar] = useState(false);
-  const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
+  const [state, setState] = useState<ToolbarState>(initialToolbarState);
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
 
     if (!$isRangeSelection(selection)) {
-      setShowToolbar(false);
+      setState(prev => prev.isVisible ? { ...prev, isVisible: false } : prev);
       return;
     }
 
     const isCollapsed = selection.isCollapsed();
     if (isCollapsed) {
-      setShowToolbar(false);
+      setState(prev => prev.isVisible ? { ...prev, isVisible: false } : prev);
       return;
     }
 
     // Get selection position
     const nativeSelection = window.getSelection();
     if (!nativeSelection || nativeSelection.rangeCount === 0) {
-      setShowToolbar(false);
+      setState(prev => prev.isVisible ? { ...prev, isVisible: false } : prev);
       return;
     }
 
     const range = nativeSelection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
 
-    setToolbarPosition({
-      top: rect.top - 45,
-      left: rect.left + rect.width / 2,
-    });
-
-    // Update format states
-    setIsBold(selection.hasFormat('bold'));
-    setIsItalic(selection.hasFormat('italic'));
-    setIsStrikethrough(selection.hasFormat('strikethrough'));
-    setIsCode(selection.hasFormat('code'));
-
     // Check for link
     const node = getSelectedNode(selection);
     const parent = node.getParent();
-    setIsLink($isLinkNode(parent) || $isLinkNode(node));
+    const isLink = $isLinkNode(parent) || $isLinkNode(node);
 
-    setShowToolbar(true);
+    // Batch all state updates into a single setState call
+    setState({
+      isVisible: true,
+      isBold: selection.hasFormat('bold'),
+      isItalic: selection.hasFormat('italic'),
+      isStrikethrough: selection.hasFormat('strikethrough'),
+      isCode: selection.hasFormat('code'),
+      isLink,
+      position: {
+        top: rect.top - 45,
+        left: rect.left + rect.width / 2,
+      },
+    });
   }, []);
 
   useEffect(() => {
@@ -83,7 +99,7 @@ export function Toolbar() {
   );
 
   const insertLink = useCallback(() => {
-    if (!isLink) {
+    if (!state.isLink) {
       const url = prompt('Enter URL:');
       if (url) {
         editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
@@ -91,24 +107,24 @@ export function Toolbar() {
     } else {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
     }
-  }, [editor, isLink]);
+  }, [editor, state.isLink]);
 
-  if (!showToolbar) return null;
+  if (!state.isVisible) return null;
 
   return (
     <div
       className="toolbar"
       style={{
         position: 'fixed',
-        top: toolbarPosition.top,
-        left: toolbarPosition.left,
+        top: state.position.top,
+        left: state.position.left,
         transform: 'translateX(-50%)',
       }}
     >
       <button
         type="button"
         onClick={() => formatText('bold')}
-        className={`toolbar-button ${isBold ? 'active' : ''}`}
+        className={`toolbar-button ${state.isBold ? 'active' : ''}`}
         aria-label="Bold"
         title="Bold (Cmd+B)"
       >
@@ -117,7 +133,7 @@ export function Toolbar() {
       <button
         type="button"
         onClick={() => formatText('italic')}
-        className={`toolbar-button ${isItalic ? 'active' : ''}`}
+        className={`toolbar-button ${state.isItalic ? 'active' : ''}`}
         aria-label="Italic"
         title="Italic (Cmd+I)"
       >
@@ -126,7 +142,7 @@ export function Toolbar() {
       <button
         type="button"
         onClick={() => formatText('strikethrough')}
-        className={`toolbar-button ${isStrikethrough ? 'active' : ''}`}
+        className={`toolbar-button ${state.isStrikethrough ? 'active' : ''}`}
         aria-label="Strikethrough"
         title="Strikethrough"
       >
@@ -135,7 +151,7 @@ export function Toolbar() {
       <button
         type="button"
         onClick={() => formatText('code')}
-        className={`toolbar-button ${isCode ? 'active' : ''}`}
+        className={`toolbar-button ${state.isCode ? 'active' : ''}`}
         aria-label="Code"
         title="Inline Code (Cmd+E)"
       >
@@ -145,7 +161,7 @@ export function Toolbar() {
       <button
         type="button"
         onClick={insertLink}
-        className={`toolbar-button ${isLink ? 'active' : ''}`}
+        className={`toolbar-button ${state.isLink ? 'active' : ''}`}
         aria-label="Link"
         title="Link (Cmd+K)"
       >

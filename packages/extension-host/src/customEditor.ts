@@ -161,20 +161,23 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
       }
     );
 
+    // Track last sent content to avoid duplicate sends
+    let lastSentContent = document.getText();
+
     // Handle external document changes
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.toString() === document.uri.toString() && !isApplyingEdits) {
         // External change detected, sync to webview
         if (e.contentChanges.length > 0) {
-          const change = e.contentChanges[0];
-          const start = document.offsetAt(change.range.start);
-          const end = start + change.rangeLength;
-
-          webviewPanel.webview.postMessage({
-            type: 'DOC_CHANGED',
-            text: document.getText(),
-            range: { start, end },
-          });
+          const newContent = document.getText();
+          // Only send if content actually changed (avoids echo from our own edits)
+          if (newContent !== lastSentContent) {
+            lastSentContent = newContent;
+            webviewPanel.webview.postMessage({
+              type: 'DOC_CHANGED',
+              text: newContent,
+            });
+          }
         }
       }
     });

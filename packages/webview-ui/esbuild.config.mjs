@@ -29,11 +29,24 @@ const buildOptions = {
   },
 };
 
-// Copy CSS file to dist
+// Minify CSS by removing comments, extra whitespace, and newlines
+function minifyCss(css) {
+  if (isWatch) return css; // Skip minification in watch mode for faster builds
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
+    .replace(/\s+/g, ' ') // Collapse whitespace
+    .replace(/\s*([{}:;,])\s*/g, '$1') // Remove spaces around punctuation
+    .replace(/;}/g, '}') // Remove trailing semicolons
+    .trim();
+}
+
+// Copy CSS file to dist (minified in production)
 async function copyCss() {
   const cssSource = path.join(process.cwd(), 'src', 'styles.css');
   const cssDest = path.join(outdir, 'webview.css');
-  fs.copyFileSync(cssSource, cssDest);
+  let css = fs.readFileSync(cssSource, 'utf8');
+  css = minifyCss(css);
+  fs.writeFileSync(cssDest, css);
 }
 
 async function build() {

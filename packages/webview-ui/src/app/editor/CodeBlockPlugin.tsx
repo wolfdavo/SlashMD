@@ -1,7 +1,21 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, $getNodeByKey, $isElementNode, LexicalNode } from 'lexical';
 import { $isCodeNode, CodeNode } from '@lexical/code';
+
+// Shared helper to recursively find all code nodes in a tree
+function findCodeNodesInTree(node: LexicalNode): CodeNode[] {
+  const codeNodes: CodeNode[] = [];
+  if ($isCodeNode(node)) {
+    codeNodes.push(node);
+  }
+  if ($isElementNode(node)) {
+    for (const child of node.getChildren()) {
+      codeNodes.push(...findCodeNodesInTree(child));
+    }
+  }
+  return codeNodes;
+}
 
 // Popular languages for the dropdown
 // Note: 'plain' is a valid Prism language that provides no syntax highlighting
@@ -174,95 +188,66 @@ export function CodeBlockPlugin() {
     position: { top: number; right: number };
   } | null>(null);
 
+  // Cache for code node keys to avoid unnecessary DOM reads
+  const cachedNodeKeysRef = useRef<Set<string>>(new Set());
+  const updateScheduledRef = useRef(false);
+
   // Track code blocks and their positions
   useEffect(() => {
+    // Batched update function that reads all DOM positions in a single frame
     const updateCodeBlocks = () => {
+      updateScheduledRef.current = false;
       const editorElement = editor.getRootElement();
       if (!editorElement) return;
 
       editor.getEditorState().read(() => {
         const root = $getRoot();
-        const blocks: CodeBlockInfo[] = [];
+        const codeNodes = findCodeNodesInTree(root);
 
-        // Recursively find all code nodes at any nesting level
-        const findCodeNodes = (node: LexicalNode): CodeNode[] => {
-          const codeNodes: CodeNode[] = [];
-          if ($isCodeNode(node)) {
-            codeNodes.push(node);
-          }
-          if ($isElementNode(node)) {
-            for (const child of node.getChildren()) {
-              codeNodes.push(...findCodeNodes(child));
+        // Collect node keys and languages first (no DOM reads)
+        const nodeData: Array<{ nodeKey: string; language: string }> = [];
+        for (const node of codeNodes) {
+          nodeData.push({
+            nodeKey: node.getKey(),
+            language: node.getLanguage() || '',
+          });
+        }
+
+        // Batch DOM reads in a single pass after the read()
+        requestAnimationFrame(() => {
+          const blocks: CodeBlockInfo[] = [];
+          for (const { nodeKey, language } of nodeData) {
+            const element = editor.getElementByKey(nodeKey);
+            if (element) {
+              blocks.push({
+                nodeKey,
+                language,
+                rect: element.getBoundingClientRect(),
+              });
             }
           }
-          return codeNodes;
-        };
-
-        const codeNodes = findCodeNodes(root);
-
-        codeNodes.forEach((node) => {
-          // Use editor.getElementByKey to get the correct DOM element for this node
-          const element = editor.getElementByKey(node.getKey());
-          if (element) {
-            const lang = node.getLanguage();
-            blocks.push({
-              nodeKey: node.getKey(),
-              language: lang || '',
-              rect: element.getBoundingClientRect(),
-            });
-          }
+          setCodeBlocks(blocks);
         });
-
-        setCodeBlocks(blocks);
       });
+    };
+
+    // Debounced update scheduler
+    const scheduleUpdate = () => {
+      if (!updateScheduledRef.current) {
+        updateScheduledRef.current = true;
+        requestAnimationFrame(updateCodeBlocks);
+      }
     };
 
     const timeoutId = setTimeout(updateCodeBlocks, 200);
 
-    const unsubscribe = editor.registerUpdateListener(({ editorState }) => {
-      // Use the editorState from the update, not editor.getEditorState()
-      requestAnimationFrame(() => {
-        const editorElement = editor.getRootElement();
-        if (!editorElement) return;
-
-        editorState.read(() => {
-          const root = $getRoot();
-          const blocks: CodeBlockInfo[] = [];
-
-          const findCodeNodes = (node: LexicalNode): CodeNode[] => {
-            const codeNodes: CodeNode[] = [];
-            if ($isCodeNode(node)) {
-              codeNodes.push(node);
-            }
-            if ($isElementNode(node)) {
-              for (const child of node.getChildren()) {
-                codeNodes.push(...findCodeNodes(child));
-              }
-            }
-            return codeNodes;
-          };
-
-          const codeNodes = findCodeNodes(root);
-
-          codeNodes.forEach((node) => {
-            const element = editor.getElementByKey(node.getKey());
-            if (element) {
-              blocks.push({
-                nodeKey: node.getKey(),
-                language: node.getLanguage() || '',
-                rect: element.getBoundingClientRect(),
-              });
-            }
-          });
-
-          setCodeBlocks(blocks);
-        });
-      });
+    const unsubscribe = editor.registerUpdateListener(() => {
+      scheduleUpdate();
     });
 
-    // Also update on scroll/resize
+    // Also update on scroll/resize with debouncing
     const handleScrollResize = () => {
-      requestAnimationFrame(updateCodeBlocks);
+      scheduleUpdate();
     };
     window.addEventListener('scroll', handleScrollResize, true);
     window.addEventListener('resize', handleScrollResize);

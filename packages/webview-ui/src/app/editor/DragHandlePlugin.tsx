@@ -71,11 +71,14 @@ export function DragHandlePlugin() {
   const dropTargetKey = useRef<string | null>(null);
   const dropPosition = useRef<'before' | 'after'>('after');
   const handleRef = useRef<HTMLDivElement | null>(null);
+  // Use ref to access isDragging in event handlers without causing re-registration
+  const isDraggingRef = useRef(false);
+  isDraggingRef.current = isDragging;
 
   // Listen for selection changes to hide handle when navigating via keyboard
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
-      if (isDragging) return;
+      if (isDraggingRef.current) return;
 
       editorState.read(() => {
         const selection = $getSelection();
@@ -118,7 +121,7 @@ export function DragHandlePlugin() {
         });
       });
     });
-  }, [editor, isDragging]);
+  }, [editor]);
 
   useEffect(() => {
     const editorElement = editor.getRootElement();
@@ -129,7 +132,7 @@ export function DragHandlePlugin() {
     if (!editorInner) return;
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (isDragging) return;
+      if (isDraggingRef.current) return;
 
       const target = event.target as HTMLElement;
 
@@ -168,7 +171,7 @@ export function DragHandlePlugin() {
     };
 
     const handleMouseLeave = () => {
-      if (isDragging) return;
+      if (isDraggingRef.current) return;
       setDragState((prev) => ({ ...prev, isVisible: false }));
     };
 
@@ -251,7 +254,7 @@ export function DragHandlePlugin() {
       editorInner.removeEventListener('drop', handleDrop);
       editorInner.removeEventListener('dragleave', handleDragLeave);
     };
-  }, [editor, isDragging]);
+  }, [editor]);
 
   const handleDragStart = (event: React.DragEvent) => {
     if (dragState.nodeKey) {

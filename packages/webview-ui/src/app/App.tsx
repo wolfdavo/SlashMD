@@ -8,12 +8,46 @@ import {
 } from '../messaging';
 import type { HostToUIMessage, SlashMDSettings, TextEdit } from '../types';
 
+// Simple diff algorithm to find the changed region between two strings
+function computeMinimalEdits(oldText: string, newText: string): TextEdit[] {
+  if (oldText === newText) return [];
+
+  // Find common prefix
+  let prefixLen = 0;
+  const minLen = Math.min(oldText.length, newText.length);
+  while (prefixLen < minLen && oldText[prefixLen] === newText[prefixLen]) {
+    prefixLen++;
+  }
+
+  // Find common suffix (but don't overlap with prefix)
+  let suffixLen = 0;
+  while (
+    suffixLen < minLen - prefixLen &&
+    oldText[oldText.length - 1 - suffixLen] === newText[newText.length - 1 - suffixLen]
+  ) {
+    suffixLen++;
+  }
+
+  // Calculate the changed region
+  const start = prefixLen;
+  const end = oldText.length - suffixLen;
+  const newTextContent = newText.slice(prefixLen, newText.length - suffixLen);
+
+  return [{
+    start,
+    end,
+    newText: newTextContent,
+  }];
+}
+
 export function App() {
   const [content, setContent] = useState<string | null>(null);
   const [settings, setSettings] = useState<SlashMDSettings | null>(null);
   const [assetBaseUri, setAssetBaseUri] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const pendingAssetCallback = useRef<((relPath: string) => void) | null>(null);
+  // Track the last known document content for diff computation
+  const lastDocumentContent = useRef<string>('');
 
   useEffect(() => {
     console.log('SlashMD App: Setting up message handler');
@@ -22,12 +56,14 @@ export function App() {
       switch (message.type) {
         case 'DOC_INIT':
           console.log('SlashMD App: Received DOC_INIT with', message.text?.length, 'chars');
+          lastDocumentContent.current = message.text;
           setContent(message.text);
           setSettings(message.settings);
           setAssetBaseUri(message.assetBaseUri);
           break;
 
         case 'DOC_CHANGED':
+          lastDocumentContent.current = message.text;
           setContent(message.text);
           break;
 
@@ -57,13 +93,11 @@ export function App() {
 
   const handleChange = useCallback((markdown: string) => {
     // Calculate diff and send minimal edits
-    // For now, we'll send the full text replacement
-    const edit: TextEdit = {
-      start: 0,
-      end: Number.MAX_SAFE_INTEGER, // Will be clamped by the host
-      newText: markdown,
-    };
-    applyTextEdits([edit], 'typing');
+    const edits = computeMinimalEdits(lastDocumentContent.current, markdown);
+    if (edits.length > 0) {
+      lastDocumentContent.current = markdown;
+      applyTextEdits(edits, 'typing');
+    }
   }, []);
 
   const handleImagePaste = useCallback(

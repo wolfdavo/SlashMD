@@ -39,8 +39,14 @@ export function writeAsset(dataUri: string, suggestedName?: string): void {
 export type MessageHandler = (message: HostToUIMessage) => void;
 
 const messageHandlers: Set<MessageHandler> = new Set();
+const MAX_HANDLERS = 10; // Reasonable limit for a single webview
 
 export function addMessageHandler(handler: MessageHandler): () => void {
+  // Guard against unbounded growth (e.g., from hot reload bugs)
+  if (messageHandlers.size >= MAX_HANDLERS) {
+    console.warn('SlashMD: Max message handlers reached, clearing old handlers');
+    messageHandlers.clear();
+  }
   messageHandlers.add(handler);
   return () => {
     messageHandlers.delete(handler);

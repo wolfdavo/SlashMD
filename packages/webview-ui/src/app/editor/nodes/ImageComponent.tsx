@@ -87,6 +87,14 @@ export function ImageComponent({
     setIsResizing(true);
   }, [currentWidth, naturalWidth]);
 
+  // Use refs for values accessed in event handlers to avoid effect re-registration
+  const currentWidthRef = useRef(currentWidth);
+  currentWidthRef.current = currentWidth;
+  const naturalWidthRef = useRef(naturalWidth);
+  naturalWidthRef.current = naturalWidth;
+  const naturalHeightRef = useRef(naturalHeight);
+  naturalHeightRef.current = naturalHeight;
+
   // Handle resize move
   useEffect(() => {
     if (!isResizing) return;
@@ -107,16 +115,20 @@ export function ImageComponent({
     };
 
     const handleMouseUp = () => {
-      if (resizeStartRef.current && currentWidth) {
+      const width = currentWidthRef.current;
+      const natWidth = naturalWidthRef.current;
+      const natHeight = naturalHeightRef.current;
+
+      if (resizeStartRef.current && width) {
         // Calculate proportional height
-        const aspectRatio = naturalHeight / naturalWidth;
-        const newHeight = Math.round(currentWidth * aspectRatio);
+        const aspectRatio = natHeight / natWidth;
+        const newHeight = Math.round(width * aspectRatio);
 
         // Update the node with new dimensions
         editor.update(() => {
           const node = $getNodeByKey(nodeKey);
           if ($isImageNode(node)) {
-            node.setWidth(currentWidth);
+            node.setWidth(width);
             node.setHeight(newHeight);
           }
         });
@@ -133,7 +145,7 @@ export function ImageComponent({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, currentWidth, naturalWidth, naturalHeight, editor, nodeKey]);
+  }, [isResizing, editor, nodeKey]);
 
   // Calculate display dimensions
   const displayWidth = currentWidth || width;

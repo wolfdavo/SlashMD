@@ -45,14 +45,17 @@ export class AssetService {
     let counter = 1;
     while (true) {
       try {
-        await vscode.workspace.fs.stat(finalUri);
-        // File exists, check if it's the same content
-        const existingContent = await vscode.workspace.fs.readFile(finalUri);
-        if (Buffer.compare(buffer, Buffer.from(existingContent)) === 0) {
-          // Same content, reuse existing file
-          break;
+        const stat = await vscode.workspace.fs.stat(finalUri);
+        // File exists - first compare sizes (cheap check)
+        if (stat.size === buffer.length) {
+          // Sizes match, need to compare content
+          const existingContent = await vscode.workspace.fs.readFile(finalUri);
+          if (Buffer.compare(buffer, Buffer.from(existingContent)) === 0) {
+            // Same content, reuse existing file
+            break;
+          }
         }
-        // Different content, try new name
+        // Different content or size, try new name
         const baseName = filename.replace(/\.[^.]+$/, '');
         const ext = path.extname(filename);
         finalUri = vscode.Uri.joinPath(assetsFolderUri, `${baseName}-${counter}${ext}`);

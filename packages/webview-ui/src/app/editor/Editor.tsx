@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -165,6 +165,17 @@ function InitializePlugin({ content }: { content: string }) {
   return null;
 }
 
+// Simple hash function for content comparison
+function simpleHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+}
+
 // Plugin to handle content updates from extension host
 function ExternalUpdatePlugin({
   content,
@@ -174,6 +185,7 @@ function ExternalUpdatePlugin({
   lastInternalUpdate: React.MutableRefObject<number>;
 }) {
   const [editor] = useLexicalComposerContext();
+  const lastContentHashRef = useRef<number>(0);
 
   useEffect(() => {
     // Skip if this is our own update echoing back
@@ -182,6 +194,13 @@ function ExternalUpdatePlugin({
       return;
     }
 
+    // Skip if content hash matches (content identical)
+    const contentHash = simpleHash(content);
+    if (contentHash === lastContentHashRef.current) {
+      return;
+    }
+    lastContentHashRef.current = contentHash;
+
     const { root } = parseMarkdown(content);
     importMarkdownToLexical(editor, root);
   }, [editor, content, lastInternalUpdate]);
@@ -189,26 +208,55 @@ function ExternalUpdatePlugin({
   return null;
 }
 
+// Debounce delay in ms - balances responsiveness with performance
+const DEBOUNCE_DELAY = 100;
+
 export function Editor({ initialContent, onChange, assetBaseUri }: EditorProps) {
   const lastInternalUpdate = useRef<number>(0);
   const currentContentRef = useRef<string>(initialContent);
+  const debounceTimerRef = useRef<number | null>(null);
+  const pendingEditorRef = useRef<LexicalEditor | null>(null);
 
   const assetContextValue = useMemo(
     () => createAssetContextValue(assetBaseUri),
     [assetBaseUri]
   );
 
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current !== null) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleChange = useCallback(
     (editorState: EditorState, editor: LexicalEditor) => {
-      const mdast = exportLexicalToMdast(editor);
-      const markdown = stringifyMarkdown(mdast);
+      // Store the latest editor for debounced processing
+      pendingEditorRef.current = editor;
 
-      // Only notify if content actually changed
-      if (markdown !== currentContentRef.current) {
-        currentContentRef.current = markdown;
-        lastInternalUpdate.current = Date.now();
-        onChange(markdown);
+      // Clear existing timer
+      if (debounceTimerRef.current !== null) {
+        clearTimeout(debounceTimerRef.current);
       }
+
+      // Debounce the expensive mdast conversion
+      debounceTimerRef.current = window.setTimeout(() => {
+        debounceTimerRef.current = null;
+        const pendingEditor = pendingEditorRef.current;
+        if (!pendingEditor) return;
+
+        const mdast = exportLexicalToMdast(pendingEditor);
+        const markdown = stringifyMarkdown(mdast);
+
+        // Only notify if content actually changed
+        if (markdown !== currentContentRef.current) {
+          currentContentRef.current = markdown;
+          lastInternalUpdate.current = Date.now();
+          onChange(markdown);
+        }
+      }, DEBOUNCE_DELAY);
     },
     [onChange]
   );
