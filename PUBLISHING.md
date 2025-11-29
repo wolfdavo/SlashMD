@@ -117,6 +117,107 @@ npm install -g ovsx
 ovsx publish slashmd-0.0.1.vsix -p <your-token>
 ```
 
+## Marketing & Branding
+
+Your extension's marketplace presence is important for discoverability. Configure these in `packages/extension-host/package.json`:
+
+### Extension Icon (Required)
+
+Create a **128x128 PNG** icon and add it to your package.json:
+
+```json
+{
+  "icon": "media/icon.png"
+}
+```
+
+The path is relative to the package.json file. Use a clear, recognizable icon that works at small sizes.
+
+### Gallery Banner (Optional)
+
+Customize the marketplace page header:
+
+```json
+{
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  }
+}
+```
+
+Theme can be `"dark"` or `"light"` — choose based on your banner color for readable text.
+
+### Categories
+
+Choose appropriate categories for discoverability (max 5):
+
+```json
+{
+  "categories": [
+    "Other",
+    "Formatters",
+    "Visualization"
+  ]
+}
+```
+
+Available categories: `Programming Languages`, `Snippets`, `Linters`, `Themes`, `Debuggers`, `Formatters`, `Keymaps`, `SCM Providers`, `Other`, `Extension Packs`, `Language Packs`, `Data Science`, `Machine Learning`, `Visualization`, `Notebooks`, `Education`, `Testing`.
+
+### Keywords
+
+Add up to 5 keywords to improve search visibility:
+
+```json
+{
+  "keywords": [
+    "markdown",
+    "wysiwyg",
+    "notion",
+    "block-editor",
+    "md"
+  ]
+}
+```
+
+### Repository & Bugs
+
+Link to your source code and issue tracker:
+
+```json
+{
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/slashmd"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/slashmd/issues"
+  },
+  "homepage": "https://github.com/your-org/slashmd#readme"
+}
+```
+
+### License
+
+Specify your license:
+
+```json
+{
+  "license": "MIT"
+}
+```
+
+### Current SlashMD Configuration
+
+The extension currently has:
+- ✅ `displayName`: "SlashMD — Block-Based Markdown"
+- ✅ `description`: "A Notion-like block-based WYSIWYG editor for Markdown files"
+- ⚠️ `categories`: Only "Other" — consider adding more
+- ❌ `icon`: Not configured
+- ❌ `keywords`: Not configured
+- ❌ `repository`: Not configured
+- ❌ `galleryBanner`: Not configured
+
 ## Pre-Publish Checklist
 
 - [ ] Version number updated in `packages/extension-host/package.json`
@@ -127,6 +228,10 @@ ovsx publish slashmd-0.0.1.vsix -p <your-token>
 - [ ] Extension works in Extension Development Host (F5)
 - [ ] README.md is up to date
 - [ ] CHANGELOG.md updated (if applicable)
+- [ ] Extension icon added (128x128 PNG)
+- [ ] Categories updated for discoverability
+- [ ] Keywords added for search visibility
+- [ ] Repository URL configured
 
 ## Troubleshooting
 
