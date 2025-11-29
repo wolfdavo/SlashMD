@@ -1,6 +1,7 @@
 {
   "name": "slashmd-monorepo",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
@@ -10,11 +11,15 @@
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "package": "npm run package --workspace=packages/extension-host",
+    "publish:extension": "node scripts/publish.js",
     "audit": "npm audit --audit-level=moderate",
     "audit:fix": "npm audit fix",
     "prepack": "npm run audit"
   },
   "devDependencies": {
+    "@inquirer/prompts": "^8.0.1",
+    "chalk": "^5.6.2",
+    "ora": "^9.0.0",
     "typescript": "^5.4.0"
   }
 }

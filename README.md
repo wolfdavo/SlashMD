@@ -1,144 +1,97 @@
-# SlashMD — Block-Based Markdown Editor for VS Code
+# SlashMD — Block-Based Markdown Editor
 
-A Notion-like block-based WYSIWYG editor for Markdown files in VS Code and Cursor.
+A Notion-style block editor for Markdown files. Write beautifully, store as plain Markdown.
+
+## Why SlashMD?
+
+Markdown is powerful but editing raw syntax can be tedious. SlashMD gives you the best of both worlds:
+
+- **Write visually** — No more counting `#` symbols or matching brackets
+- **Store as Markdown** — Your files stay portable, version-control friendly, and readable anywhere
+- **Works instantly** — Opens `.md` files automatically with zero configuration
 
 ## Features
 
-- **Block-based editing**: Headings, paragraphs, lists, todos, quotes, code blocks, tables, and more
-- **Slash menu**: Type `/` to insert blocks with fuzzy search
-- **Inline formatting**: Bold, italic, strikethrough, inline code, links
-- **Drag handles**: Reorder blocks with drag-and-drop
-- **Callouts**: Note, tip, warning, important, and caution admonitions
-- **Toggles**: Collapsible sections using `<details>` HTML
-- **Image support**: Paste or drag images to save to your assets folder
-- **Live sync**: Changes sync instantly with the underlying Markdown file
-- **VS Code themes**: Respects your current color theme
-- **Keyboard navigation**: Full keyboard support for accessibility
+### Slash Commands
 
-## Installation
+Type `/` anywhere to insert blocks with fuzzy search. Headings, lists, code blocks, tables, callouts — all just a keystroke away.
 
-### From VSIX
+### Block-Based Editing
 
-1. Download the `.vsix` file from releases
-2. In VS Code: `Extensions` → `...` → `Install from VSIX`
+- **Drag & drop** blocks to reorder content
+- **Indent/outdent** with Tab and Shift+Tab
+- **Move blocks** with Alt+Arrow keys
 
-### From Source
+### Rich Content
 
-```bash
-# Clone and install
-git clone <repo>
-cd slashmd
-npm install
+| Block Type      | Markdown Output         |
+| --------------- | ----------------------- |
+| Headings        | `# ## ###`              |
+| Bullet lists    | `- item`                |
+| Numbered lists  | `1. item`               |
+| Todo checkboxes | `- [ ] task`            |
+| Blockquotes     | `> quote`               |
+| Code blocks     | ` ```lang ``` `         |
+| Tables          | GFM tables              |
+| Callouts        | `> [!NOTE]` admonitions |
+| Toggles         | `<details>` HTML        |
+| Images          | `![alt](path)`          |
+| Dividers        | `---`                   |
 
-# Build
-npm run build
+### Inline Formatting
 
-# Package
-npm run package
-```
+Select text to reveal the formatting toolbar:
 
-## Usage
+- **Bold** (Cmd/Ctrl+B)
+- _Italic_ (Cmd/Ctrl+I)
+- `Code` (Cmd/Ctrl+E)
+- [Links](.) (Cmd/Ctrl+K)
+- ~~Strikethrough~~
 
-1. Open any `.md` or `.markdown` file
-2. SlashMD opens as the default editor
-3. Type `/` to open the block menu
-4. Select text for inline formatting toolbar
+### Image Support
 
-### Commands
+Paste or drag images directly into the editor. SlashMD automatically saves them to your assets folder and inserts the Markdown reference.
 
-- **SlashMD: Open as Raw Markdown** - Switch to plain text editor
-- **SlashMD: Insert Block...** - Open block picker
+### Theme Integration
 
-### Keyboard Shortcuts
+SlashMD respects your VS Code color theme — light, dark, or high contrast.
 
-| Shortcut | Action |
-|----------|--------|
-| `/` | Open slash menu |
-| `Cmd/Ctrl+B` | Bold |
-| `Cmd/Ctrl+I` | Italic |
-| `Cmd/Ctrl+E` | Inline code |
-| `Cmd/Ctrl+K` | Insert link |
-| `Tab` | Indent list item |
-| `Shift+Tab` | Outdent list item |
-| `Alt+↑/↓` | Move block up/down |
+## Keyboard Shortcuts
+
+| Shortcut      | Action             |
+| ------------- | ------------------ |
+| `/`           | Open slash menu    |
+| `Cmd/Ctrl+B`  | Bold               |
+| `Cmd/Ctrl+I`  | Italic             |
+| `Cmd/Ctrl+E`  | Inline code        |
+| `Cmd/Ctrl+K`  | Insert link        |
+| `Tab`         | Indent list item   |
+| `Shift+Tab`   | Outdent list item  |
+| `Alt+Up/Down` | Move block up/down |
+
+## Commands
+
+- **SlashMD: Open as Raw Markdown** — Switch to the plain text editor
+- **SlashMD: Open as SlashMD** — Open a Markdown file in SlashMD
+- **SlashMD: Copy Markdown Content** — Copy the document to clipboard
 
 ## Settings
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `slashmd.assets.folder` | Folder for pasted images | `assets` |
-| `slashmd.format.wrap` | Line wrap width (0 = no wrap) | `0` |
+| Setting                  | Description                              | Default      |
+| ------------------------ | ---------------------------------------- | ------------ |
+| `slashmd.assets.folder`  | Folder for pasted images                 | `assets`     |
 | `slashmd.callouts.style` | Callout syntax (`admonition` or `emoji`) | `admonition` |
-| `slashmd.toggles.syntax` | Toggle syntax (`details` or `list`) | `details` |
-| `slashmd.math.enabled` | Enable math blocks (future) | `false` |
-| `slashmd.mermaid.enabled` | Enable Mermaid diagrams (future) | `false` |
+| `slashmd.toggles.syntax` | Toggle syntax (`details` or `list`)      | `details`    |
 
-## Block Types
+## Requirements
 
-### Supported
+- VS Code 1.85.0+ or Cursor
 
-- Paragraph
-- Heading 1-3
-- Bullet list
-- Numbered list
-- Todo list (checkboxes)
-- Quote
-- Code block (with language)
-- Divider (horizontal rule)
-- Table
-- Image
-- Link
-- Callout (Note, Tip, Warning, Important, Caution)
-- Toggle (collapsible)
+## Links
 
-### Markdown Mapping
-
-| Block | Markdown |
-|-------|----------|
-| Heading | `# H1`, `## H2`, `### H3` |
-| Bullet list | `- item` |
-| Numbered list | `1. item` |
-| Todo | `- [ ] task`, `- [x] done` |
-| Quote | `> text` |
-| Code | ` ```lang ` |
-| Divider | `---` |
-| Table | GFM tables |
-| Toggle | `<details><summary>Title</summary>...</details>` |
-| Callout | `> [!NOTE]` |
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Watch mode
-npm run dev
-
-# Build
-npm run build
-
-# Package extension
-npm run package
-```
-
-### Project Structure
-
-```
-slashmd/
-├── packages/
-│   ├── extension-host/    # VS Code extension
-│   ├── webview-ui/        # React + Lexical editor
-│   └── shared/            # Shared types
-├── package.json           # Root workspace
-└── tsconfig.base.json     # Shared TypeScript config
-```
-
-## Compatibility
-
-- VS Code 1.85.0+
-- Cursor (latest)
-- macOS, Windows, Linux
+- [Website](https://slashmd.dev)
+- [GitHub Repository](https://github.com/wolfdavo/SlashMD)
+- [Report Issues](https://github.com/wolfdavo/SlashMD/issues)
 
 ## License
 

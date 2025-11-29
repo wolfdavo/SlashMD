@@ -8,7 +8,7 @@
     "color": "#161617",
     "theme": "dark"
   },
-  "version": "0.0.1",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -31,7 +31,7 @@
   "bugs": {
     "url": "https://github.com/wolfdavo/SlashMD/issues"
   },
-  "homepage": "https://github.com/wolfdavo/SlashMD#readme",
+  "homepage": "https://slashmd.dev",
   "license": "MIT",
   "main": "./dist/extension.js",
   "activationEvents": [],
@@ -157,7 +157,7 @@
     "build": "tsup src/extension.ts --format cjs --dts --outDir dist --external vscode",
     "dev": "tsup src/extension.ts --format cjs --watch --outDir dist --external vscode",
     "lint": "eslint src",
-    "package": "rm -rf .vsce-pkg && mkdir -p .vsce-pkg && cp -r package.json LICENSE dist media .vsce-pkg/ && rm -f .vsce-pkg/dist/*.map && cd .vsce-pkg && vsce package --no-dependencies -o ../slashmd.vsix && cd .. && rm -rf .vsce-pkg",
+    "package": "rm -rf .vsce-pkg && mkdir -p .vsce-pkg && cp -r package.json LICENSE README.md dist media .vsce-pkg/ && rm -f .vsce-pkg/dist/*.map && cd .vsce-pkg && vsce package --no-dependencies -o ../slashmd.vsix && cd .. && rm -rf .vsce-pkg",
     "publish": "npm run package && vsce publish --packagePath slashmd.vsix",
     "prepublishOnly": "npm run build"
   },
