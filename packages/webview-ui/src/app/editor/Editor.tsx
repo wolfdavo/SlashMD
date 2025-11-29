@@ -22,6 +22,7 @@ import { Toolbar } from './Toolbar';
 import { SlashMenuPlugin } from './SlashMenuPlugin';
 import { DragHandlePlugin } from './DragHandlePlugin';
 import { MarkdownShortcutsPlugin } from './MarkdownShortcutsPlugin';
+import { TableActionsPlugin } from './TableActionsPlugin';
 import {
   CalloutNode,
   ToggleNode,
@@ -223,6 +224,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
           <SlashMenuPlugin />
           <DragHandlePlugin />
           <MarkdownShortcutsPlugin />
+          <TableActionsPlugin />
           <Toolbar />
         </div>
       </div>

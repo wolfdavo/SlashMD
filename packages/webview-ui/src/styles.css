@@ -568,3 +568,94 @@ body {
 ::selection {
   background: var(--vscode-selection);
 }
+
+/* Table Actions Menu */
+.table-actions-menu {
+  min-width: 200px;
+  background: var(--vscode-background);
+  border: 1px solid var(--vscode-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 300;
+  overflow: hidden;
+}
+
+.table-actions-section {
+  padding: 4px 0;
+}
+
+.table-actions-header {
+  padding: 6px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--vscode-foreground);
+  opacity: 0.6;
+}
+
+.table-actions-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.table-actions-button:hover {
+  background: var(--vscode-selection);
+}
+
+.table-actions-button.table-actions-danger {
+  color: #e74c3c;
+}
+
+.table-actions-button.table-actions-danger:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.table-actions-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  font-size: 12px;
+}
+
+.table-actions-divider {
+  height: 1px;
+  background: var(--vscode-border);
+  margin: 4px 0;
+}
+
+/* Table cell selection styles */
+.editor-table td:focus,
+.editor-table th:focus,
+.editor-table-cell:focus,
+.editor-table-cell-header:focus {
+  outline: 2px solid var(--vscode-link);
+  outline-offset: -2px;
+}
+
+/* Table hover row highlight */
+.editor-table tr:hover {
+  background: rgba(128, 128, 128, 0.05);
+}
+
+/* Table cell min-width for usability */
+.editor-table-cell,
+.editor-table-cell-header {
+  min-width: 80px;
+  vertical-align: top;
+}
+
+/* Cursor in table cells */
+.editor-table-cell p,
+.editor-table-cell-header p {
+  margin: 0;
+}

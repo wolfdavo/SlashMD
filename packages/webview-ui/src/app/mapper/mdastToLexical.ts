@@ -22,7 +22,7 @@ import {
   ToggleNode,
   CalloutType,
 } from '../editor/nodes';
-import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode } from '@lexical/table';
+import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
 import type { Root, Content, PhrasingContent, List, ListItem, Table, TableRow, TableCell, Heading, Paragraph, Blockquote, Code, ThematicBreak, Image, Link, Text, Strong, Emphasis, InlineCode, Delete, Html } from 'mdast';
 
 type LexicalBlockNode =
@@ -261,7 +261,7 @@ function convertTableCell(
   isHeader: boolean,
   _align: 'left' | 'right' | 'center' | null
 ): TableCellNode {
-  const cell = $createTableCellNode(isHeader ? 1 : 0);
+  const cell = $createTableCellNode(isHeader ? TableCellHeaderStates.ROW : TableCellHeaderStates.NO_STATUS);
 
   const paragraph = $createParagraphNode();
   for (const child of node.children) {

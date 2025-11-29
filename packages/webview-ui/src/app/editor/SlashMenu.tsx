@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $createParagraphNode,
+  $createTextNode,
   $getSelection,
   $isRangeSelection,
   TextNode,
@@ -10,6 +11,12 @@ import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
 import { $createListNode, $createListItemNode } from '@lexical/list';
 import { $createCodeNode } from '@lexical/code';
 import { $createHorizontalRuleNode, $createCalloutNode, $createToggleNode } from './nodes';
+import {
+  $createTableNode,
+  $createTableRowNode,
+  $createTableCellNode,
+  TableCellHeaderStates,
+} from '@lexical/table';
 
 interface BlockOption {
   key: string;
@@ -260,6 +267,48 @@ export function SlashMenu({ isOpen, position, query, onClose }: SlashMenuProps) 
             if ($isRangeSelection(selection)) {
               const node = $createToggleNode('Toggle title', '', false);
               selection.insertNodes([node]);
+            }
+          });
+        },
+      },
+      {
+        key: 'table',
+        label: 'Table',
+        description: 'Insert a table',
+        icon: '⊞',
+        keywords: ['table', 'grid', 'matrix', 'spreadsheet'],
+        onSelect: () => {
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              // Create a 3x3 table with header row
+              const table = $createTableNode();
+
+              // Header row
+              const headerRow = $createTableRowNode();
+              for (let col = 0; col < 3; col++) {
+                const cell = $createTableCellNode(TableCellHeaderStates.ROW);
+                const paragraph = $createParagraphNode();
+                paragraph.append($createTextNode(`Header ${col + 1}`));
+                cell.append(paragraph);
+                headerRow.append(cell);
+              }
+              table.append(headerRow);
+
+              // Data rows
+              for (let row = 0; row < 2; row++) {
+                const tableRow = $createTableRowNode();
+                for (let col = 0; col < 3; col++) {
+                  const cell = $createTableCellNode(TableCellHeaderStates.NO_STATUS);
+                  const paragraph = $createParagraphNode();
+                  paragraph.append($createTextNode(''));
+                  cell.append(paragraph);
+                  tableRow.append(cell);
+                }
+                table.append(tableRow);
+              }
+
+              selection.insertNodes([table]);
             }
           });
         },
