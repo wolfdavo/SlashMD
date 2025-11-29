@@ -1,8 +1,11 @@
-.vscode/**
-src/**
-node_modules/**
-**/*.ts
+# Ignore everything
+**/*
+
+# Include only these
+!package.json
+!LICENSE
 !dist/**
-**/*.map
-.gitignore
-tsconfig.json
+!media/**
+
+# But exclude source maps
+dist/**/*.map

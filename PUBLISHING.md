@@ -56,20 +56,21 @@ npm run build
 npm run package
 ```
 
-This creates `slashmd-0.0.1.vsix` in `packages/extension-host/`.
+This creates `slashmd.vsix` in `packages/extension-host/`.
+
+**Note:** The package script uses a workaround for npm workspaces. It copies only the necessary files (package.json, LICENSE, dist/, media/) to a temporary directory before packaging, which avoids vsce including parent directory files from the monorepo. Source maps are also excluded to keep the package small (~350 KB).
 
 ### Publish to Marketplace
 
 ```bash
 # From packages/extension-host directory
 cd packages/extension-host
-npx vsce publish
+npx vsce publish --packagePath slashmd.vsix
 ```
 
-Or publish a specific version:
+Or build and publish in one step (bumps version automatically):
 
 ```bash
-npx vsce publish 0.1.0  # Sets version and publishes
 npx vsce publish minor  # Bumps minor version and publishes
 npx vsce publish patch  # Bumps patch version and publishes
 ```
@@ -212,11 +213,12 @@ Specify your license:
 The extension currently has:
 - ✅ `displayName`: "SlashMD — Block-Based Markdown"
 - ✅ `description`: "A Notion-like block-based WYSIWYG editor for Markdown files"
-- ⚠️ `categories`: Only "Other" — consider adding more
-- ❌ `icon`: Not configured
-- ❌ `keywords`: Not configured
-- ❌ `repository`: Not configured
-- ❌ `galleryBanner`: Not configured
+- ✅ `icon`: media/icon.png
+- ✅ `categories`: Other, Formatters, Visualization
+- ✅ `keywords`: markdown, wysiwyg, notion, block-editor, md
+- ✅ `repository`: https://github.com/wolfdavo/SlashMD
+- ✅ `galleryBanner`: Dark theme (#161617)
+- ✅ `license`: MIT
 
 ## Pre-Publish Checklist
 
@@ -254,6 +256,14 @@ npm install
 npm run build
 npm run package
 ```
+
+### Package includes parent directory files
+
+This is a known issue with vsce in npm workspaces/monorepos. The package script works around this by copying files to a temporary directory before packaging. If you still see issues:
+
+1. Ensure you're running `npm run package` (not `npx vsce package` directly)
+2. Check that the package script in `packages/extension-host/package.json` includes the temp directory workaround
+3. Verify the output shows only the expected files (~350 KB total)
 
 ### Extension not appearing in search
 

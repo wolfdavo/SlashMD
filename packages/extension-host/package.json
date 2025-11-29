@@ -1,15 +1,38 @@
 {
   "name": "slashmd",
+  "icon": "media/icon.png",
   "displayName": "SlashMD — Block-Based Markdown",
   "description": "A Notion-like block-based WYSIWYG editor for Markdown files",
   "publisher": "slashmd",
+  "galleryBanner": {
+    "color": "#161617",
+    "theme": "dark"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Formatters",
+    "Visualization"
   ],
+  "keywords": [
+    "markdown",
+    "wysiwyg",
+    "notion",
+    "block-editor",
+    "md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wolfdavo/SlashMD"
+  },
+  "bugs": {
+    "url": "https://github.com/wolfdavo/SlashMD/issues"
+  },
+  "homepage": "https://github.com/wolfdavo/SlashMD#readme",
+  "license": "MIT",
   "main": "./dist/extension.js",
   "activationEvents": [],
   "contributes": {
@@ -134,7 +157,8 @@
     "build": "tsup src/extension.ts --format cjs --dts --outDir dist --external vscode",
     "dev": "tsup src/extension.ts --format cjs --watch --outDir dist --external vscode",
     "lint": "eslint src",
-    "package": "vsce package --no-dependencies",
+    "package": "rm -rf .vsce-pkg && mkdir -p .vsce-pkg && cp -r package.json LICENSE dist media .vsce-pkg/ && rm -f .vsce-pkg/dist/*.map && cd .vsce-pkg && vsce package --no-dependencies -o ../slashmd.vsix && cd .. && rm -rf .vsce-pkg",
+    "publish": "npm run package && vsce publish --packagePath slashmd.vsix",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
@@ -142,9 +166,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.4.0"
-  },
-  "dependencies": {
+    "typescript": "^5.4.0",
     "zod": "^4.1.13"
   }
 }
