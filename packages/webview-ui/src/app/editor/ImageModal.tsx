@@ -15,6 +15,46 @@ interface ImageModalProps {
 
 type TabType = 'url' | 'upload';
 
+// SECURITY: Maximum file size for uploaded images (5MB)
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+// SECURITY: Maximum URL length
+const MAX_URL_LENGTH = 2048;
+
+/**
+ * SECURITY: Validate image URL
+ * - Only allows http/https protocols
+ * - Validates URL format
+ * - Optionally could block internal/private IPs
+ */
+function validateImageUrl(url: string): { valid: boolean; error?: string } {
+  if (!url) {
+    return { valid: false, error: 'URL is required' };
+  }
+
+  if (url.length > MAX_URL_LENGTH) {
+    return { valid: false, error: `URL is too long. Maximum ${MAX_URL_LENGTH} characters.` };
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    // Only allow http/https protocols
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return { valid: false, error: 'Only http:// and https:// URLs are allowed' };
+    }
+
+    // Block javascript: and data: URIs (extra safety)
+    if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') {
+      return { valid: false, error: 'Invalid URL protocol' };
+    }
+
+    return { valid: true };
+  } catch {
+    return { valid: false, error: 'Invalid URL format' };
+  }
+}
+
 export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('upload');
   const [url, setUrl] = useState('');
@@ -79,6 +119,12 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
       return;
     }
 
+    // SECURITY: Check file size before reading
+    if (file.size > MAX_IMAGE_SIZE) {
+      setError(`Image too large. Maximum size is ${MAX_IMAGE_SIZE / (1024 * 1024)}MB`);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUri = e.target?.result as string;
@@ -130,9 +176,15 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
     setUrl(newUrl);
     setError(null);
 
-    // Show preview for valid URLs
-    if (newUrl && (newUrl.startsWith('http://') || newUrl.startsWith('https://'))) {
-      setPreviewUrl(newUrl);
+    // SECURITY: Validate URL before showing preview
+    if (newUrl) {
+      const validation = validateImageUrl(newUrl);
+      if (validation.valid) {
+        setPreviewUrl(newUrl);
+      } else {
+        setPreviewUrl(null);
+        // Don't show error while typing, only on submit
+      }
     } else {
       setPreviewUrl(null);
     }
@@ -144,6 +196,14 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
         setError('Please enter an image URL');
         return;
       }
+
+      // SECURITY: Validate URL before inserting
+      const validation = validateImageUrl(url);
+      if (!validation.valid) {
+        setError(validation.error || 'Invalid URL');
+        return;
+      }
+
       onInsert({
         src: url,
         alt: alt || '',
@@ -215,6 +275,7 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
                 <div className="image-modal-dropzone-content">
                   <span className="image-modal-dropzone-icon">🖼</span>
                   <span>Drop an image here or click to browse</span>
+                  <span className="image-modal-size-hint">Maximum size: {MAX_IMAGE_SIZE / (1024 * 1024)}MB</span>
                 </div>
               )}
               <input

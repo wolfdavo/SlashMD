@@ -26,6 +26,7 @@ import {
 } from '../editor/nodes';
 import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
 import type { Root, Content, PhrasingContent, List, ListItem, Table, TableRow, TableCell, Heading, Paragraph, Blockquote, Code, ThematicBreak, Image, Link, Text, Strong, Emphasis, InlineCode, Delete, Html } from 'mdast';
+import DOMPurify from 'dompurify';
 
 type LexicalBlockNode =
   | ParagraphNode
@@ -192,7 +193,7 @@ function convertParagraph(node: Paragraph): ParagraphNode | ImageNode {
     node.children[0].type === 'image'
   ) {
     const img = node.children[0] as Image;
-    return $createImageNode(img.url, img.alt || '', img.title);
+    return $createImageNode(img.url, img.alt || '', img.title ?? undefined);
   }
 
   const paragraph = $createParagraphNode();
@@ -409,40 +410,72 @@ function convertTableCell(
   return cell;
 }
 
+/**
+ * SECURITY: Safely parse HTML content using DOMPurify
+ * Only allows specific safe tags and attributes
+ */
 function convertHtml(node: Html): LexicalBlockNode[] {
   const html = node.value.trim();
 
   // Toggle/details blocks are handled by preprocessDetailsBlocks
   // This function only handles remaining HTML
 
-  // Check for img tag
-  const imgMatch = html.match(/^<img\s+([^>]*)\/?>$/i);
-  if (imgMatch) {
-    const attrs = imgMatch[1];
+  // SECURITY: Sanitize HTML using DOMPurify with strict allowlist
+  const sanitized = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['img', 'br', 'hr'],
+    ALLOWED_ATTR: ['src', 'alt', 'title', 'width', 'height'],
+    ALLOW_DATA_ATTR: false,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+  });
 
-    // Parse attributes
-    const srcMatch = attrs.match(/src=["']([^"']*)["']/i);
-    const altMatch = attrs.match(/alt=["']([^"']*)["']/i);
-    const titleMatch = attrs.match(/title=["']([^"']*)["']/i);
-    const widthMatch = attrs.match(/width=["']?(\d+)["']?/i);
-    const heightMatch = attrs.match(/height=["']?(\d+)["']?/i);
+  // If sanitization removed everything, treat as unknown HTML
+  if (!sanitized.trim()) {
+    // For unknown/unsafe HTML, create a code block to preserve it visually
+    const code = $createCodeNode('html');
+    code.append($createTextNode(html));
+    return [code];
+  }
 
-    if (srcMatch) {
+  // Parse sanitized HTML with proper DOM parser
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(sanitized, 'text/html');
+
+  // Check for img element
+  const imgElement = doc.querySelector('img');
+  if (imgElement) {
+    const src = imgElement.getAttribute('src');
+    if (src) {
       const imageNode = $createImageNode(
-        srcMatch[1],
-        altMatch ? altMatch[1] : '',
-        titleMatch ? titleMatch[1] : undefined
+        src,
+        imgElement.getAttribute('alt') || '',
+        imgElement.getAttribute('title') || undefined
       );
 
-      if (widthMatch) {
-        imageNode.setWidth(parseInt(widthMatch[1], 10));
+      const width = imgElement.getAttribute('width');
+      const height = imgElement.getAttribute('height');
+
+      if (width) {
+        const widthNum = parseInt(width, 10);
+        if (!isNaN(widthNum) && widthNum > 0) {
+          imageNode.setWidth(widthNum);
+        }
       }
-      if (heightMatch) {
-        imageNode.setHeight(parseInt(heightMatch[1], 10));
+      if (height) {
+        const heightNum = parseInt(height, 10);
+        if (!isNaN(heightNum) && heightNum > 0) {
+          imageNode.setHeight(heightNum);
+        }
       }
 
       return [imageNode];
     }
+  }
+
+  // Check for hr element
+  const hrElement = doc.querySelector('hr');
+  if (hrElement) {
+    return [$createHorizontalRuleNode()];
   }
 
   // For other HTML, create a code block to preserve it

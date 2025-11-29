@@ -1,21 +1,8 @@
 import * as vscode from 'vscode';
 import { generateNonce, buildCsp } from './csp';
-import { getSettings, SlashMDSettings } from './types';
+import { getSettings } from './types';
 import { AssetService } from './assetService';
-
-interface TextEdit {
-  start: number;
-  end: number;
-  newText: string;
-}
-
-interface UIToHostMessage {
-  type: 'APPLY_TEXT_EDITS' | 'WRITE_ASSET' | 'REQUEST_INIT' | 'REQUEST_SETTINGS';
-  edits?: TextEdit[];
-  reason?: 'typing' | 'drag' | 'paste' | 'format';
-  dataUri?: string;
-  suggestedName?: string;
-}
+import { UIToHostMessageSchema } from './validation';
 
 export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'slashmd.editor';
@@ -98,10 +85,19 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
       });
     };
 
-    // Handle messages from webview
+    // Handle messages from webview with runtime validation
     const messageHandler = webviewPanel.webview.onDidReceiveMessage(
-      async (message: UIToHostMessage) => {
-        console.log('SlashMD: Received message from webview:', message.type);
+      async (rawMessage: unknown) => {
+        // Runtime validation of incoming message
+        const parseResult = UIToHostMessageSchema.safeParse(rawMessage);
+        if (!parseResult.success) {
+          console.error('SlashMD: Invalid message from webview:', parseResult.error.message);
+          return;
+        }
+
+        const message = parseResult.data;
+        console.log('SlashMD: Received validated message from webview:', message.type);
+
         switch (message.type) {
           case 'REQUEST_INIT':
             sendDocumentToWebview();
@@ -120,6 +116,11 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
               const edit = new vscode.WorkspaceEdit();
 
               for (const textEdit of message.edits) {
+                // Additional validation: ensure end >= start
+                if (textEdit.end < textEdit.start) {
+                  console.error('SlashMD: Invalid edit range: end < start');
+                  continue;
+                }
                 const startPos = document.positionAt(textEdit.start);
                 const endPos = document.positionAt(textEdit.end);
                 const range = new vscode.Range(startPos, endPos);
@@ -223,6 +224,8 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     console.log('SlashMD: Style URI:', styleUri.toString());
     console.log('SlashMD: CSP:', csp);
 
+    // SECURITY: Use safe DOM APIs for error display instead of innerHTML
+    // The error handler uses textContent to prevent XSS
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -240,7 +243,12 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     console.log('SlashMD inline script running');
     window.onerror = function(msg, url, line, col, error) {
       console.error('SlashMD error:', msg, url, line, col, error);
-      document.getElementById('root').innerHTML = '<div style="color: red; padding: 20px;">Error: ' + msg + '</div>';
+      var root = document.getElementById('root');
+      var errorDiv = document.createElement('div');
+      errorDiv.style.cssText = 'color: red; padding: 20px;';
+      errorDiv.textContent = 'Error: ' + String(msg);
+      root.innerHTML = '';
+      root.appendChild(errorDiv);
       return false;
     };
   </script>

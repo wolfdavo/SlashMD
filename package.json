@@ -9,7 +9,10 @@
     "dev": "npm run dev --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "package": "npm run package --workspace=packages/extension-host"
+    "package": "npm run package --workspace=packages/extension-host",
+    "audit": "npm audit --audit-level=moderate",
+    "audit:fix": "npm audit fix",
+    "prepack": "npm run audit"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

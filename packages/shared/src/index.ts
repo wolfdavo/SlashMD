@@ -1,35 +1,141 @@
 // Messaging protocol between UI (webview) and Host (extension)
+import { z } from 'zod';
 
-export interface TextEdit {
-  start: number;
-  end: number;
-  newText: string;
+// =============================================================================
+// ZOD SCHEMAS - Runtime validation
+// =============================================================================
+
+// Text edit schema with validation
+export const TextEditSchema = z.object({
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+  newText: z.string().max(10_000_000), // 10MB limit for text content
+});
+
+// Settings schema
+export const SlashMDSettingsSchema = z.object({
+  assetsFolder: z.string().max(256),
+  formatWrap: z.number().int().min(0).max(1000),
+  calloutsStyle: z.enum(['admonition', 'emoji']),
+  togglesSyntax: z.enum(['details', 'list']),
+  mathEnabled: z.boolean(),
+  mermaidEnabled: z.boolean(),
+});
+
+// UI → Host message schemas
+export const ApplyTextEditsMessageSchema = z.object({
+  type: z.literal('APPLY_TEXT_EDITS'),
+  edits: z.array(TextEditSchema).max(10000),
+  reason: z.enum(['typing', 'drag', 'paste', 'format']),
+});
+
+export const WriteAssetMessageSchema = z.object({
+  type: z.literal('WRITE_ASSET'),
+  dataUri: z.string().max(50_000_000), // 50MB limit for data URIs
+  suggestedName: z.string().max(256).optional(),
+});
+
+export const RequestInitMessageSchema = z.object({
+  type: z.literal('REQUEST_INIT'),
+});
+
+export const RequestSettingsMessageSchema = z.object({
+  type: z.literal('REQUEST_SETTINGS'),
+});
+
+export const UIToHostMessageSchema = z.discriminatedUnion('type', [
+  ApplyTextEditsMessageSchema,
+  WriteAssetMessageSchema,
+  RequestInitMessageSchema,
+  RequestSettingsMessageSchema,
+]);
+
+// Host → UI message schemas
+export const DocInitMessageSchema = z.object({
+  type: z.literal('DOC_INIT'),
+  text: z.string(),
+  settings: SlashMDSettingsSchema,
+  assetBaseUri: z.string().optional(),
+});
+
+export const DocChangedMessageSchema = z.object({
+  type: z.literal('DOC_CHANGED'),
+  text: z.string(),
+  range: z.object({
+    start: z.number().int().min(0),
+    end: z.number().int().min(0),
+  }).optional(),
+});
+
+export const AssetWrittenMessageSchema = z.object({
+  type: z.literal('ASSET_WRITTEN'),
+  relPath: z.string().max(1024),
+  webviewUri: z.string().optional(),
+});
+
+export const SettingsChangedMessageSchema = z.object({
+  type: z.literal('SETTINGS_CHANGED'),
+  settings: SlashMDSettingsSchema,
+});
+
+export const ErrorMessageSchema = z.object({
+  type: z.literal('ERROR'),
+  message: z.string().max(10000),
+});
+
+export const HostToUIMessageSchema = z.discriminatedUnion('type', [
+  DocInitMessageSchema,
+  DocChangedMessageSchema,
+  AssetWrittenMessageSchema,
+  SettingsChangedMessageSchema,
+  ErrorMessageSchema,
+]);
+
+// =============================================================================
+// TYPESCRIPT TYPES - Inferred from schemas
+// =============================================================================
+
+export type TextEdit = z.infer<typeof TextEditSchema>;
+export type SlashMDSettings = z.infer<typeof SlashMDSettingsSchema>;
+export type UIToHostMessage = z.infer<typeof UIToHostMessageSchema>;
+export type HostToUIMessage = z.infer<typeof HostToUIMessageSchema>;
+
+// Individual message types
+export type ApplyTextEditsMessage = z.infer<typeof ApplyTextEditsMessageSchema>;
+export type WriteAssetMessage = z.infer<typeof WriteAssetMessageSchema>;
+export type RequestInitMessage = z.infer<typeof RequestInitMessageSchema>;
+export type RequestSettingsMessage = z.infer<typeof RequestSettingsMessageSchema>;
+export type DocInitMessage = z.infer<typeof DocInitMessageSchema>;
+export type DocChangedMessage = z.infer<typeof DocChangedMessageSchema>;
+export type AssetWrittenMessage = z.infer<typeof AssetWrittenMessageSchema>;
+export type SettingsChangedMessage = z.infer<typeof SettingsChangedMessageSchema>;
+export type ErrorMessage = z.infer<typeof ErrorMessageSchema>;
+
+// =============================================================================
+// VALIDATION HELPERS
+// =============================================================================
+
+export function validateUIToHostMessage(data: unknown): UIToHostMessage | null {
+  const result = UIToHostMessageSchema.safeParse(data);
+  if (!result.success) {
+    console.error('SlashMD: Invalid UI→Host message:', result.error.message);
+    return null;
+  }
+  return result.data;
 }
 
-// UI → Host messages
-export type UIToHostMessage =
-  | { type: 'APPLY_TEXT_EDITS'; edits: TextEdit[]; reason: 'typing' | 'drag' | 'paste' | 'format' }
-  | { type: 'WRITE_ASSET'; dataUri: string; suggestedName?: string }
-  | { type: 'REQUEST_INIT' }
-  | { type: 'REQUEST_SETTINGS' };
-
-// Host → UI messages
-export type HostToUIMessage =
-  | { type: 'DOC_INIT'; text: string; settings: SlashMDSettings; assetBaseUri?: string }
-  | { type: 'DOC_CHANGED'; text: string; range?: { start: number; end: number } }
-  | { type: 'ASSET_WRITTEN'; relPath: string; webviewUri?: string }
-  | { type: 'SETTINGS_CHANGED'; settings: SlashMDSettings }
-  | { type: 'ERROR'; message: string };
-
-// Extension settings
-export interface SlashMDSettings {
-  assetsFolder: string;
-  formatWrap: number;
-  calloutsStyle: 'admonition' | 'emoji';
-  togglesSyntax: 'details' | 'list';
-  mathEnabled: boolean;
-  mermaidEnabled: boolean;
+export function validateHostToUIMessage(data: unknown): HostToUIMessage | null {
+  const result = HostToUIMessageSchema.safeParse(data);
+  if (!result.success) {
+    console.error('SlashMD: Invalid Host→UI message:', result.error.message);
+    return null;
+  }
+  return result.data;
 }
+
+// =============================================================================
+// OTHER TYPES
+// =============================================================================
 
 // Block types supported in the editor
 export type BlockType =

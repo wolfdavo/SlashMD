@@ -1,4 +1,6 @@
 // VS Code API type for webview
+import { z } from 'zod';
+
 declare global {
   interface Window {
     acquireVsCodeApi: () => VsCodeApi;
@@ -11,36 +13,97 @@ export interface VsCodeApi {
   setState(state: unknown): void;
 }
 
-export interface TextEdit {
-  start: number;
-  end: number;
-  newText: string;
-}
+// =============================================================================
+// ZOD SCHEMAS - Runtime validation
+// =============================================================================
 
-// UI → Host messages
+export const TextEditSchema = z.object({
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+  newText: z.string().max(10_000_000),
+});
+
+export const SlashMDSettingsSchema = z.object({
+  assetsFolder: z.string().max(256),
+  formatWrap: z.number().int().min(0).max(1000),
+  calloutsStyle: z.enum(['admonition', 'emoji']),
+  togglesSyntax: z.enum(['details', 'list']),
+  mathEnabled: z.boolean(),
+  mermaidEnabled: z.boolean(),
+});
+
+// Host → UI message schemas
+export const DocInitMessageSchema = z.object({
+  type: z.literal('DOC_INIT'),
+  text: z.string(),
+  settings: SlashMDSettingsSchema,
+  assetBaseUri: z.string().optional(),
+});
+
+export const DocChangedMessageSchema = z.object({
+  type: z.literal('DOC_CHANGED'),
+  text: z.string(),
+  range: z.object({
+    start: z.number().int().min(0),
+    end: z.number().int().min(0),
+  }).optional(),
+});
+
+export const AssetWrittenMessageSchema = z.object({
+  type: z.literal('ASSET_WRITTEN'),
+  relPath: z.string().max(1024),
+  webviewUri: z.string().optional(),
+});
+
+export const SettingsChangedMessageSchema = z.object({
+  type: z.literal('SETTINGS_CHANGED'),
+  settings: SlashMDSettingsSchema,
+});
+
+export const ErrorMessageSchema = z.object({
+  type: z.literal('ERROR'),
+  message: z.string().max(10000),
+});
+
+export const HostToUIMessageSchema = z.discriminatedUnion('type', [
+  DocInitMessageSchema,
+  DocChangedMessageSchema,
+  AssetWrittenMessageSchema,
+  SettingsChangedMessageSchema,
+  ErrorMessageSchema,
+]);
+
+// =============================================================================
+// TYPESCRIPT TYPES
+// =============================================================================
+
+export type TextEdit = z.infer<typeof TextEditSchema>;
+export type SlashMDSettings = z.infer<typeof SlashMDSettingsSchema>;
+export type HostToUIMessage = z.infer<typeof HostToUIMessageSchema>;
+
+// UI → Host messages (outgoing, don't need validation)
 export type UIToHostMessage =
   | { type: 'APPLY_TEXT_EDITS'; edits: TextEdit[]; reason: 'typing' | 'drag' | 'paste' | 'format' }
   | { type: 'WRITE_ASSET'; dataUri: string; suggestedName?: string }
   | { type: 'REQUEST_INIT' }
   | { type: 'REQUEST_SETTINGS' };
 
-// Host → UI messages
-export type HostToUIMessage =
-  | { type: 'DOC_INIT'; text: string; settings: SlashMDSettings }
-  | { type: 'DOC_CHANGED'; text: string; range?: { start: number; end: number } }
-  | { type: 'ASSET_WRITTEN'; relPath: string }
-  | { type: 'SETTINGS_CHANGED'; settings: SlashMDSettings }
-  | { type: 'ERROR'; message: string };
+// =============================================================================
+// VALIDATION HELPER
+// =============================================================================
 
-// Extension settings
-export interface SlashMDSettings {
-  assetsFolder: string;
-  formatWrap: number;
-  calloutsStyle: 'admonition' | 'emoji';
-  togglesSyntax: 'details' | 'list';
-  mathEnabled: boolean;
-  mermaidEnabled: boolean;
+export function validateHostToUIMessage(data: unknown): HostToUIMessage | null {
+  const result = HostToUIMessageSchema.safeParse(data);
+  if (!result.success) {
+    console.error('SlashMD: Invalid Host→UI message:', result.error.message);
+    return null;
+  }
+  return result.data;
 }
+
+// =============================================================================
+// OTHER TYPES
+// =============================================================================
 
 // Block types supported in the editor
 export type BlockType =
