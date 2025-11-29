@@ -24,9 +24,12 @@ import { DragHandlePlugin } from './DragHandlePlugin';
 import { MarkdownShortcutsPlugin } from './MarkdownShortcutsPlugin';
 import { TableActionsPlugin } from './TableActionsPlugin';
 import { CodeBlockPlugin } from './CodeBlockPlugin';
+import { TogglePlugin } from './TogglePlugin';
 import {
   CalloutNode,
-  ToggleNode,
+  ToggleContainerNode,
+  ToggleTitleNode,
+  ToggleContentNode,
   ImageNode,
   HorizontalRuleNode,
 } from './nodes';
@@ -122,7 +125,9 @@ const editorNodes = [
   TableRowNode,
   TableCellNode,
   CalloutNode,
-  ToggleNode,
+  ToggleContainerNode,
+  ToggleTitleNode,
+  ToggleContentNode,
   ImageNode,
   HorizontalRuleNode,
 ];
@@ -239,6 +244,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
           <MarkdownShortcutsPlugin />
           <TableActionsPlugin />
           <CodeBlockPlugin />
+          <TogglePlugin />
           <Toolbar />
         </div>
       </div>

@@ -15,11 +15,13 @@ import {
   $createHorizontalRuleNode,
   $createImageNode,
   $createCalloutNode,
-  $createToggleNode,
+  $createToggleContainerNode,
+  $createToggleTitleNode,
+  $createToggleContentNode,
   HorizontalRuleNode,
   ImageNode,
   CalloutNode,
-  ToggleNode,
+  ToggleContainerNode,
   CalloutType,
 } from '../editor/nodes';
 import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
@@ -34,7 +36,7 @@ type LexicalBlockNode =
   | HorizontalRuleNode
   | ImageNode
   | CalloutNode
-  | ToggleNode
+  | ToggleContainerNode
   | TableNode;
 
 // Convert mdast tree to Lexical editor state
@@ -50,39 +52,49 @@ export function importMarkdownToLexical(
     const processedChildren = preprocessDetailsBlocks(root.children);
 
     for (const child of processedChildren) {
-      const nodes = convertBlockNode(child);
-      for (const node of nodes) {
-        lexicalRoot.append(node);
+      // Check if this is a toggle marker
+      if ((child as ToggleContentMarker).type === 'toggle-marker') {
+        const nodes = convertToggleMarker(child as ToggleContentMarker);
+        for (const node of nodes) {
+          lexicalRoot.append(node);
+        }
+      } else {
+        const nodes = convertBlockNode(child as Content);
+        for (const node of nodes) {
+          lexicalRoot.append(node);
+        }
       }
     }
   });
 }
 
-// Pre-process mdast children to combine details blocks
-function preprocessDetailsBlocks(children: Content[]): Content[] {
-  const result: Content[] = [];
-  let i = 0;
+// Type for synthetic toggle node that carries mdast content
+interface ToggleContentMarker {
+  type: 'toggle-marker';
+  isOpen: boolean;
+  summary: string;
+  contentNodes: Content[];
+}
 
-  console.log('[preprocessDetailsBlocks] Processing', children.length, 'children');
-  for (const c of children) {
-    console.log('[preprocessDetailsBlocks] Child type:', c.type, c.type === 'html' ? (c as Html).value.substring(0, 50) : '');
-  }
+// Pre-process mdast children to combine details blocks and preserve content nodes
+function preprocessDetailsBlocks(children: Content[]): (Content | ToggleContentMarker)[] {
+  const result: (Content | ToggleContentMarker)[] = [];
+  let i = 0;
 
   while (i < children.length) {
     const node = children[i];
 
     if (node.type === 'html') {
       const html = node.value.trim();
-      console.log('[preprocessDetailsBlocks] HTML node:', html.substring(0, 100));
 
       // Check for opening details tag
       const openingMatch = html.match(/<details(?:\s+open)?>\s*<summary>([\s\S]*?)<\/summary>/i);
       if (openingMatch) {
         const isOpen = html.toLowerCase().includes('<details open');
         const summary = openingMatch[1].trim();
-        const contentParts: string[] = [];
+        const contentNodes: Content[] = [];
 
-        // Collect content until we find the closing tag
+        // Collect content nodes until we find the closing tag
         i++;
         while (i < children.length) {
           const innerNode = children[i];
@@ -90,25 +102,45 @@ function preprocessDetailsBlocks(children: Content[]): Content[] {
             // Found closing tag
             break;
           }
-          // Collect text content from inner nodes
-          if (innerNode.type === 'paragraph') {
-            const text = extractTextFromMdastParagraph(innerNode);
-            if (text) contentParts.push(text);
-          } else if (innerNode.type === 'list') {
-            // For lists, just note there's a list (we store as text for now)
-            const listText = extractTextFromMdastList(innerNode);
-            if (listText) contentParts.push(listText);
-          }
+          // Keep the actual mdast node
+          contentNodes.push(innerNode);
           i++;
         }
 
-        // Create a synthetic HTML node with the complete details
-        const fullContent = contentParts.join('\n');
+        // Create a marker that carries the actual mdast nodes
         result.push({
-          type: 'html',
-          value: `<details${isOpen ? ' open' : ''}><summary>${summary}</summary>\n${fullContent}\n</details>`,
-        } as Html);
+          type: 'toggle-marker',
+          isOpen,
+          summary,
+          contentNodes,
+        } as ToggleContentMarker);
         i++; // Skip the closing tag
+        continue;
+      }
+
+      // Check for complete details block in a single HTML node
+      const completeMatch = html.match(/<details(?:\s+open)?>\s*<summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/i);
+      if (completeMatch) {
+        const isOpen = html.toLowerCase().includes('<details open');
+        const summary = completeMatch[1].trim();
+        const contentText = completeMatch[2].trim();
+
+        // Create a marker with a paragraph for the text content
+        const contentNodes: Content[] = [];
+        if (contentText) {
+          contentNodes.push({
+            type: 'paragraph',
+            children: [{ type: 'text', value: contentText }],
+          } as Paragraph);
+        }
+
+        result.push({
+          type: 'toggle-marker',
+          isOpen,
+          summary,
+          contentNodes,
+        } as ToggleContentMarker);
+        i++;
         continue;
       }
     }
@@ -118,32 +150,6 @@ function preprocessDetailsBlocks(children: Content[]): Content[] {
   }
 
   return result;
-}
-
-function extractTextFromMdastParagraph(node: Paragraph): string {
-  let text = '';
-  for (const child of node.children) {
-    if (child.type === 'text') {
-      text += child.value;
-    }
-  }
-  return text;
-}
-
-function extractTextFromMdastList(node: List): string {
-  const items: string[] = [];
-  for (const item of node.children) {
-    if (item.type === 'listItem') {
-      for (const child of item.children) {
-        if (child.type === 'paragraph') {
-          const text = extractTextFromMdastParagraph(child);
-          const prefix = node.ordered ? '1. ' : '- ';
-          items.push(prefix + text);
-        }
-      }
-    }
-  }
-  return items.join('\n');
 }
 
 function convertBlockNode(node: Content): LexicalBlockNode[] {
@@ -369,19 +375,46 @@ function convertTableCell(
 function convertHtml(node: Html): LexicalBlockNode[] {
   const html = node.value.trim();
 
-  // Check for complete toggle/details block
-  const detailsMatch = html.match(/<details(?:\s+open)?>\s*<summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/i);
-  if (detailsMatch) {
-    const isOpen = html.toLowerCase().includes('<details open');
-    const summary = detailsMatch[1].trim();
-    const content = detailsMatch[2].trim();
-    return [$createToggleNode(summary, content, isOpen)];
-  }
+  // Toggle/details blocks are handled by preprocessDetailsBlocks
+  // This function only handles remaining HTML
 
   // For other HTML, create a code block to preserve it
   const code = $createCodeNode('html');
   code.append($createTextNode(html));
   return [code];
+}
+
+// Convert a toggle marker (from preprocessDetailsBlocks) to Lexical nodes
+function convertToggleMarker(marker: ToggleContentMarker): ToggleContainerNode[] {
+  const container = $createToggleContainerNode(marker.isOpen);
+
+  // Create title node with the summary text
+  const title = $createToggleTitleNode();
+  const titleParagraph = $createParagraphNode();
+  if (marker.summary) {
+    titleParagraph.append($createTextNode(marker.summary));
+  }
+  title.append(titleParagraph);
+  container.append(title);
+
+  // Create content node with all the content blocks
+  const content = $createToggleContentNode();
+
+  if (marker.contentNodes.length === 0) {
+    // Add an empty paragraph if no content
+    content.append($createParagraphNode());
+  } else {
+    // Convert each content node to Lexical nodes
+    for (const contentNode of marker.contentNodes) {
+      const lexicalNodes = convertBlockNode(contentNode);
+      for (const node of lexicalNodes) {
+        content.append(node);
+      }
+    }
+  }
+
+  container.append(content);
+  return [container];
 }
 
 function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode)[] {

@@ -1,171 +1,253 @@
-import { useCallback } from 'react';
 import {
-  DecoratorNode,
+  $createParagraphNode,
+  $createTextNode,
   DOMConversionMap,
+  DOMConversionOutput,
   DOMExportOutput,
+  EditorConfig,
+  ElementNode,
   LexicalNode,
   NodeKey,
-  SerializedLexicalNode,
+  RangeSelection,
+  SerializedElementNode,
   Spread,
 } from 'lexical';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
-export type SerializedToggleNode = Spread<
+// ==================== ToggleContainerNode ====================
+// The outer wrapper that contains the title and content
+
+export type SerializedToggleContainerNode = Spread<
   {
-    summary: string;
-    content: string;
-    isOpen: boolean;
+    open: boolean;
   },
-  SerializedLexicalNode
+  SerializedElementNode
 >;
 
-// React component for rendering the toggle
-function ToggleComponent({
-  nodeKey,
-  summary,
-  content,
-  isOpen,
-}: {
-  nodeKey: NodeKey;
-  summary: string;
-  content: string;
-  isOpen: boolean;
-}) {
-  const [editor] = useLexicalComposerContext();
-
-  const handleToggle = useCallback(() => {
-    editor.update(() => {
-      const node = editor.getEditorState().read(() => {
-        return editor.getEditorState()._nodeMap.get(nodeKey) as ToggleNode | undefined;
-      });
-      if (node) {
-        const writable = node.getWritable();
-        writable.__isOpen = !writable.__isOpen;
-      }
-    });
-  }, [editor, nodeKey]);
-
-  const handleSummaryChange = useCallback(
-    (e: React.FocusEvent<HTMLSpanElement>) => {
-      const newSummary = e.currentTarget.textContent || '';
-      editor.update(() => {
-        const node = editor.getEditorState()._nodeMap.get(nodeKey) as ToggleNode | undefined;
-        if (node) {
-          const writable = node.getWritable();
-          writable.__summary = newSummary;
-        }
-      });
-    },
-    [editor, nodeKey]
-  );
-
-  const handleContentChange = useCallback(
-    (e: React.FocusEvent<HTMLDivElement>) => {
-      const newContent = e.currentTarget.textContent || '';
-      editor.update(() => {
-        const node = editor.getEditorState()._nodeMap.get(nodeKey) as ToggleNode | undefined;
-        if (node) {
-          const writable = node.getWritable();
-          writable.__content = newContent;
-        }
-      });
-    },
-    [editor, nodeKey]
-  );
-
-  return (
-    <div className="toggle-block">
-      <div className="toggle-header" onClick={handleToggle}>
-        <span className={`toggle-arrow ${isOpen ? 'open' : ''}`}>▶</span>
-        <span
-          className="toggle-summary"
-          contentEditable
-          suppressContentEditableWarning
-          onBlur={handleSummaryChange}
-        >
-          {summary}
-        </span>
-      </div>
-      {isOpen && (
-        <div
-          className="toggle-content"
-          contentEditable
-          suppressContentEditableWarning
-          onBlur={handleContentChange}
-        >
-          {content}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export class ToggleNode extends DecoratorNode<JSX.Element> {
-  __summary: string;
-  __content: string;
-  __isOpen: boolean;
+export class ToggleContainerNode extends ElementNode {
+  __open: boolean;
 
   static getType(): string {
-    return 'toggle';
+    return 'toggle-container';
   }
 
-  static clone(node: ToggleNode): ToggleNode {
-    return new ToggleNode(
-      node.__summary,
-      node.__content,
-      node.__isOpen,
-      node.__key
-    );
+  static clone(node: ToggleContainerNode): ToggleContainerNode {
+    return new ToggleContainerNode(node.__open, node.__key);
   }
 
-  constructor(
-    summary: string,
-    content: string,
-    isOpen: boolean = false,
-    key?: NodeKey
-  ) {
+  constructor(open: boolean = false, key?: NodeKey) {
     super(key);
-    this.__summary = summary;
-    this.__content = content;
-    this.__isOpen = isOpen;
+    this.__open = open;
   }
 
-  getSummary(): string {
-    return this.__summary;
+  createDOM(config: EditorConfig): HTMLElement {
+    const dom = document.createElement('div');
+    dom.classList.add('toggle-container');
+    if (this.__open) {
+      dom.classList.add('toggle-container--open');
+    }
+    return dom;
   }
 
-  getContent(): string {
-    return this.__content;
+  updateDOM(prevNode: ToggleContainerNode, dom: HTMLElement): boolean {
+    if (prevNode.__open !== this.__open) {
+      dom.classList.toggle('toggle-container--open', this.__open);
+    }
+    return false;
   }
 
-  getIsOpen(): boolean {
-    return this.__isOpen;
+  static importDOM(): DOMConversionMap | null {
+    return {
+      details: (domNode: HTMLElement) => {
+        return {
+          conversion: convertDetailsElement,
+          priority: 1,
+        };
+      },
+    };
   }
 
-  setSummary(summary: string): void {
+  static importJSON(serializedNode: SerializedToggleContainerNode): ToggleContainerNode {
+    const node = $createToggleContainerNode(serializedNode.open);
+    return node;
+  }
+
+  exportDOM(): DOMExportOutput {
+    const element = document.createElement('details');
+    if (this.__open) {
+      element.setAttribute('open', '');
+    }
+    return { element };
+  }
+
+  exportJSON(): SerializedToggleContainerNode {
+    return {
+      ...super.exportJSON(),
+      type: 'toggle-container',
+      open: this.__open,
+      version: 1,
+    };
+  }
+
+  setOpen(open: boolean): void {
     const writable = this.getWritable();
-    writable.__summary = summary;
+    writable.__open = open;
   }
 
-  setContent(content: string): void {
-    const writable = this.getWritable();
-    writable.__content = content;
-  }
-
-  setIsOpen(isOpen: boolean): void {
-    const writable = this.getWritable();
-    writable.__isOpen = isOpen;
+  getOpen(): boolean {
+    return this.__open;
   }
 
   toggleOpen(): void {
-    const writable = this.getWritable();
-    writable.__isOpen = !writable.__isOpen;
+    this.setOpen(!this.getOpen());
   }
 
-  createDOM(): HTMLElement {
-    const element = document.createElement('div');
-    element.className = 'toggle-wrapper';
-    return element;
+  // This prevents direct selection in the container
+  isShadowRoot(): boolean {
+    return true;
+  }
+
+  canBeEmpty(): boolean {
+    return false;
+  }
+}
+
+function convertDetailsElement(domNode: HTMLElement): DOMConversionOutput | null {
+  const isOpen = domNode.hasAttribute('open');
+  const node = $createToggleContainerNode(isOpen);
+  return { node };
+}
+
+export function $createToggleContainerNode(open: boolean = false): ToggleContainerNode {
+  return new ToggleContainerNode(open);
+}
+
+export function $isToggleContainerNode(
+  node: LexicalNode | null | undefined
+): node is ToggleContainerNode {
+  return node instanceof ToggleContainerNode;
+}
+
+// ==================== ToggleTitleNode ====================
+// The clickable title/summary area
+
+export type SerializedToggleTitleNode = SerializedElementNode;
+
+export class ToggleTitleNode extends ElementNode {
+  static getType(): string {
+    return 'toggle-title';
+  }
+
+  static clone(node: ToggleTitleNode): ToggleTitleNode {
+    return new ToggleTitleNode(node.__key);
+  }
+
+  createDOM(config: EditorConfig): HTMLElement {
+    const dom = document.createElement('div');
+    dom.classList.add('toggle-title');
+    return dom;
+  }
+
+  updateDOM(): boolean {
+    return false;
+  }
+
+  static importDOM(): DOMConversionMap | null {
+    return {
+      summary: () => ({
+        conversion: convertSummaryElement,
+        priority: 1,
+      }),
+    };
+  }
+
+  static importJSON(serializedNode: SerializedToggleTitleNode): ToggleTitleNode {
+    return $createToggleTitleNode();
+  }
+
+  exportDOM(): DOMExportOutput {
+    const element = document.createElement('summary');
+    return { element };
+  }
+
+  exportJSON(): SerializedToggleTitleNode {
+    return {
+      ...super.exportJSON(),
+      type: 'toggle-title',
+      version: 1,
+    };
+  }
+
+  // Collapse at start collapses the entire toggle
+  collapseAtStart(_selection: RangeSelection): boolean {
+    this.getParentOrThrow().insertBefore(this);
+    return true;
+  }
+
+  // Prevent inserting nodes that aren't allowed
+  insertNewAfter(_: RangeSelection, restoreSelection?: boolean): null | ElementNode {
+    const containerNode = this.getParentOrThrow();
+
+    if (!$isToggleContainerNode(containerNode)) {
+      throw new Error('ToggleTitleNode must be a child of ToggleContainerNode');
+    }
+
+    // If closed, open it
+    if (!containerNode.getOpen()) {
+      containerNode.toggleOpen();
+    }
+
+    // Find or create content node
+    const children = containerNode.getChildren();
+    const contentNode = children.find($isToggleContentNode);
+
+    if (contentNode) {
+      const firstChild = contentNode.getFirstChild();
+      if (firstChild) {
+        firstChild.selectStart();
+      } else {
+        const paragraph = $createParagraphNode();
+        contentNode.append(paragraph);
+        paragraph.selectStart();
+      }
+    }
+
+    return null;
+  }
+}
+
+function convertSummaryElement(): DOMConversionOutput | null {
+  const node = $createToggleTitleNode();
+  return { node };
+}
+
+export function $createToggleTitleNode(): ToggleTitleNode {
+  return new ToggleTitleNode();
+}
+
+export function $isToggleTitleNode(
+  node: LexicalNode | null | undefined
+): node is ToggleTitleNode {
+  return node instanceof ToggleTitleNode;
+}
+
+// ==================== ToggleContentNode ====================
+// The expandable content area that can hold any block content
+
+export type SerializedToggleContentNode = SerializedElementNode;
+
+export class ToggleContentNode extends ElementNode {
+  static getType(): string {
+    return 'toggle-content';
+  }
+
+  static clone(node: ToggleContentNode): ToggleContentNode {
+    return new ToggleContentNode(node.__key);
+  }
+
+  createDOM(config: EditorConfig): HTMLElement {
+    const dom = document.createElement('div');
+    dom.classList.add('toggle-content-area');
+    return dom;
   }
 
   updateDOM(): boolean {
@@ -176,65 +258,74 @@ export class ToggleNode extends DecoratorNode<JSX.Element> {
     return null;
   }
 
+  static importJSON(serializedNode: SerializedToggleContentNode): ToggleContentNode {
+    return $createToggleContentNode();
+  }
+
   exportDOM(): DOMExportOutput {
-    const element = document.createElement('details');
-    if (this.__isOpen) {
-      element.setAttribute('open', '');
-    }
-
-    const summary = document.createElement('summary');
-    summary.textContent = this.__summary;
-    element.appendChild(summary);
-
-    const content = document.createElement('div');
-    content.textContent = this.__content;
-    element.appendChild(content);
-
+    const element = document.createElement('div');
     return { element };
   }
 
-  static importJSON(serializedNode: SerializedToggleNode): ToggleNode {
-    return new ToggleNode(
-      serializedNode.summary,
-      serializedNode.content,
-      serializedNode.isOpen
-    );
-  }
-
-  exportJSON(): SerializedToggleNode {
+  exportJSON(): SerializedToggleContentNode {
     return {
-      type: 'toggle',
-      summary: this.__summary,
-      content: this.__content,
-      isOpen: this.__isOpen,
+      ...super.exportJSON(),
+      type: 'toggle-content',
       version: 1,
     };
   }
 
-  decorate(): JSX.Element {
-    return (
-      <ToggleComponent
-        nodeKey={this.__key}
-        summary={this.__summary}
-        content={this.__content}
-        isOpen={this.__isOpen}
-      />
-    );
-  }
-
-  isInline(): boolean {
-    return false;
+  isShadowRoot(): boolean {
+    return true;
   }
 }
+
+export function $createToggleContentNode(): ToggleContentNode {
+  return new ToggleContentNode();
+}
+
+export function $isToggleContentNode(
+  node: LexicalNode | null | undefined
+): node is ToggleContentNode {
+  return node instanceof ToggleContentNode;
+}
+
+// ==================== Helper Functions ====================
 
 export function $createToggleNode(
-  summary: string,
-  content: string,
-  isOpen: boolean = false
-): ToggleNode {
-  return new ToggleNode(summary, content, isOpen);
+  summaryText: string = 'Toggle',
+  contentText: string = '',
+  open: boolean = false
+): ToggleContainerNode {
+  const container = $createToggleContainerNode(open);
+
+  const title = $createToggleTitleNode();
+  const titleParagraph = $createParagraphNode();
+  if (summaryText) {
+    titleParagraph.append($createTextNode(summaryText));
+  }
+  title.append(titleParagraph);
+
+  const content = $createToggleContentNode();
+  const contentParagraph = $createParagraphNode();
+  if (contentText) {
+    contentParagraph.append($createTextNode(contentText));
+  }
+  content.append(contentParagraph);
+
+  container.append(title);
+  container.append(content);
+
+  return container;
 }
 
-export function $isToggleNode(node: LexicalNode | null | undefined): node is ToggleNode {
-  return node instanceof ToggleNode;
+// Legacy compatibility - now just checks for container
+export function $isToggleNode(
+  node: LexicalNode | null | undefined
+): node is ToggleContainerNode {
+  return $isToggleContainerNode(node);
 }
+
+// Legacy type alias
+export type ToggleNode = ToggleContainerNode;
+export type SerializedToggleNode = SerializedToggleContainerNode;

@@ -16,10 +16,14 @@ import {
   $isHorizontalRuleNode,
   $isImageNode,
   $isCalloutNode,
-  $isToggleNode,
+  $isToggleContainerNode,
+  $isToggleTitleNode,
+  $isToggleContentNode,
   ImageNode,
   CalloutNode,
-  ToggleNode,
+  ToggleContainerNode,
+  ToggleTitleNode,
+  ToggleContentNode,
 } from '../editor/nodes';
 import type {
   Root,
@@ -101,8 +105,8 @@ function convertLexicalNode(node: LexicalNode): Content[] {
     return [convertCalloutNode(node)];
   }
 
-  if ($isToggleNode(node)) {
-    return [convertToggleNode(node)];
+  if ($isToggleContainerNode(node)) {
+    return convertToggleContainerNode(node);
   }
 
   // Fallback: create paragraph
@@ -299,14 +303,42 @@ function convertCalloutNode(node: CalloutNode): Blockquote {
   };
 }
 
-function convertToggleNode(node: ToggleNode): Html {
-  const summary = node.getSummary();
-  const content = node.getContent();
+function convertToggleContainerNode(node: ToggleContainerNode): Content[] {
+  const result: Content[] = [];
+  let summaryText = '';
+  const contentNodes: Content[] = [];
 
-  return {
+  // Iterate through children to find title and content
+  for (const child of node.getChildren()) {
+    if ($isToggleTitleNode(child)) {
+      // Extract text from title
+      summaryText = child.getTextContent();
+    } else if ($isToggleContentNode(child)) {
+      // Convert content children to mdast
+      for (const contentChild of child.getChildren()) {
+        const converted = convertLexicalNode(contentChild);
+        contentNodes.push(...converted);
+      }
+    }
+  }
+
+  // Build the opening HTML tag
+  const isOpen = node.getOpen();
+  result.push({
     type: 'html',
-    value: `<details><summary>${summary}</summary>\n\n${content}\n\n</details>`,
-  };
+    value: `<details${isOpen ? ' open' : ''}><summary>${summaryText}</summary>`,
+  } as Html);
+
+  // Add all the content nodes (they will be serialized as markdown)
+  result.push(...contentNodes);
+
+  // Add the closing tag
+  result.push({
+    type: 'html',
+    value: '</details>',
+  } as Html);
+
+  return result;
 }
 
 function convertInlineChildren(node: ElementNode): PhrasingContent[] {

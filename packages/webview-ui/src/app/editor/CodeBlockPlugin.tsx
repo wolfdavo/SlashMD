@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getRoot, $getNodeByKey } from 'lexical';
+import { $getRoot, $getNodeByKey, $isElementNode, LexicalNode } from 'lexical';
 import { $isCodeNode, CodeNode } from '@lexical/code';
 
 // Popular languages for the dropdown
+// Note: 'plain' is a valid Prism language that provides no syntax highlighting
 const LANGUAGES = [
-  { value: '', label: 'Plain Text' },
+  { value: 'plain', label: 'Plain Text' },
   { value: 'javascript', label: 'JavaScript' },
   { value: 'typescript', label: 'TypeScript' },
   { value: 'jsx', label: 'JSX' },
@@ -50,7 +51,6 @@ interface LanguageSelectorProps {
 function LanguageSelector({ nodeKey, currentLanguage, position, onClose }: LanguageSelectorProps) {
   const [editor] = useLexicalComposerContext();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -65,11 +65,6 @@ function LanguageSelector({ nodeKey, currentLanguage, position, onClose }: Langu
     inputRef.current?.focus();
   }, []);
 
-  // Reset selection when search changes
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [searchQuery]);
-
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -83,44 +78,48 @@ function LanguageSelector({ nodeKey, currentLanguage, position, onClose }: Langu
 
   const selectLanguage = useCallback(
     (language: string) => {
-      editor.update(() => {
-        const node = $getNodeByKey(nodeKey);
-        if (node && $isCodeNode(node)) {
-          node.setLanguage(language || null);
+      // Set the language and wait for the update to complete before closing
+      editor.update(
+        () => {
+          const node = $getNodeByKey(nodeKey);
+          if (node && $isCodeNode(node)) {
+            // Use 'plain' for Plain Text - it's a valid Prism language with no highlighting
+            // This avoids Lexical's transform that resets undefined/null languages to 'javascript'
+            node.setLanguage(language);
+          }
+        },
+        {
+          onUpdate: () => {
+            // Close the selector after the update is committed
+            onClose();
+          },
         }
-      });
-      onClose();
+      );
     },
     [editor, nodeKey, onClose]
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setSelectedIndex((prev) =>
-            prev < filteredLanguages.length - 1 ? prev + 1 : prev
-          );
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (filteredLanguages[selectedIndex]) {
-            selectLanguage(filteredLanguages[selectedIndex].value);
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          onClose();
-          break;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
       }
     },
-    [filteredLanguages, selectedIndex, selectLanguage, onClose]
+    [onClose]
   );
+
+  const handleItemClick = useCallback(
+    (e: React.MouseEvent, language: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      selectLanguage(language);
+    },
+    [selectLanguage]
+  );
+
+  // Normalize for comparison
+  const normalizedCurrent = currentLanguage || 'plain';
 
   return (
     <div
@@ -145,20 +144,21 @@ function LanguageSelector({ nodeKey, currentLanguage, position, onClose }: Langu
         {filteredLanguages.length === 0 ? (
           <div className="code-language-empty">No languages found</div>
         ) : (
-          filteredLanguages.map((lang, index) => (
-            <button
-              key={lang.value}
-              className={`code-language-item ${
-                index === selectedIndex ? 'selected' : ''
-              } ${lang.value === currentLanguage ? 'current' : ''}`}
-              onClick={() => selectLanguage(lang.value)}
-            >
-              {lang.label}
-              {lang.value === currentLanguage && (
-                <span className="code-language-check">✓</span>
-              )}
-            </button>
-          ))
+          filteredLanguages.map((lang) => {
+            const isCurrentLang = lang.value === normalizedCurrent;
+            return (
+              <div
+                key={lang.value || 'plain-text'}
+                className={`code-language-item ${isCurrentLang ? 'current' : ''}`}
+                onMouseDown={(e) => handleItemClick(e, lang.value)}
+              >
+                {lang.label}
+                {isCurrentLang && (
+                  <span className="code-language-check">✓</span>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
     </div>
@@ -180,25 +180,34 @@ export function CodeBlockPlugin() {
       const editorElement = editor.getRootElement();
       if (!editorElement) return;
 
-      const codeElements = Array.from(editorElement.querySelectorAll('.editor-code')) as HTMLElement[];
-
       editor.getEditorState().read(() => {
         const root = $getRoot();
         const blocks: CodeBlockInfo[] = [];
 
-        const codeNodes: CodeNode[] = [];
-        for (const child of root.getChildren()) {
-          if ($isCodeNode(child)) {
-            codeNodes.push(child);
+        // Recursively find all code nodes at any nesting level
+        const findCodeNodes = (node: LexicalNode): CodeNode[] => {
+          const codeNodes: CodeNode[] = [];
+          if ($isCodeNode(node)) {
+            codeNodes.push(node);
           }
-        }
+          if ($isElementNode(node)) {
+            for (const child of node.getChildren()) {
+              codeNodes.push(...findCodeNodes(child));
+            }
+          }
+          return codeNodes;
+        };
 
-        codeNodes.forEach((node, index) => {
-          const element = codeElements[index];
+        const codeNodes = findCodeNodes(root);
+
+        codeNodes.forEach((node) => {
+          // Use editor.getElementByKey to get the correct DOM element for this node
+          const element = editor.getElementByKey(node.getKey());
           if (element) {
+            const lang = node.getLanguage();
             blocks.push({
               nodeKey: node.getKey(),
-              language: node.getLanguage() || '',
+              language: lang || '',
               rect: element.getBoundingClientRect(),
             });
           }
@@ -210,8 +219,45 @@ export function CodeBlockPlugin() {
 
     const timeoutId = setTimeout(updateCodeBlocks, 200);
 
-    const unsubscribe = editor.registerUpdateListener(() => {
-      requestAnimationFrame(updateCodeBlocks);
+    const unsubscribe = editor.registerUpdateListener(({ editorState }) => {
+      // Use the editorState from the update, not editor.getEditorState()
+      requestAnimationFrame(() => {
+        const editorElement = editor.getRootElement();
+        if (!editorElement) return;
+
+        editorState.read(() => {
+          const root = $getRoot();
+          const blocks: CodeBlockInfo[] = [];
+
+          const findCodeNodes = (node: LexicalNode): CodeNode[] => {
+            const codeNodes: CodeNode[] = [];
+            if ($isCodeNode(node)) {
+              codeNodes.push(node);
+            }
+            if ($isElementNode(node)) {
+              for (const child of node.getChildren()) {
+                codeNodes.push(...findCodeNodes(child));
+              }
+            }
+            return codeNodes;
+          };
+
+          const codeNodes = findCodeNodes(root);
+
+          codeNodes.forEach((node) => {
+            const element = editor.getElementByKey(node.getKey());
+            if (element) {
+              blocks.push({
+                nodeKey: node.getKey(),
+                language: node.getLanguage() || '',
+                rect: element.getBoundingClientRect(),
+              });
+            }
+          });
+
+          setCodeBlocks(blocks);
+        });
+      });
     });
 
     // Also update on scroll/resize
@@ -247,7 +293,9 @@ export function CodeBlockPlugin() {
   return (
     <>
       {codeBlocks.map((block) => {
-        const langLabel = LANGUAGES.find((l) => l.value === block.language)?.label || block.language || 'Plain Text';
+        // Normalize empty/null/undefined to 'plain' for comparison
+        const normalizedLang = block.language || 'plain';
+        const langLabel = LANGUAGES.find((l) => l.value === normalizedLang)?.label || normalizedLang;
         return (
           <button
             key={block.nodeKey}
