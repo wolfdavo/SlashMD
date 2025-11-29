@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getNodeByKey } from 'lexical';
+import { $getNodeByKey, $getSelection, $isRangeSelection } from 'lexical';
 
 interface DragHandleState {
   isVisible: boolean;
@@ -71,6 +71,54 @@ export function DragHandlePlugin() {
   const dropTargetKey = useRef<string | null>(null);
   const dropPosition = useRef<'before' | 'after'>('after');
   const handleRef = useRef<HTMLDivElement | null>(null);
+
+  // Listen for selection changes to hide handle when navigating via keyboard
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      if (isDragging) return;
+
+      editorState.read(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          setDragState((prev) => ({ ...prev, isVisible: false }));
+          return;
+        }
+
+        // Get the current anchor node and find its top-level block
+        const anchorNode = selection.anchor.getNode();
+        const topLevelElement = anchorNode.getTopLevelElement();
+
+        if (!topLevelElement) {
+          setDragState((prev) => ({ ...prev, isVisible: false }));
+          return;
+        }
+
+        const nodeKey = topLevelElement.getKey();
+        const editorElement = editor.getRootElement();
+        if (!editorElement) return;
+
+        // Find the DOM element for this node
+        const blockElement = editor.getElementByKey(nodeKey);
+        if (!blockElement) {
+          setDragState((prev) => ({ ...prev, isVisible: false }));
+          return;
+        }
+
+        const rect = blockElement.getBoundingClientRect();
+        const editorRect = editorElement.getBoundingClientRect();
+
+        setDragState({
+          isVisible: true,
+          position: {
+            top: rect.top - editorRect.top,
+            left: 0,
+          },
+          nodeKey,
+          blockElement,
+        });
+      });
+    });
+  }, [editor, isDragging]);
 
   useEffect(() => {
     const editorElement = editor.getRootElement();

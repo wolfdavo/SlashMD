@@ -21,6 +21,7 @@ import { EditorState, LexicalEditor } from 'lexical';
 import { Toolbar } from './Toolbar';
 import { SlashMenuPlugin } from './SlashMenuPlugin';
 import { DragHandlePlugin } from './DragHandlePlugin';
+import { MarkdownShortcutsPlugin } from './MarkdownShortcutsPlugin';
 import {
   CalloutNode,
   ToggleNode,
@@ -221,6 +222,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
           />
           <SlashMenuPlugin />
           <DragHandlePlugin />
+          <MarkdownShortcutsPlugin />
           <Toolbar />
         </div>
       </div>

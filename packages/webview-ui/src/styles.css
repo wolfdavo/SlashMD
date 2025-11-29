@@ -254,8 +254,20 @@ body {
 /* Divider */
 .divider-block {
   border: none;
-  border-top: 1px solid var(--vscode-border);
-  margin: 24px 0;
+  height: 24px;
+  margin: 12px 0;
+  background: transparent;
+  position: relative;
+}
+
+.divider-block::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--vscode-border);
 }
 
 /* Image */
