@@ -274,7 +274,31 @@ function convertTableCellNode(node: TableCellNode): TableCell {
   };
 }
 
-function convertImageNode(node: ImageNode): Paragraph {
+function convertImageNode(node: ImageNode): Paragraph | Html {
+  const width = node.getWidth();
+  const height = node.getHeight();
+
+  // If image has custom dimensions, output as HTML img tag
+  if (width || height) {
+    let html = `<img src="${node.getSrc()}" alt="${node.getAlt()}"`;
+    if (width) {
+      html += ` width="${width}"`;
+    }
+    if (height) {
+      html += ` height="${height}"`;
+    }
+    if (node.getTitle()) {
+      html += ` title="${node.getTitle()}"`;
+    }
+    html += '>';
+
+    return {
+      type: 'html',
+      value: html,
+    };
+  }
+
+  // Standard markdown image syntax
   const image: Image = {
     type: 'image',
     url: node.getSrc(),

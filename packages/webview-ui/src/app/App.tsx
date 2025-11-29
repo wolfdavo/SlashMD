@@ -11,6 +11,7 @@ import type { HostToUIMessage, SlashMDSettings, TextEdit } from '../types';
 export function App() {
   const [content, setContent] = useState<string | null>(null);
   const [settings, setSettings] = useState<SlashMDSettings | null>(null);
+  const [assetBaseUri, setAssetBaseUri] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const pendingAssetCallback = useRef<((relPath: string) => void) | null>(null);
 
@@ -23,6 +24,7 @@ export function App() {
           console.log('SlashMD App: Received DOC_INIT with', message.text?.length, 'chars');
           setContent(message.text);
           setSettings(message.settings);
+          setAssetBaseUri(message.assetBaseUri);
           break;
 
         case 'DOC_CHANGED':
@@ -88,7 +90,7 @@ export function App() {
           {error}
         </div>
       )}
-      <Editor initialContent={content} onChange={handleChange} />
+      <Editor initialContent={content} onChange={handleChange} assetBaseUri={assetBaseUri} />
     </div>
   );
 }

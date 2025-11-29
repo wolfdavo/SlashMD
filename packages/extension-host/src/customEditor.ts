@@ -54,12 +54,17 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     const assetService = new AssetService(workspaceFolder);
 
     // Configure webview
+    const localResourceRoots = [
+      vscode.Uri.joinPath(this.context.extensionUri, 'dist'),
+      vscode.Uri.joinPath(this.context.extensionUri, 'media'),
+    ];
+    // Add workspace folder to allow loading images from assets
+    if (workspaceFolder) {
+      localResourceRoots.push(workspaceFolder.uri);
+    }
     webviewPanel.webview.options = {
       ...SlashMDEditorProvider.webviewOptions,
-      localResourceRoots: [
-        vscode.Uri.joinPath(this.context.extensionUri, 'dist'),
-        vscode.Uri.joinPath(this.context.extensionUri, 'media'),
-      ],
+      localResourceRoots,
     };
 
     // Set initial HTML
@@ -74,10 +79,22 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     const sendDocumentToWebview = () => {
       const text = document.getText();
       console.log('SlashMD: Sending DOC_INIT to webview, text length:', text.length);
+
+      // Generate base URI for resolving relative asset paths
+      let assetBaseUri: string | undefined;
+      if (workspaceFolder) {
+        assetBaseUri = webviewPanel.webview.asWebviewUri(workspaceFolder.uri).toString();
+        // Ensure it ends with a slash for proper path joining
+        if (!assetBaseUri.endsWith('/')) {
+          assetBaseUri += '/';
+        }
+      }
+
       webviewPanel.webview.postMessage({
         type: 'DOC_INIT',
         text: text,
         settings: getSettings(),
+        assetBaseUri,
       });
     };
 
@@ -121,9 +138,16 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
                   message.dataUri,
                   message.suggestedName
                 );
+                // Convert relative path to webview URI for display
+                let webviewUri = relPath;
+                if (workspaceFolder) {
+                  const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, relPath);
+                  webviewUri = webviewPanel.webview.asWebviewUri(fileUri).toString();
+                }
                 webviewPanel.webview.postMessage({
                   type: 'ASSET_WRITTEN',
                   relPath,
+                  webviewUri,
                 });
               } catch (error) {
                 webviewPanel.webview.postMessage({

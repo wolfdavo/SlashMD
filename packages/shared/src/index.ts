@@ -15,9 +15,9 @@ export type UIToHostMessage =
 
 // Host → UI messages
 export type HostToUIMessage =
-  | { type: 'DOC_INIT'; text: string; settings: SlashMDSettings }
+  | { type: 'DOC_INIT'; text: string; settings: SlashMDSettings; assetBaseUri?: string }
   | { type: 'DOC_CHANGED'; text: string; range?: { start: number; end: number } }
-  | { type: 'ASSET_WRITTEN'; relPath: string }
+  | { type: 'ASSET_WRITTEN'; relPath: string; webviewUri?: string }
   | { type: 'SETTINGS_CHANGED'; settings: SlashMDSettings }
   | { type: 'ERROR'; message: string };
 

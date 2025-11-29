@@ -17,6 +17,7 @@ import {
   $createTableCellNode,
   TableCellHeaderStates,
 } from '@lexical/table';
+import { INSERT_IMAGE_COMMAND } from './ImagePlugin';
 
 interface BlockOption {
   key: string;
@@ -205,6 +206,16 @@ export function SlashMenu({ isOpen, position, query, onClose }: SlashMenuProps) 
               selection.insertNodes([node]);
             }
           });
+        },
+      },
+      {
+        key: 'image',
+        label: 'Image',
+        description: 'Upload or embed an image',
+        icon: '🖼',
+        keywords: ['image', 'picture', 'photo', 'img', 'upload'],
+        onSelect: () => {
+          editor.dispatchCommand(INSERT_IMAGE_COMMAND, undefined);
         },
       },
       {

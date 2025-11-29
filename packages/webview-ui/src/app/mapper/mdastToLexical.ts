@@ -178,21 +178,17 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
   }
 }
 
-function convertParagraph(node: Paragraph): ParagraphNode {
-  const paragraph = $createParagraphNode();
-
-  // Check if this is just an image
+function convertParagraph(node: Paragraph): ParagraphNode | ImageNode {
+  // Check if this is just an image - return ImageNode directly
   if (
     node.children.length === 1 &&
     node.children[0].type === 'image'
   ) {
     const img = node.children[0] as Image;
-    const imageNode = $createImageNode(img.url, img.alt || '', img.title);
-    // Images are block-level in our editor, but mdast wraps them in paragraphs
-    // We'll return the paragraph with the image representation for now
-    paragraph.append($createTextNode(`![${img.alt || ''}](${img.url})`));
-    return paragraph;
+    return $createImageNode(img.url, img.alt || '', img.title);
   }
+
+  const paragraph = $createParagraphNode();
 
   for (const child of node.children) {
     const nodes = convertInlineNode(child);
@@ -411,6 +407,36 @@ function convertHtml(node: Html): LexicalBlockNode[] {
 
   // Toggle/details blocks are handled by preprocessDetailsBlocks
   // This function only handles remaining HTML
+
+  // Check for img tag
+  const imgMatch = html.match(/^<img\s+([^>]*)\/?>$/i);
+  if (imgMatch) {
+    const attrs = imgMatch[1];
+
+    // Parse attributes
+    const srcMatch = attrs.match(/src=["']([^"']*)["']/i);
+    const altMatch = attrs.match(/alt=["']([^"']*)["']/i);
+    const titleMatch = attrs.match(/title=["']([^"']*)["']/i);
+    const widthMatch = attrs.match(/width=["']?(\d+)["']?/i);
+    const heightMatch = attrs.match(/height=["']?(\d+)["']?/i);
+
+    if (srcMatch) {
+      const imageNode = $createImageNode(
+        srcMatch[1],
+        altMatch ? altMatch[1] : '',
+        titleMatch ? titleMatch[1] : undefined
+      );
+
+      if (widthMatch) {
+        imageNode.setWidth(parseInt(widthMatch[1], 10));
+      }
+      if (heightMatch) {
+        imageNode.setHeight(parseInt(heightMatch[1], 10));
+      }
+
+      return [imageNode];
+    }
+  }
 
   // For other HTML, create a code block to preserve it
   const code = $createCodeNode('html');

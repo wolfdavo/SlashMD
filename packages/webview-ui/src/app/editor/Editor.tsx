@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useMemo } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -25,6 +25,8 @@ import { MarkdownShortcutsPlugin } from './MarkdownShortcutsPlugin';
 import { TableActionsPlugin } from './TableActionsPlugin';
 import { CodeBlockPlugin } from './CodeBlockPlugin';
 import { TogglePlugin } from './TogglePlugin';
+import { ImagePlugin } from './ImagePlugin';
+import { AssetContext, createAssetContextValue } from './AssetContext';
 import {
   CalloutNode,
   ToggleContainerNode,
@@ -41,6 +43,7 @@ import { stringifyMarkdown } from '../../markdown/stringify';
 interface EditorProps {
   initialContent: string;
   onChange: (markdown: string) => void;
+  assetBaseUri?: string;
 }
 
 const editorTheme = {
@@ -185,9 +188,14 @@ function ExternalUpdatePlugin({
   return null;
 }
 
-export function Editor({ initialContent, onChange }: EditorProps) {
+export function Editor({ initialContent, onChange, assetBaseUri }: EditorProps) {
   const lastInternalUpdate = useRef<number>(0);
   const currentContentRef = useRef<string>(initialContent);
+
+  const assetContextValue = useMemo(
+    () => createAssetContextValue(assetBaseUri),
+    [assetBaseUri]
+  );
 
   const handleChange = useCallback(
     (editorState: EditorState, editor: LexicalEditor) => {
@@ -212,42 +220,45 @@ export function Editor({ initialContent, onChange }: EditorProps) {
   };
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <div className="editor-container">
-        <div className="editor-inner">
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable className="editor-input" aria-label="Markdown editor" />
-            }
-            placeholder={
-              <div className="editor-placeholder">
-                Type '/' for commands...
-              </div>
-            }
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <HistoryPlugin />
-          <ListPlugin />
-          <CheckListPlugin />
-          <TabIndentationPlugin />
-          <LinkPlugin />
-          <TablePlugin />
-          <CodeHighlightPlugin />
-          <OnChangePlugin onChange={handleChange} ignoreSelectionChange />
-          <InitializePlugin content={initialContent} />
-          <ExternalUpdatePlugin
-            content={initialContent}
-            lastInternalUpdate={lastInternalUpdate}
-          />
-          <SlashMenuPlugin />
-          <DragHandlePlugin />
-          <MarkdownShortcutsPlugin />
-          <TableActionsPlugin />
-          <CodeBlockPlugin />
-          <TogglePlugin />
-          <Toolbar />
+    <AssetContext.Provider value={assetContextValue}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className="editor-container">
+          <div className="editor-inner">
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable className="editor-input" aria-label="Markdown editor" />
+              }
+              placeholder={
+                <div className="editor-placeholder">
+                  Type '/' for commands...
+                </div>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <HistoryPlugin />
+            <ListPlugin />
+            <CheckListPlugin />
+            <TabIndentationPlugin />
+            <LinkPlugin />
+            <TablePlugin />
+            <CodeHighlightPlugin />
+            <OnChangePlugin onChange={handleChange} ignoreSelectionChange />
+            <InitializePlugin content={initialContent} />
+            <ExternalUpdatePlugin
+              content={initialContent}
+              lastInternalUpdate={lastInternalUpdate}
+            />
+            <SlashMenuPlugin />
+            <DragHandlePlugin />
+            <MarkdownShortcutsPlugin />
+            <TableActionsPlugin />
+            <CodeBlockPlugin />
+            <TogglePlugin />
+            <ImagePlugin />
+            <Toolbar />
+          </div>
         </div>
-      </div>
-    </LexicalComposer>
+      </LexicalComposer>
+    </AssetContext.Provider>
   );
 }
