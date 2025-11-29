@@ -82,14 +82,34 @@ export function SlashMenuPlugin() {
           return;
         }
 
-        // Get position for menu
+        // Get position for menu - position at the slash character
         const nativeSelection = window.getSelection();
         if (!nativeSelection || nativeSelection.rangeCount === 0) {
           return;
         }
 
         const range = nativeSelection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
+
+        // Create a range that starts at the slash position
+        const slashRange = document.createRange();
+        const textNode = range.startContainer;
+        if (textNode.nodeType === Node.TEXT_NODE) {
+          // Find the actual position of the slash in the text node
+          const textContent = textNode.textContent || '';
+          const slashPosInNode = textContent.lastIndexOf('/');
+          if (slashPosInNode >= 0) {
+            slashRange.setStart(textNode, slashPosInNode);
+            slashRange.setEnd(textNode, slashPosInNode + 1);
+          } else {
+            slashRange.setStart(textNode, 0);
+            slashRange.setEnd(textNode, 0);
+          }
+        } else {
+          slashRange.setStart(textNode, 0);
+          slashRange.setEnd(textNode, 0);
+        }
+
+        const rect = slashRange.getBoundingClientRect();
 
         setMenuState({
           isOpen: true,

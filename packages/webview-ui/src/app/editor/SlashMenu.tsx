@@ -1,14 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $createParagraphNode,
   $getSelection,
   $isRangeSelection,
-  COMMAND_PRIORITY_LOW,
-  KEY_ARROW_DOWN_COMMAND,
-  KEY_ARROW_UP_COMMAND,
-  KEY_ENTER_COMMAND,
-  KEY_ESCAPE_COMMAND,
   TextNode,
 } from 'lexical';
 import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
@@ -35,6 +30,7 @@ interface SlashMenuProps {
 export function SlashMenu({ isOpen, position, query, onClose }: SlashMenuProps) {
   const [editor] = useLexicalComposerContext();
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const listRef = useRef<HTMLUListElement>(null);
 
   const blockOptions: BlockOption[] = useMemo(
     () => [
@@ -276,16 +272,55 @@ export function SlashMenu({ isOpen, position, query, onClose }: SlashMenuProps) 
     if (!query) return blockOptions;
 
     const lowerQuery = query.toLowerCase();
-    return blockOptions.filter(
-      (option) =>
-        option.label.toLowerCase().includes(lowerQuery) ||
-        option.keywords.some((kw) => kw.includes(lowerQuery))
-    );
+
+    // Filter and score options
+    const scored = blockOptions
+      .map((option) => {
+        const labelLower = option.label.toLowerCase();
+        let score = 0;
+
+        // Exact label match gets highest score
+        if (labelLower === lowerQuery) {
+          score = 100;
+        }
+        // Label starts with query
+        else if (labelLower.startsWith(lowerQuery)) {
+          score = 80;
+        }
+        // Label contains query
+        else if (labelLower.includes(lowerQuery)) {
+          score = 60;
+        }
+        // Keyword starts with query
+        else if (option.keywords.some((kw) => kw.startsWith(lowerQuery))) {
+          score = 40;
+        }
+        // Keyword contains query
+        else if (option.keywords.some((kw) => kw.includes(lowerQuery))) {
+          score = 20;
+        }
+
+        return { option, score };
+      })
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    return scored.map(({ option }) => option);
   }, [blockOptions, query]);
 
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    if (listRef.current && isOpen) {
+      const selectedItem = listRef.current.children[selectedIndex] as HTMLElement;
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [selectedIndex, isOpen]);
 
   const handleSelect = useCallback(
     (option: BlockOption) => {
@@ -315,57 +350,46 @@ export function SlashMenu({ isOpen, position, query, onClose }: SlashMenuProps) 
     [editor, onClose]
   );
 
-  // Handle keyboard navigation
+  // Handle keyboard navigation with native events (capture phase to intercept before Lexical)
   useEffect(() => {
     if (!isOpen) return;
 
-    const removeArrowDown = editor.registerCommand(
-      KEY_ARROW_DOWN_COMMAND,
-      () => {
-        setSelectedIndex((prev) =>
-          prev < filteredOptions.length - 1 ? prev + 1 : prev
-        );
-        return true;
-      },
-      COMMAND_PRIORITY_LOW
-    );
+    const handleKeyDown = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'ArrowDown':
+          event.preventDefault();
+          event.stopPropagation();
+          setSelectedIndex((prev) =>
+            prev < filteredOptions.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          event.stopPropagation();
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+          break;
+        case 'Enter':
+          event.preventDefault();
+          event.stopPropagation();
+          if (filteredOptions[selectedIndex]) {
+            handleSelect(filteredOptions[selectedIndex]);
+          }
+          break;
+        case 'Escape':
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+          break;
+      }
+    };
 
-    const removeArrowUp = editor.registerCommand(
-      KEY_ARROW_UP_COMMAND,
-      () => {
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-        return true;
-      },
-      COMMAND_PRIORITY_LOW
-    );
-
-    const removeEnter = editor.registerCommand(
-      KEY_ENTER_COMMAND,
-      () => {
-        if (filteredOptions[selectedIndex]) {
-          handleSelect(filteredOptions[selectedIndex]);
-        }
-        return true;
-      },
-      COMMAND_PRIORITY_LOW
-    );
-
-    const removeEscape = editor.registerCommand(
-      KEY_ESCAPE_COMMAND,
-      () => {
-        onClose();
-        return true;
-      },
-      COMMAND_PRIORITY_LOW
-    );
+    // Use capture phase to intercept events before they reach Lexical
+    document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
-      removeArrowDown();
-      removeArrowUp();
-      removeEnter();
-      removeEscape();
+      document.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [editor, isOpen, filteredOptions, selectedIndex, handleSelect, onClose]);
+  }, [isOpen, filteredOptions, selectedIndex, handleSelect, onClose]);
 
   if (!isOpen || !position) return null;
 
@@ -373,16 +397,16 @@ export function SlashMenu({ isOpen, position, query, onClose }: SlashMenuProps) 
     <div
       className="slash-menu"
       style={{
-        position: 'absolute',
+        position: 'fixed',
         top: position.top,
         left: position.left,
       }}
     >
-      <div className="slash-menu-header">Insert block</div>
+      <div className="slash-menu-header">INSERT BLOCK</div>
       {filteredOptions.length === 0 ? (
         <div className="slash-menu-empty">No matching blocks</div>
       ) : (
-        <ul className="slash-menu-list" role="listbox">
+        <ul className="slash-menu-list" role="listbox" ref={listRef}>
           {filteredOptions.map((option, index) => (
             <li
               key={option.key}
