@@ -198,13 +198,8 @@ function convertListItemNode(node: ListItemNode, _ordered: boolean): ListItem {
 }
 
 function convertCodeNode(node: ElementNode): Code {
-  let value = '';
-  for (const child of node.getChildren()) {
-    if ($isTextNode(child)) {
-      value += child.getTextContent();
-    }
-  }
-
+  // Use getTextContent() which handles both TextNode and CodeHighlightNode children
+  const value = node.getTextContent();
   const lang = (node as unknown as { getLanguage?: () => string }).getLanguage?.() || undefined;
 
   return {

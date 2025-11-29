@@ -13,7 +13,7 @@ import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
-import { CodeNode, CodeHighlightNode } from '@lexical/code';
+import { CodeNode, CodeHighlightNode, registerCodeHighlighting } from '@lexical/code';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
 import { TableNode, TableRowNode, TableCellNode } from '@lexical/table';
 import { EditorState, LexicalEditor } from 'lexical';
@@ -23,6 +23,7 @@ import { SlashMenuPlugin } from './SlashMenuPlugin';
 import { DragHandlePlugin } from './DragHandlePlugin';
 import { MarkdownShortcutsPlugin } from './MarkdownShortcutsPlugin';
 import { TableActionsPlugin } from './TableActionsPlugin';
+import { CodeBlockPlugin } from './CodeBlockPlugin';
 import {
   CalloutNode,
   ToggleNode,
@@ -126,6 +127,17 @@ const editorNodes = [
   HorizontalRuleNode,
 ];
 
+// Plugin to enable syntax highlighting in code blocks
+function CodeHighlightPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return registerCodeHighlighting(editor);
+  }, [editor]);
+
+  return null;
+}
+
 // Plugin to initialize editor with markdown content
 function InitializePlugin({ content }: { content: string }) {
   const [editor] = useLexicalComposerContext();
@@ -215,6 +227,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
           <TabIndentationPlugin />
           <LinkPlugin />
           <TablePlugin />
+          <CodeHighlightPlugin />
           <OnChangePlugin onChange={handleChange} ignoreSelectionChange />
           <InitializePlugin content={initialContent} />
           <ExternalUpdatePlugin
@@ -225,6 +238,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
           <DragHandlePlugin />
           <MarkdownShortcutsPlugin />
           <TableActionsPlugin />
+          <CodeBlockPlugin />
           <Toolbar />
         </div>
       </div>

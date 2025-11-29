@@ -46,13 +46,104 @@ export function importMarkdownToLexical(
     const lexicalRoot = $getRoot();
     lexicalRoot.clear();
 
-    for (const child of root.children) {
+    // Pre-process: combine details blocks
+    const processedChildren = preprocessDetailsBlocks(root.children);
+
+    for (const child of processedChildren) {
       const nodes = convertBlockNode(child);
       for (const node of nodes) {
         lexicalRoot.append(node);
       }
     }
   });
+}
+
+// Pre-process mdast children to combine details blocks
+function preprocessDetailsBlocks(children: Content[]): Content[] {
+  const result: Content[] = [];
+  let i = 0;
+
+  console.log('[preprocessDetailsBlocks] Processing', children.length, 'children');
+  for (const c of children) {
+    console.log('[preprocessDetailsBlocks] Child type:', c.type, c.type === 'html' ? (c as Html).value.substring(0, 50) : '');
+  }
+
+  while (i < children.length) {
+    const node = children[i];
+
+    if (node.type === 'html') {
+      const html = node.value.trim();
+      console.log('[preprocessDetailsBlocks] HTML node:', html.substring(0, 100));
+
+      // Check for opening details tag
+      const openingMatch = html.match(/<details(?:\s+open)?>\s*<summary>([\s\S]*?)<\/summary>/i);
+      if (openingMatch) {
+        const isOpen = html.toLowerCase().includes('<details open');
+        const summary = openingMatch[1].trim();
+        const contentParts: string[] = [];
+
+        // Collect content until we find the closing tag
+        i++;
+        while (i < children.length) {
+          const innerNode = children[i];
+          if (innerNode.type === 'html' && innerNode.value.trim().match(/<\/details>/i)) {
+            // Found closing tag
+            break;
+          }
+          // Collect text content from inner nodes
+          if (innerNode.type === 'paragraph') {
+            const text = extractTextFromMdastParagraph(innerNode);
+            if (text) contentParts.push(text);
+          } else if (innerNode.type === 'list') {
+            // For lists, just note there's a list (we store as text for now)
+            const listText = extractTextFromMdastList(innerNode);
+            if (listText) contentParts.push(listText);
+          }
+          i++;
+        }
+
+        // Create a synthetic HTML node with the complete details
+        const fullContent = contentParts.join('\n');
+        result.push({
+          type: 'html',
+          value: `<details${isOpen ? ' open' : ''}><summary>${summary}</summary>\n${fullContent}\n</details>`,
+        } as Html);
+        i++; // Skip the closing tag
+        continue;
+      }
+    }
+
+    result.push(node);
+    i++;
+  }
+
+  return result;
+}
+
+function extractTextFromMdastParagraph(node: Paragraph): string {
+  let text = '';
+  for (const child of node.children) {
+    if (child.type === 'text') {
+      text += child.value;
+    }
+  }
+  return text;
+}
+
+function extractTextFromMdastList(node: List): string {
+  const items: string[] = [];
+  for (const item of node.children) {
+    if (item.type === 'listItem') {
+      for (const child of item.children) {
+        if (child.type === 'paragraph') {
+          const text = extractTextFromMdastParagraph(child);
+          const prefix = node.ordered ? '1. ' : '- ';
+          items.push(prefix + text);
+        }
+      }
+    }
+  }
+  return items.join('\n');
 }
 
 function convertBlockNode(node: Content): LexicalBlockNode[] {
@@ -276,14 +367,15 @@ function convertTableCell(
 }
 
 function convertHtml(node: Html): LexicalBlockNode[] {
-  const html = node.value;
+  const html = node.value.trim();
 
-  // Check for toggle/details
-  const detailsMatch = html.match(/<details>\s*<summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/i);
+  // Check for complete toggle/details block
+  const detailsMatch = html.match(/<details(?:\s+open)?>\s*<summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/i);
   if (detailsMatch) {
+    const isOpen = html.toLowerCase().includes('<details open');
     const summary = detailsMatch[1].trim();
     const content = detailsMatch[2].trim();
-    return [$createToggleNode(summary, content, false)];
+    return [$createToggleNode(summary, content, isOpen)];
   }
 
   // For other HTML, create a code block to preserve it

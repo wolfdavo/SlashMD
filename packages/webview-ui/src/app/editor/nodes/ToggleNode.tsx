@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
   DecoratorNode,
   DOMConversionMap,
@@ -7,6 +8,7 @@ import {
   SerializedLexicalNode,
   Spread,
 } from 'lexical';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
 export type SerializedToggleNode = Spread<
   {
@@ -16,6 +18,87 @@ export type SerializedToggleNode = Spread<
   },
   SerializedLexicalNode
 >;
+
+// React component for rendering the toggle
+function ToggleComponent({
+  nodeKey,
+  summary,
+  content,
+  isOpen,
+}: {
+  nodeKey: NodeKey;
+  summary: string;
+  content: string;
+  isOpen: boolean;
+}) {
+  const [editor] = useLexicalComposerContext();
+
+  const handleToggle = useCallback(() => {
+    editor.update(() => {
+      const node = editor.getEditorState().read(() => {
+        return editor.getEditorState()._nodeMap.get(nodeKey) as ToggleNode | undefined;
+      });
+      if (node) {
+        const writable = node.getWritable();
+        writable.__isOpen = !writable.__isOpen;
+      }
+    });
+  }, [editor, nodeKey]);
+
+  const handleSummaryChange = useCallback(
+    (e: React.FocusEvent<HTMLSpanElement>) => {
+      const newSummary = e.currentTarget.textContent || '';
+      editor.update(() => {
+        const node = editor.getEditorState()._nodeMap.get(nodeKey) as ToggleNode | undefined;
+        if (node) {
+          const writable = node.getWritable();
+          writable.__summary = newSummary;
+        }
+      });
+    },
+    [editor, nodeKey]
+  );
+
+  const handleContentChange = useCallback(
+    (e: React.FocusEvent<HTMLDivElement>) => {
+      const newContent = e.currentTarget.textContent || '';
+      editor.update(() => {
+        const node = editor.getEditorState()._nodeMap.get(nodeKey) as ToggleNode | undefined;
+        if (node) {
+          const writable = node.getWritable();
+          writable.__content = newContent;
+        }
+      });
+    },
+    [editor, nodeKey]
+  );
+
+  return (
+    <div className="toggle-block">
+      <div className="toggle-header" onClick={handleToggle}>
+        <span className={`toggle-arrow ${isOpen ? 'open' : ''}`}>▶</span>
+        <span
+          className="toggle-summary"
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={handleSummaryChange}
+        >
+          {summary}
+        </span>
+      </div>
+      {isOpen && (
+        <div
+          className="toggle-content"
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={handleContentChange}
+        >
+          {content}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export class ToggleNode extends DecoratorNode<JSX.Element> {
   __summary: string;
@@ -80,22 +163,12 @@ export class ToggleNode extends DecoratorNode<JSX.Element> {
   }
 
   createDOM(): HTMLElement {
-    const element = document.createElement('details');
-    element.className = 'toggle-block';
-    if (this.__isOpen) {
-      element.setAttribute('open', '');
-    }
+    const element = document.createElement('div');
+    element.className = 'toggle-wrapper';
     return element;
   }
 
-  updateDOM(prevNode: ToggleNode, dom: HTMLDetailsElement): boolean {
-    if (prevNode.__isOpen !== this.__isOpen) {
-      if (this.__isOpen) {
-        dom.setAttribute('open', '');
-      } else {
-        dom.removeAttribute('open');
-      }
-    }
+  updateDOM(): boolean {
     return false;
   }
 
@@ -105,7 +178,6 @@ export class ToggleNode extends DecoratorNode<JSX.Element> {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement('details');
-    element.className = 'toggle-block';
     if (this.__isOpen) {
       element.setAttribute('open', '');
     }
@@ -140,8 +212,14 @@ export class ToggleNode extends DecoratorNode<JSX.Element> {
   }
 
   decorate(): JSX.Element {
-    // This will be rendered by React
-    return null as unknown as JSX.Element;
+    return (
+      <ToggleComponent
+        nodeKey={this.__key}
+        summary={this.__summary}
+        content={this.__content}
+        isOpen={this.__isOpen}
+      />
+    );
   }
 
   isInline(): boolean {
