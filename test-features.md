@@ -120,19 +120,19 @@ print(fibonacci(10))
 
 ## Callouts (Admonitions)
 
-> \[!NOTE]
+> [!NOTE]
 > This is a note callout. Use it for additional information.
 
-> \[!TIP]
+> [!TIP]
 > This is a tip callout. Use it for helpful suggestions.
 
-> \[!WARNING]
+> [!WARNING]
 > This is a warning callout. Use it for important cautions.
 
-> \[!IMPORTANT]
+> [!IMPORTANT]
 > This is an important callout. Use it for critical information.
 
-> \[!CAUTION]
+> [!CAUTION]
 > This is a caution callout. Use it for dangerous operations.
 
 ## Toggle (Collapsible Section)

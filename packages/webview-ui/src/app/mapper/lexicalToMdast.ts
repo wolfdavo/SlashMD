@@ -290,16 +290,51 @@ function convertImageNode(node: ImageNode): Paragraph {
 
 function convertCalloutNode(node: CalloutNode): Blockquote {
   const calloutType = node.getCalloutType().toUpperCase();
-  const content = node.getContent();
+  const children: Paragraph[] = [];
 
-  const textNode: Text = {
-    type: 'text',
-    value: `[!${calloutType}]\n${content}`,
-  };
+  // Iterate through callout's children (paragraphs)
+  let isFirst = true;
+  for (const child of node.getChildren()) {
+    if ($isParagraphNode(child)) {
+      const inlineChildren = convertInlineChildren(child);
+
+      if (isFirst) {
+        // First paragraph gets the [!TYPE] prefix
+        const prefix: Text = { type: 'text', value: `[!${calloutType}]` };
+        const contentChildren: PhrasingContent[] = [prefix];
+
+        if (inlineChildren.length > 0) {
+          // Add newline before content if there is content
+          contentChildren.push({ type: 'text', value: '\n' });
+          contentChildren.push(...inlineChildren);
+        }
+
+        children.push({
+          type: 'paragraph',
+          children: contentChildren,
+        });
+        isFirst = false;
+      } else {
+        // Subsequent paragraphs are added as-is
+        children.push({
+          type: 'paragraph',
+          children: inlineChildren.length > 0 ? inlineChildren : [{ type: 'text', value: '' }],
+        });
+      }
+    }
+  }
+
+  // Ensure at least one paragraph with the type marker
+  if (children.length === 0) {
+    children.push({
+      type: 'paragraph',
+      children: [{ type: 'text', value: `[!${calloutType}]` }],
+    });
+  }
 
   return {
     type: 'blockquote',
-    children: [{ type: 'paragraph', children: [textNode] }],
+    children,
   };
 }
 

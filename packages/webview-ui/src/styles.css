@@ -677,6 +677,45 @@ body {
   background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.1));
 }
 
+/* Block Delete Button */
+.block-delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 50;
+  padding: 4px 4px 4px 12px;
+  background: none;
+  border: none;
+}
+
+.editor-inner:hover .block-delete-button {
+  opacity: 0.4;
+}
+
+.block-delete-button:hover {
+  opacity: 1;
+}
+
+.block-delete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+  color: var(--vscode-foreground);
+  user-select: none;
+  border-radius: 4px;
+}
+
+.block-delete-button:hover .block-delete-icon {
+  background: var(--vscode-inputValidation-errorBackground, rgba(255, 0, 0, 0.15));
+  color: var(--vscode-errorForeground, #f44336);
+}
+
 /* Code syntax highlighting */
 .editor-tokenComment {
   color: #6a9955;

@@ -1,10 +1,14 @@
 import {
-  DecoratorNode,
+  $createParagraphNode,
+  $createTextNode,
   DOMConversionMap,
+  DOMConversionOutput,
   DOMExportOutput,
+  EditorConfig,
+  ElementNode,
   LexicalNode,
   NodeKey,
-  SerializedLexicalNode,
+  SerializedElementNode,
   Spread,
 } from 'lexical';
 
@@ -13,40 +17,28 @@ export type CalloutType = 'note' | 'tip' | 'warning' | 'important' | 'caution';
 export type SerializedCalloutNode = Spread<
   {
     calloutType: CalloutType;
-    content: string;
   },
-  SerializedLexicalNode
+  SerializedElementNode
 >;
 
-export class CalloutNode extends DecoratorNode<JSX.Element> {
+export class CalloutNode extends ElementNode {
   __calloutType: CalloutType;
-  __content: string;
 
   static getType(): string {
     return 'callout';
   }
 
   static clone(node: CalloutNode): CalloutNode {
-    return new CalloutNode(node.__calloutType, node.__content, node.__key);
+    return new CalloutNode(node.__calloutType, node.__key);
   }
 
-  constructor(calloutType: CalloutType, content: string, key?: NodeKey) {
+  constructor(calloutType: CalloutType, key?: NodeKey) {
     super(key);
     this.__calloutType = calloutType;
-    this.__content = content;
   }
 
   getCalloutType(): CalloutType {
     return this.__calloutType;
-  }
-
-  getContent(): string {
-    return this.__content;
-  }
-
-  setContent(content: string): void {
-    const writable = this.getWritable();
-    writable.__content = content;
   }
 
   setCalloutType(calloutType: CalloutType): void {
@@ -54,55 +46,85 @@ export class CalloutNode extends DecoratorNode<JSX.Element> {
     writable.__calloutType = calloutType;
   }
 
-  createDOM(): HTMLElement {
+  createDOM(config: EditorConfig): HTMLElement {
     const element = document.createElement('div');
     element.className = `callout callout-${this.__calloutType}`;
+    element.setAttribute('data-callout-type', this.__calloutType);
     return element;
   }
 
-  updateDOM(): boolean {
+  updateDOM(prevNode: CalloutNode, dom: HTMLElement): boolean {
+    if (prevNode.__calloutType !== this.__calloutType) {
+      dom.className = `callout callout-${this.__calloutType}`;
+      dom.setAttribute('data-callout-type', this.__calloutType);
+    }
     return false;
   }
 
   static importDOM(): DOMConversionMap | null {
-    return null;
+    return {
+      div: (domNode: HTMLElement) => {
+        if (domNode.classList.contains('callout')) {
+          return {
+            conversion: convertCalloutElement,
+            priority: 1,
+          };
+        }
+        return null;
+      },
+    };
   }
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement('div');
     element.className = `callout callout-${this.__calloutType}`;
-    element.textContent = this.__content;
+    element.setAttribute('data-callout-type', this.__calloutType);
     return { element };
   }
 
   static importJSON(serializedNode: SerializedCalloutNode): CalloutNode {
-    return new CalloutNode(
-      serializedNode.calloutType,
-      serializedNode.content
-    );
+    const node = $createCalloutNode(serializedNode.calloutType);
+    return node;
   }
 
   exportJSON(): SerializedCalloutNode {
     return {
+      ...super.exportJSON(),
       type: 'callout',
       calloutType: this.__calloutType,
-      content: this.__content,
       version: 1,
     };
   }
 
-  decorate(): JSX.Element {
-    // This will be rendered by React
-    return null as unknown as JSX.Element;
+  // Allow block-level content inside callouts
+  canBeEmpty(): boolean {
+    return false;
   }
 
-  isInline(): boolean {
-    return false;
+  isShadowRoot(): boolean {
+    return true;
   }
 }
 
-export function $createCalloutNode(calloutType: CalloutType, content: string): CalloutNode {
-  return new CalloutNode(calloutType, content);
+function convertCalloutElement(domNode: HTMLElement): DOMConversionOutput | null {
+  const calloutType = (domNode.getAttribute('data-callout-type') || 'note') as CalloutType;
+  const node = $createCalloutNode(calloutType);
+  return { node };
+}
+
+export function $createCalloutNode(calloutType: CalloutType, content?: string): CalloutNode {
+  const node = new CalloutNode(calloutType);
+
+  // If content is provided, create a paragraph with text inside
+  if (content !== undefined) {
+    const paragraph = $createParagraphNode();
+    if (content) {
+      paragraph.append($createTextNode(content));
+    }
+    node.append(paragraph);
+  }
+
+  return node;
 }
 
 export function $isCalloutNode(node: LexicalNode | null | undefined): node is CalloutNode {

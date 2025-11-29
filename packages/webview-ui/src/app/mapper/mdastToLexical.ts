@@ -230,16 +230,50 @@ function convertBlockquote(node: Blockquote): LexicalBlockNode[] {
           const calloutType = calloutMatch[1].toLowerCase() as CalloutType;
           const restOfText = firstText.value.slice(calloutMatch[0].length).trim();
 
-          // Collect content from remaining children
-          let content = restOfText;
-          for (let i = 1; i < node.children.length; i++) {
-            const child = node.children[i];
-            if (child.type === 'paragraph') {
-              content += '\n' + extractTextFromParagraph(child);
+          // Create callout node without initial content
+          const callout = $createCalloutNode(calloutType);
+
+          // Create a paragraph for the first line's remaining text and rest of first paragraph
+          const firstParagraph = $createParagraphNode();
+
+          if (restOfText) {
+            firstParagraph.append($createTextNode(restOfText));
+          }
+
+          // Add remaining inline content from the first paragraph
+          for (let j = 1; j < firstChild.children.length; j++) {
+            const inlineNodes = convertInlineNode(firstChild.children[j]);
+            for (const n of inlineNodes) {
+              firstParagraph.append(n);
             }
           }
 
-          return [$createCalloutNode(calloutType, content)];
+          // Only add the paragraph if it has content
+          if (firstParagraph.getTextContent() || firstChild.children.length > 1) {
+            callout.append(firstParagraph);
+          }
+
+          // Convert remaining children (additional paragraphs, lists, etc.)
+          for (let i = 1; i < node.children.length; i++) {
+            const child = node.children[i];
+            if (child.type === 'paragraph') {
+              const p = $createParagraphNode();
+              for (const inlineChild of child.children) {
+                const nodes = convertInlineNode(inlineChild);
+                for (const n of nodes) {
+                  p.append(n);
+                }
+              }
+              callout.append(p);
+            }
+          }
+
+          // Ensure callout has at least one paragraph
+          if (callout.getChildrenSize() === 0) {
+            callout.append($createParagraphNode());
+          }
+
+          return [callout];
         }
       }
     }

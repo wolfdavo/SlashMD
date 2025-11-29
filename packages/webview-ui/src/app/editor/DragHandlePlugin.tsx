@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getNodeByKey, $getSelection, $isRangeSelection } from 'lexical';
+import { $getNodeByKey, $getSelection, $isRangeSelection, $createParagraphNode } from 'lexical';
 
 interface DragHandleState {
   isVisible: boolean;
@@ -274,27 +274,77 @@ export function DragHandlePlugin() {
     dropTargetKey.current = null;
   };
 
+  const handleDelete = useCallback(() => {
+    if (!dragState.nodeKey) return;
+
+    editor.update(() => {
+      const node = $getNodeByKey(dragState.nodeKey!);
+      if (node) {
+        // If this is the only node, replace with empty paragraph
+        const parent = node.getParent();
+        if (parent && parent.getChildrenSize() === 1) {
+          const paragraph = $createParagraphNode();
+          node.replace(paragraph);
+          paragraph.selectStart();
+        } else {
+          // Select the next or previous node before removing
+          const nextSibling = node.getNextSibling();
+          const prevSibling = node.getPreviousSibling();
+          node.remove();
+
+          if (nextSibling) {
+            nextSibling.selectStart();
+          } else if (prevSibling) {
+            prevSibling.selectEnd();
+          }
+        }
+      }
+    });
+
+    setDragState((prev) => ({ ...prev, isVisible: false }));
+  }, [editor, dragState.nodeKey]);
+
   return (
     <>
       {dragState.isVisible && (
-        <div
-          ref={handleRef}
-          className={`drag-handle ${isDragging ? 'dragging' : ''}`}
-          style={{
-            position: 'absolute',
-            top: dragState.position.top,
-            left: dragState.position.left,
-            transform: 'translateX(-100%)',
-          }}
-          draggable
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          aria-label="Drag to reorder block"
-          role="button"
-          tabIndex={0}
-        >
-          <span className="drag-handle-icon">⋮⋮</span>
-        </div>
+        <>
+          {/* Drag handle on the left */}
+          <div
+            ref={handleRef}
+            className={`drag-handle ${isDragging ? 'dragging' : ''}`}
+            style={{
+              position: 'absolute',
+              top: dragState.position.top,
+              left: dragState.position.left,
+              transform: 'translateX(-100%)',
+            }}
+            draggable
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            aria-label="Drag to reorder block"
+            role="button"
+            tabIndex={0}
+          >
+            <span className="drag-handle-icon">⋮⋮</span>
+          </div>
+
+          {/* Delete button on the right */}
+          <button
+            className="block-delete-button"
+            style={{
+              position: 'absolute',
+              top: dragState.position.top,
+              right: 0,
+              transform: 'translateX(100%)',
+            }}
+            onClick={handleDelete}
+            aria-label="Delete block"
+            title="Delete block"
+            tabIndex={0}
+          >
+            <span className="block-delete-icon">×</span>
+          </button>
+        </>
       )}
       {dropIndicator && (
         <div
