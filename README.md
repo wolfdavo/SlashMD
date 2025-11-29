@@ -45,7 +45,7 @@ Type `/` anywhere to insert blocks with fuzzy search. Headings, lists, code bloc
 Select text to reveal the formatting toolbar:
 
 - **Bold** (Cmd/Ctrl+B)
-- _Italic_ (Cmd/Ctrl+I)
+- *Italic* (Cmd/Ctrl+I)
 - `Code` (Cmd/Ctrl+E)
 - [Links](.) (Cmd/Ctrl+K)
 - ~~Strikethrough~~
