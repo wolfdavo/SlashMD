@@ -358,16 +358,34 @@ body {
   color: rgb(96, 165, 250);
 }
 
-/* Horizontal Rule */
-.horizontal-rule {
+/* Horizontal Rule / Divider */
+.horizontal-rule,
+.divider-block {
   border: none;
-  border-top: 1px solid rgb(51, 65, 85);
-  margin: 1.5rem 0;
+  height: 48px;
+  margin: 1rem 0;
+  background: transparent;
+  position: relative;
   cursor: pointer;
+  display: block;
+  width: 100%;
 }
 
-.horizontal-rule:hover {
-  border-color: rgb(100, 116, 139);
+.horizontal-rule::before,
+.divider-block::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgb(100, 116, 139);
+  opacity: 0.3;
+}
+
+.horizontal-rule:hover::before,
+.divider-block:hover::before {
+  opacity: 0.5;
 }
 
 /* Callouts */

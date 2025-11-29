@@ -27,6 +27,7 @@ import { BlockClickPlugin } from './BlockClickPlugin';
 import { Toolbar } from './Toolbar';
 import { ImagePlugin } from './ImagePlugin';
 import { TableActionsPlugin } from './TableActionsPlugin';
+import { MarkdownSyncPlugin } from './MarkdownSyncPlugin';
 import {
   CalloutNode,
   ToggleContainerNode,
@@ -126,7 +127,7 @@ const editorNodes = [
   HorizontalRuleNode,
 ];
 
-const initialContent = `# Welcome to SlashMD
+export const initialContent = `# Welcome to SlashMD
 
 A beautiful block-based editor for your Markdown files. Everything stays as **plain Markdown** on disk.
 
@@ -152,10 +153,15 @@ editor.open("README.md");
 
 :::warning
 This is a live demo! Your changes won't be saved when you leave the page.
-:::
-`;
+:::`;
 
-export function DemoEditor() {
+interface DemoEditorProps {
+  onMarkdownChange?: (markdown: string) => void;
+  externalMarkdown?: string;
+  lastExternalUpdate?: number;
+}
+
+export function DemoEditor({ onMarkdownChange, externalMarkdown, lastExternalUpdate }: DemoEditorProps) {
   const initialConfig = {
     namespace: 'SlashMD-Demo',
     theme: editorTheme,
@@ -197,6 +203,11 @@ export function DemoEditor() {
         <Toolbar />
         <ImagePlugin />
         <TableActionsPlugin />
+        <MarkdownSyncPlugin
+          onMarkdownChange={onMarkdownChange}
+          externalMarkdown={externalMarkdown}
+          lastExternalUpdate={lastExternalUpdate}
+        />
       </div>
     </LexicalComposer>
   );
