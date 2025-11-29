@@ -52,6 +52,7 @@ const LANGUAGES = [
 interface CodeBlockInfo {
   nodeKey: string;
   language: string;
+  textContent: string;
   rect: DOMRect;
 }
 
@@ -204,24 +205,26 @@ export function CodeBlockPlugin() {
         const root = $getRoot();
         const codeNodes = findCodeNodesInTree(root);
 
-        // Collect node keys and languages first (no DOM reads)
-        const nodeData: Array<{ nodeKey: string; language: string }> = [];
+        // Collect node keys, languages, and text content first (no DOM reads)
+        const nodeData: Array<{ nodeKey: string; language: string; textContent: string }> = [];
         for (const node of codeNodes) {
           nodeData.push({
             nodeKey: node.getKey(),
             language: node.getLanguage() || '',
+            textContent: node.getTextContent(),
           });
         }
 
         // Batch DOM reads in a single pass after the read()
         requestAnimationFrame(() => {
           const blocks: CodeBlockInfo[] = [];
-          for (const { nodeKey, language } of nodeData) {
+          for (const { nodeKey, language, textContent } of nodeData) {
             const element = editor.getElementByKey(nodeKey);
             if (element) {
               blocks.push({
                 nodeKey,
                 language,
+                textContent,
                 rect: element.getBoundingClientRect(),
               });
             }
@@ -275,30 +278,65 @@ export function CodeBlockPlugin() {
     setSelectorState(null);
   }, []);
 
+  // Track which code blocks show "Copied" feedback
+  const [copiedNodeKey, setCopiedNodeKey] = useState<string | null>(null);
+
+  const handleCopyCode = useCallback((nodeKey: string, textContent: string) => {
+    navigator.clipboard.writeText(textContent).then(() => {
+      setCopiedNodeKey(nodeKey);
+      setTimeout(() => setCopiedNodeKey(null), 1500);
+    });
+  }, []);
+
   return (
     <>
       {codeBlocks.map((block) => {
         // Normalize empty/null/undefined to 'plain' for comparison
         const normalizedLang = block.language || 'plain';
         const langLabel = LANGUAGES.find((l) => l.value === normalizedLang)?.label || normalizedLang;
+        const isCopied = copiedNodeKey === block.nodeKey;
         return (
-          <button
+          <div
             key={block.nodeKey}
-            className="code-language-button"
+            className="code-block-toolbar"
             style={{
               position: 'fixed',
               top: block.rect.top + 6,
               right: window.innerWidth - block.rect.right + 8,
             }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const rect = (e.target as HTMLElement).getBoundingClientRect();
-              handleOpenSelector(block.nodeKey, block.language, rect);
-            }}
           >
-            {langLabel}
-          </button>
+            <button
+              className="code-language-button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const rect = (e.target as HTMLElement).getBoundingClientRect();
+                handleOpenSelector(block.nodeKey, block.language, rect);
+              }}
+            >
+              {langLabel}
+            </button>
+            <button
+              className={`code-copy-button ${isCopied ? 'copied' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleCopyCode(block.nodeKey, block.textContent);
+              }}
+              title="Copy code"
+            >
+              {isCopied ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              )}
+            </button>
+          </div>
         );
       })}
       {selectorState && (

@@ -198,6 +198,15 @@ body {
   white-space: pre;
 }
 
+/* Code Block Toolbar */
+.code-block-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
 /* Code Language Selector Button */
 .code-language-button {
   padding: 2px 8px;
@@ -210,13 +219,38 @@ body {
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.15s, background 0.15s;
-  z-index: 50;
-  pointer-events: auto;
 }
 
 .code-language-button:hover {
   opacity: 1;
   background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+/* Code Copy Button */
+.code-copy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 20px;
+  padding: 0;
+  color: var(--vscode-foreground);
+  background: var(--vscode-code-bg);
+  border: 1px solid var(--vscode-border);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.code-copy-button:hover {
+  opacity: 1;
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+.code-copy-button.copied {
+  opacity: 1;
+  color: var(--vscode-notificationsInfoIcon-foreground, #3794ff);
 }
 
 /* Code Language Selector Menu */
