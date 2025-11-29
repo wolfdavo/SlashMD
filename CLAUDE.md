@@ -18,6 +18,15 @@ npm run build
 # Watch mode for development
 npm run dev
 
+# Lint all packages
+npm run lint
+
+# Run tests
+npm run test
+
+# Security audit
+npm run audit
+
 # Package the extension for distribution
 npm run package
 
@@ -72,6 +81,7 @@ Host → UI messages: `DOC_INIT`, `DOC_CHANGED`, `ASSET_WRITTEN`, `SETTINGS_CHAN
 
 ## Technical Constraints
 
+- Requires VS Code 1.85.0+ or Cursor
 - Use only stable VS Code APIs (for Cursor compatibility)
 - Strict webview CSP - no remote code, all JS/CSS bundled
 - Underlying file must always be plain Markdown - no sidecar state
