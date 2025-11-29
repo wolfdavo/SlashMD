@@ -157,6 +157,7 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
               }
             }
             break;
+
         }
       }
     );

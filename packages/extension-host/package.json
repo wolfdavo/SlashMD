@@ -32,7 +32,29 @@
       {
         "command": "slashmd.openAsText",
         "title": "Open as Raw Markdown",
-        "category": "SlashMD"
+        "category": "SlashMD",
+        "icon": {
+          "light": "media/code-light.svg",
+          "dark": "media/code-dark.svg"
+        }
+      },
+      {
+        "command": "slashmd.openAsSlashMD",
+        "title": "Open as SlashMD",
+        "category": "SlashMD",
+        "icon": {
+          "light": "media/blocks-light.svg",
+          "dark": "media/blocks-dark.svg"
+        }
+      },
+      {
+        "command": "slashmd.copyContent",
+        "title": "Copy Markdown Content",
+        "category": "SlashMD",
+        "icon": {
+          "light": "media/copy-light.svg",
+          "dark": "media/copy-dark.svg"
+        }
       },
       {
         "command": "slashmd.insertBlock",
@@ -43,8 +65,23 @@
     "menus": {
       "editor/title": [
         {
+          "command": "slashmd.copyContent",
+          "when": "activeCustomEditorId == slashmd.editor",
+          "group": "navigation"
+        },
+        {
           "command": "slashmd.openAsText",
           "when": "activeCustomEditorId == slashmd.editor",
+          "group": "navigation"
+        },
+        {
+          "command": "slashmd.copyContent",
+          "when": "resourceLangId == markdown && activeCustomEditorId != slashmd.editor",
+          "group": "navigation"
+        },
+        {
+          "command": "slashmd.openAsSlashMD",
+          "when": "resourceLangId == markdown && activeCustomEditorId != slashmd.editor",
           "group": "navigation"
         }
       ]
