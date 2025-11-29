@@ -676,6 +676,34 @@ body {
   margin: 0 4px;
 }
 
+.toolbar-link-input {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  padding: 8px;
+  background: var(--vscode-background);
+  border: 1px solid var(--vscode-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.toolbar-link-input input {
+  width: 220px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--vscode-text);
+  background: var(--vscode-input-bg, var(--vscode-code-bg));
+  border: 1px solid var(--vscode-border);
+  border-radius: 4px;
+  outline: none;
+}
+
+.toolbar-link-input input:focus {
+  border-color: var(--vscode-focus-border, #007acc);
+}
+
 /* Slash Menu */
 .slash-menu {
   position: fixed;
