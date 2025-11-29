@@ -73,11 +73,14 @@ body {
   position: relative;
   max-width: 800px;
   margin: 0 auto;
+  /* Ensure space for drag handle (left) and delete button (right) on narrow screens */
+  padding-left: 32px;
+  padding-right: 32px;
 }
 
 .editor-inner {
   position: relative;
-  padding-left: 28px;
+  /* No padding-left needed here since container handles it */
 }
 
 .editor-input {
@@ -484,6 +487,11 @@ body {
 .callout-caution {
   background: rgba(255, 51, 51, 0.1);
   border-left-color: #ff3333;
+}
+
+/* Remove bottom margin from last paragraph in callout */
+.callout > .editor-paragraph:last-child {
+  margin-bottom: 0;
 }
 
 /* Toggle - New ElementNode-based structure */

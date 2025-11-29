@@ -26,6 +26,7 @@ import { TableActionsPlugin } from './TableActionsPlugin';
 import { CodeBlockPlugin } from './CodeBlockPlugin';
 import { TogglePlugin } from './TogglePlugin';
 import { ImagePlugin } from './ImagePlugin';
+import { BlockClickPlugin } from './BlockClickPlugin';
 import { AssetContext, createAssetContextValue } from './AssetContext';
 import {
   CalloutNode,
@@ -255,6 +256,7 @@ export function Editor({ initialContent, onChange, assetBaseUri }: EditorProps) 
             <CodeBlockPlugin />
             <TogglePlugin />
             <ImagePlugin />
+            <BlockClickPlugin />
             <Toolbar />
           </div>
         </div>
