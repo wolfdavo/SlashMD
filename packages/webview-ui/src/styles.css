@@ -1260,3 +1260,137 @@ body {
 .image-modal-button.primary:hover {
   filter: brightness(1.1);
 }
+
+/* Search Bar */
+.search-bar {
+  position: fixed;
+  top: 8px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--vscode-background);
+  border: 1px solid var(--vscode-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 500;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--vscode-code-bg);
+  border: 1px solid var(--vscode-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.search-input-wrapper:focus-within {
+  outline: none;
+}
+
+.search-bar *:focus,
+.search-bar *:focus-visible {
+  outline: none !important;
+}
+
+.search-icon {
+  flex-shrink: 0;
+  color: var(--vscode-foreground);
+  opacity: 0.5;
+}
+
+.search-input {
+  width: 200px;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground);
+  font-size: 14px;
+  font-family: var(--vscode-font-family);
+  outline: none !important;
+}
+
+.search-input:focus,
+.search-input:focus-visible {
+  outline: none !important;
+  box-shadow: none;
+}
+
+.search-input::placeholder {
+  color: var(--vscode-foreground);
+  opacity: 0.5;
+}
+
+.search-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.search-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.search-nav-button,
+.search-close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+  transition: background 0.15s;
+}
+
+.search-nav-button:hover:not(:disabled),
+.search-close-button:hover {
+  background: var(--vscode-code-bg);
+}
+
+.search-nav-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.search-close-button:hover {
+  color: var(--vscode-errorForeground, #f44336);
+}
+
+/* Search Highlight Layer */
+.search-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-highlight {
+  position: absolute;
+  background: rgba(255, 213, 0, 0.4);
+  border-radius: 2px;
+  mix-blend-mode: multiply;
+}
+
+/* Dark theme adjustment */
+@media (prefers-color-scheme: dark) {
+  .search-highlight {
+    background: rgba(255, 213, 0, 0.3);
+    mix-blend-mode: screen;
+  }
+}
+
+.search-highlight.current {
+  background: rgba(255, 153, 0, 0.6);
+  outline: 2px solid rgba(255, 153, 0, 0.8);
+}

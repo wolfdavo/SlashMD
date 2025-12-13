@@ -27,6 +27,7 @@ import { CodeBlockPlugin } from './CodeBlockPlugin';
 import { TogglePlugin } from './TogglePlugin';
 import { ImagePlugin } from './ImagePlugin';
 import { BlockClickPlugin } from './BlockClickPlugin';
+import { SearchPlugin } from './SearchPlugin';
 import { AssetContext, createAssetContextValue } from './AssetContext';
 import {
   CalloutNode,
@@ -165,6 +166,30 @@ function InitializePlugin({ content }: { content: string }) {
   return null;
 }
 
+// Plugin to auto-focus the editor when it mounts
+function AutoFocusPlugin() {
+  const [editor] = useLexicalComposerContext();
+  const hasFocused = useRef(false);
+
+  useEffect(() => {
+    if (hasFocused.current) return;
+    hasFocused.current = true;
+
+    // Small delay to ensure the editor is fully ready
+    const timeoutId = setTimeout(() => {
+      const rootElement = editor.getRootElement();
+      if (rootElement) {
+        // Focus without scrolling
+        rootElement.focus({ preventScroll: true });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [editor]);
+
+  return null;
+}
+
 // Simple hash function for content comparison
 function simpleHash(str: string): number {
   let hash = 0;
@@ -293,6 +318,7 @@ export function Editor({ initialContent, onChange, assetBaseUri }: EditorProps) 
             <CodeHighlightPlugin />
             <OnChangePlugin onChange={handleChange} ignoreSelectionChange />
             <InitializePlugin content={initialContent} />
+            <AutoFocusPlugin />
             <ExternalUpdatePlugin
               content={initialContent}
               lastInternalUpdate={lastInternalUpdate}
@@ -306,6 +332,7 @@ export function Editor({ initialContent, onChange, assetBaseUri }: EditorProps) 
             <ImagePlugin />
             <BlockClickPlugin />
             <Toolbar />
+            <SearchPlugin />
           </div>
         </div>
       </LexicalComposer>
