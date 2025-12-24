@@ -123,10 +123,36 @@ export function SlashMenuPlugin() {
         }
 
         const rect = slashRange.getBoundingClientRect();
-        const newPosition = {
-          top: rect.bottom + 4,
-          left: rect.left,
-        };
+        const menuHeight = 320; // max-height from CSS
+        const menuWidth = 280; // min-width from CSS
+        const padding = 4;
+
+        // Check if menu would overflow bottom of viewport
+        const spaceBelow = window.innerHeight - rect.bottom - padding;
+        const spaceAbove = rect.top - padding;
+
+        let top: number;
+        if (spaceBelow >= menuHeight) {
+          // Enough space below - position below cursor
+          top = rect.bottom + padding;
+        } else if (spaceAbove >= menuHeight) {
+          // Not enough below, but enough above - position above cursor
+          top = rect.top - menuHeight - padding;
+        } else {
+          // Not enough space either way - position where there's more room
+          top =
+            spaceBelow > spaceAbove
+              ? rect.bottom + padding
+              : rect.top - menuHeight - padding;
+        }
+
+        // Check horizontal overflow
+        let left = rect.left;
+        if (left + menuWidth > window.innerWidth) {
+          left = Math.max(padding, window.innerWidth - menuWidth - padding);
+        }
+
+        const newPosition = { top, left };
 
         // Only update state if something changed
         const currentState = menuStateRef.current;
