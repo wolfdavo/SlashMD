@@ -8,6 +8,28 @@
   --vscode-border: var(--vscode-panel-border, #e0e0e0);
   --vscode-link: var(--vscode-textLink-foreground, #0066cc);
   --vscode-code-bg: var(--vscode-textCodeBlock-background, #f5f5f5);
+
+  /* SlashMD Theme Variables - Syntax Highlighting */
+  --slashmd-token-comment: #6a9955;
+  --slashmd-token-punctuation: #d4d4d4;
+  --slashmd-token-property: #9cdcfe;
+  --slashmd-token-selector: #ce9178;
+  --slashmd-token-operator: #d4d4d4;
+  --slashmd-token-keyword: #569cd6;
+  --slashmd-token-variable: #4ec9b0;
+  --slashmd-token-function: #dcdcaa;
+
+  /* SlashMD Theme Variables - Callouts */
+  --slashmd-callout-note-bg: rgba(0, 102, 204, 0.1);
+  --slashmd-callout-note-border: #0066cc;
+  --slashmd-callout-tip-bg: rgba(0, 153, 51, 0.1);
+  --slashmd-callout-tip-border: #009933;
+  --slashmd-callout-warning-bg: rgba(255, 153, 0, 0.1);
+  --slashmd-callout-warning-border: #ff9900;
+  --slashmd-callout-important-bg: rgba(153, 51, 255, 0.1);
+  --slashmd-callout-important-border: #9933ff;
+  --slashmd-callout-caution-bg: rgba(255, 51, 51, 0.1);
+  --slashmd-callout-caution-border: #ff3333;
 }
 
 * {
@@ -499,28 +521,28 @@ body {
 }
 
 .callout-note {
-  background: rgba(0, 102, 204, 0.1);
-  border-left-color: #0066cc;
+  background: var(--slashmd-callout-note-bg);
+  border-left-color: var(--slashmd-callout-note-border);
 }
 
 .callout-tip {
-  background: rgba(0, 153, 51, 0.1);
-  border-left-color: #009933;
+  background: var(--slashmd-callout-tip-bg);
+  border-left-color: var(--slashmd-callout-tip-border);
 }
 
 .callout-warning {
-  background: rgba(255, 153, 0, 0.1);
-  border-left-color: #ff9900;
+  background: var(--slashmd-callout-warning-bg);
+  border-left-color: var(--slashmd-callout-warning-border);
 }
 
 .callout-important {
-  background: rgba(153, 51, 255, 0.1);
-  border-left-color: #9933ff;
+  background: var(--slashmd-callout-important-bg);
+  border-left-color: var(--slashmd-callout-important-border);
 }
 
 .callout-caution {
-  background: rgba(255, 51, 51, 0.1);
-  border-left-color: #ff3333;
+  background: var(--slashmd-callout-caution-bg);
+  border-left-color: var(--slashmd-callout-caution-border);
 }
 
 /* Remove bottom margin from last paragraph in callout */
@@ -866,35 +888,35 @@ body {
 
 /* Code syntax highlighting */
 .editor-tokenComment {
-  color: #6a9955;
+  color: var(--slashmd-token-comment);
 }
 
 .editor-tokenPunctuation {
-  color: #d4d4d4;
+  color: var(--slashmd-token-punctuation);
 }
 
 .editor-tokenProperty {
-  color: #9cdcfe;
+  color: var(--slashmd-token-property);
 }
 
 .editor-tokenSelector {
-  color: #ce9178;
+  color: var(--slashmd-token-selector);
 }
 
 .editor-tokenOperator {
-  color: #d4d4d4;
+  color: var(--slashmd-token-operator);
 }
 
 .editor-tokenAttr {
-  color: #569cd6;
+  color: var(--slashmd-token-keyword);
 }
 
 .editor-tokenVariable {
-  color: #4ec9b0;
+  color: var(--slashmd-token-variable);
 }
 
 .editor-tokenFunction {
-  color: #dcdcaa;
+  color: var(--slashmd-token-function);
 }
 
 /* Scrollbar */

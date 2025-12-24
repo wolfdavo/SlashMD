@@ -6,7 +6,7 @@ import {
   applyTextEdits,
   writeAsset,
 } from '../messaging';
-import type { HostToUIMessage, SlashMDSettings, TextEdit } from '../types';
+import type { HostToUIMessage, SlashMDSettings, TextEdit, ThemeOverrides } from '../types';
 
 // Simple diff algorithm to find the changed region between two strings
 function computeMinimalEdits(oldText: string, newText: string): TextEdit[] {
@@ -44,6 +44,7 @@ export function App() {
   const [content, setContent] = useState<string | null>(null);
   const [settings, setSettings] = useState<SlashMDSettings | null>(null);
   const [assetBaseUri, setAssetBaseUri] = useState<string | undefined>(undefined);
+  const [themeOverrides, setThemeOverrides] = useState<ThemeOverrides | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const pendingAssetCallback = useRef<((relPath: string) => void) | null>(null);
   // Track the last known document content for diff computation
@@ -60,6 +61,7 @@ export function App() {
           setContent(message.text);
           setSettings(message.settings);
           setAssetBaseUri(message.assetBaseUri);
+          setThemeOverrides(message.themeOverrides);
           break;
 
         case 'DOC_CHANGED':
@@ -69,6 +71,7 @@ export function App() {
 
         case 'SETTINGS_CHANGED':
           setSettings(message.settings);
+          setThemeOverrides(message.themeOverrides);
           break;
 
         case 'ASSET_WRITTEN':
@@ -90,6 +93,16 @@ export function App() {
 
     return removeHandler;
   }, []);
+
+  // Apply theme overrides as CSS variables
+  useEffect(() => {
+    if (!themeOverrides) return;
+
+    const root = document.documentElement;
+    for (const [property, value] of Object.entries(themeOverrides)) {
+      root.style.setProperty(property, value);
+    }
+  }, [themeOverrides]);
 
   const handleChange = useCallback((markdown: string) => {
     // Calculate diff and send minimal edits

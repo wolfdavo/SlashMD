@@ -149,6 +149,27 @@
           "type": "boolean",
           "default": false,
           "description": "Enable Mermaid diagram support."
+        },
+        "slashmd.theme.codeTheme": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "dark",
+            "light",
+            "github-dark",
+            "github-light",
+            "monokai"
+          ],
+          "default": "auto",
+          "description": "Syntax highlighting theme for code blocks. 'auto' follows your VS Code theme.",
+          "enumDescriptions": [
+            "Automatically match your VS Code theme (dark or light)",
+            "Dark theme (VS Code Dark+)",
+            "Light theme (VS Code Light+)",
+            "GitHub Dark theme",
+            "GitHub Light theme",
+            "Monokai theme"
+          ]
         }
       }
     }

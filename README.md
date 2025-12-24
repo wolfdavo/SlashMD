@@ -58,6 +58,21 @@ Paste or drag images directly into the editor. SlashMD automatically saves them 
 
 SlashMD respects your VS Code color theme — light, dark, or high contrast.
 
+#### Code Block Themes
+
+By default, code block syntax highlighting automatically adapts to your VS Code theme (light or dark). You can also choose a specific theme:
+
+| Theme          | Description                |
+| -------------- | -------------------------- |
+| `auto`         | Matches your VS Code theme |
+| `dark`         | VS Code Dark+ colors       |
+| `light`        | VS Code Light+ colors      |
+| `github-dark`  | GitHub's dark theme        |
+| `github-light` | GitHub's light theme       |
+| `monokai`      | Classic Monokai colors     |
+
+Change this in Settings → `slashmd.theme.codeTheme`
+
 ## Keyboard Shortcuts
 
 | Shortcut      | Action             |
@@ -79,11 +94,12 @@ SlashMD respects your VS Code color theme — light, dark, or high contrast.
 
 ## Settings
 
-| Setting                  | Description                              | Default      |
-| ------------------------ | ---------------------------------------- | ------------ |
-| `slashmd.assets.folder`  | Folder for pasted images                 | `assets`     |
-| `slashmd.callouts.style` | Callout syntax (`admonition` or `emoji`) | `admonition` |
-| `slashmd.toggles.syntax` | Toggle syntax (`details` or `list`)      | `details`    |
+| Setting                   | Description                              | Default      |
+| ------------------------- | ---------------------------------------- | ------------ |
+| `slashmd.assets.folder`   | Folder for pasted images                 | `assets`     |
+| `slashmd.callouts.style`  | Callout syntax (`admonition` or `emoji`) | `admonition` |
+| `slashmd.toggles.syntax`  | Toggle syntax (`details` or `list`)      | `details`    |
+| `slashmd.theme.codeTheme` | Code block syntax highlighting theme     | `auto`       |
 
 ## Requirements
 

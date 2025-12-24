@@ -23,6 +23,12 @@ export const TextEditSchema = z.object({
   newText: z.string().max(10_000_000),
 });
 
+// Code theme options
+export const CodeThemeSchema = z.enum(['auto', 'dark', 'light', 'github-dark', 'github-light', 'monokai']);
+
+// Theme overrides - CSS variable values
+export const ThemeOverridesSchema = z.record(z.string(), z.string());
+
 export const SlashMDSettingsSchema = z.object({
   assetsFolder: z.string().max(256),
   formatWrap: z.number().int().min(0).max(1000),
@@ -30,6 +36,7 @@ export const SlashMDSettingsSchema = z.object({
   togglesSyntax: z.enum(['details', 'list']),
   mathEnabled: z.boolean(),
   mermaidEnabled: z.boolean(),
+  codeTheme: CodeThemeSchema,
 });
 
 // Host → UI message schemas
@@ -38,6 +45,7 @@ export const DocInitMessageSchema = z.object({
   text: z.string(),
   settings: SlashMDSettingsSchema,
   assetBaseUri: z.string().optional(),
+  themeOverrides: ThemeOverridesSchema.optional(),
 });
 
 export const DocChangedMessageSchema = z.object({
@@ -58,6 +66,7 @@ export const AssetWrittenMessageSchema = z.object({
 export const SettingsChangedMessageSchema = z.object({
   type: z.literal('SETTINGS_CHANGED'),
   settings: SlashMDSettingsSchema,
+  themeOverrides: ThemeOverridesSchema.optional(),
 });
 
 export const ErrorMessageSchema = z.object({
@@ -78,6 +87,8 @@ export const HostToUIMessageSchema = z.discriminatedUnion('type', [
 // =============================================================================
 
 export type TextEdit = z.infer<typeof TextEditSchema>;
+export type CodeTheme = z.infer<typeof CodeThemeSchema>;
+export type ThemeOverrides = z.infer<typeof ThemeOverridesSchema>;
 export type SlashMDSettings = z.infer<typeof SlashMDSettingsSchema>;
 export type HostToUIMessage = z.infer<typeof HostToUIMessageSchema>;
 

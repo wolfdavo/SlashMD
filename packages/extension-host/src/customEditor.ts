@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { generateNonce, buildCsp } from './csp';
-import { getSettings } from './types';
+import { getSettings, getThemeOverrides } from './types';
 import { AssetService } from './assetService';
 import { UIToHostMessageSchema } from './validation';
 
@@ -77,11 +77,13 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
         }
       }
 
+      const settings = getSettings();
       webviewPanel.webview.postMessage({
         type: 'DOC_INIT',
         text: text,
-        settings: getSettings(),
+        settings,
         assetBaseUri,
+        themeOverrides: getThemeOverrides(settings),
       });
     };
 
@@ -103,12 +105,15 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
             sendDocumentToWebview();
             break;
 
-          case 'REQUEST_SETTINGS':
+          case 'REQUEST_SETTINGS': {
+            const reqSettings = getSettings();
             webviewPanel.webview.postMessage({
               type: 'SETTINGS_CHANGED',
-              settings: getSettings(),
+              settings: reqSettings,
+              themeOverrides: getThemeOverrides(reqSettings),
             });
             break;
+          }
 
           case 'APPLY_TEXT_EDITS':
             if (message.edits && message.edits.length > 0) {
@@ -187,9 +192,24 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     // Handle settings changes
     const configChangeSubscription = vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('slashmd')) {
+        const newSettings = getSettings();
         webviewPanel.webview.postMessage({
           type: 'SETTINGS_CHANGED',
-          settings: getSettings(),
+          settings: newSettings,
+          themeOverrides: getThemeOverrides(newSettings),
+        });
+      }
+    });
+
+    // Handle VS Code theme changes (for auto theme detection)
+    const themeChangeSubscription = vscode.window.onDidChangeActiveColorTheme(() => {
+      const currentSettings = getSettings();
+      // Only update if using auto theme
+      if (currentSettings.codeTheme === 'auto') {
+        webviewPanel.webview.postMessage({
+          type: 'SETTINGS_CHANGED',
+          settings: currentSettings,
+          themeOverrides: getThemeOverrides(currentSettings),
         });
       }
     });
@@ -199,6 +219,7 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
       messageHandler.dispose();
       changeDocumentSubscription.dispose();
       configChangeSubscription.dispose();
+      themeChangeSubscription.dispose();
     });
 
     // Send initial content after a short delay to ensure webview is ready
