@@ -19,6 +19,11 @@
   --slashmd-token-variable: #4ec9b0;
   --slashmd-token-function: #dcdcaa;
 
+  /* SlashMD Theme Variables - Typography */
+  --slashmd-heading-color: inherit;
+  --slashmd-bold-color: inherit;
+  --slashmd-italic-color: inherit;
+
   /* SlashMD Theme Variables - Callouts */
   --slashmd-callout-note-bg: rgba(0, 102, 204, 0.1);
   --slashmd-callout-note-border: #0066cc;
@@ -131,6 +136,7 @@ body {
   font-weight: 700;
   margin: 24px 0 16px 0;
   line-height: 1.2;
+  color: var(--slashmd-heading-color);
 }
 
 .editor-heading-h2 {
@@ -138,6 +144,7 @@ body {
   font-weight: 600;
   margin: 20px 0 12px 0;
   line-height: 1.3;
+  color: var(--slashmd-heading-color);
 }
 
 .editor-heading-h3 {
@@ -145,6 +152,7 @@ body {
   font-weight: 600;
   margin: 16px 0 8px 0;
   line-height: 1.4;
+  color: var(--slashmd-heading-color);
 }
 
 /* Lists */
@@ -350,10 +358,12 @@ body {
 /* Inline text formatting */
 .editor-text-bold {
   font-weight: 700;
+  color: var(--slashmd-bold-color);
 }
 
 .editor-text-italic {
   font-style: italic;
+  color: var(--slashmd-italic-color);
 }
 
 .editor-text-strikethrough {

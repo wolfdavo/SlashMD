@@ -8,7 +8,7 @@
     "color": "#161617",
     "theme": "dark"
   },
-  "version": "0.1.1",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -170,6 +170,21 @@
             "GitHub Light theme",
             "Monokai theme"
           ]
+        },
+        "slashmd.theme.headingColor": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for headings (e.g., '#e06c75' or 'coral'). Leave empty to use default."
+        },
+        "slashmd.theme.boldColor": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for bold text (e.g., '#d19a66' or 'orange'). Leave empty to use default."
+        },
+        "slashmd.theme.italicColor": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for italic text (e.g., '#98c379' or 'green'). Leave empty to use default."
         }
       }
     }

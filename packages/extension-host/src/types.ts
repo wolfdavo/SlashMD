@@ -10,6 +10,9 @@ export interface SlashMDSettings {
   mathEnabled: boolean;
   mermaidEnabled: boolean;
   codeTheme: CodeTheme;
+  headingColor: string;
+  boldColor: string;
+  italicColor: string;
 }
 
 export type ThemeOverrides = Record<string, string>;
@@ -78,6 +81,9 @@ export function getSettings(): SlashMDSettings {
     mathEnabled: config.get<boolean>('math.enabled', false),
     mermaidEnabled: config.get<boolean>('mermaid.enabled', false),
     codeTheme: config.get<CodeTheme>('theme.codeTheme', 'auto'),
+    headingColor: config.get<string>('theme.headingColor', ''),
+    boldColor: config.get<string>('theme.boldColor', ''),
+    italicColor: config.get<string>('theme.italicColor', ''),
   };
 }
 
@@ -102,5 +108,12 @@ function getEffectiveTheme(codeTheme: CodeTheme): 'dark' | 'light' | 'github-dar
  */
 export function getThemeOverrides(settings: SlashMDSettings): ThemeOverrides {
   const effectiveTheme = getEffectiveTheme(settings.codeTheme);
-  return THEME_PRESETS[effectiveTheme] || THEME_PRESETS.dark;
+  const overrides: ThemeOverrides = { ...(THEME_PRESETS[effectiveTheme] || THEME_PRESETS.dark) };
+
+  // Always include typography colors - use 'inherit' as default to reset when cleared
+  overrides['--slashmd-heading-color'] = settings.headingColor || 'inherit';
+  overrides['--slashmd-bold-color'] = settings.boldColor || 'inherit';
+  overrides['--slashmd-italic-color'] = settings.italicColor || 'inherit';
+
+  return overrides;
 }

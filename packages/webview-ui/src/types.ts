@@ -37,6 +37,9 @@ export const SlashMDSettingsSchema = z.object({
   mathEnabled: z.boolean(),
   mermaidEnabled: z.boolean(),
   codeTheme: CodeThemeSchema,
+  headingColor: z.string().max(64),
+  boldColor: z.string().max(64),
+  italicColor: z.string().max(64),
 });
 
 // Host → UI message schemas

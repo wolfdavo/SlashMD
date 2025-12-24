@@ -71,6 +71,18 @@ By default, code block syntax highlighting automatically adapts to your VS Code 
 
 Change this in Settings → `slashmd.theme.codeTheme`
 
+#### Typography Colors
+
+Customize colors for headings, bold, and italic text to make them stand out:
+
+| Setting                      | Description            | Example Values          |
+| ---------------------------- | ---------------------- | ----------------------- |
+| `slashmd.theme.headingColor` | Color for all headings | `#e06c75`, `coral`      |
+| `slashmd.theme.boldColor`    | Color for bold text    | `#d19a66`, `orange`     |
+| `slashmd.theme.italicColor`  | Color for italic text  | `#98c379`, `lightgreen` |
+
+Leave empty to use your theme's default text color.
+
 ## Keyboard Shortcuts
 
 | Shortcut      | Action             |
@@ -92,12 +104,15 @@ Change this in Settings → `slashmd.theme.codeTheme`
 
 ## Settings
 
-| Setting                   | Description                              | Default      |
-| ------------------------- | ---------------------------------------- | ------------ |
-| `slashmd.assets.folder`   | Folder for pasted images                 | `assets`     |
-| `slashmd.callouts.style`  | Callout syntax (`admonition` or `emoji`) | `admonition` |
-| `slashmd.toggles.syntax`  | Toggle syntax (`details` or `list`)      | `details`    |
-| `slashmd.theme.codeTheme` | Code block syntax highlighting theme     | `auto`       |
+| Setting                      | Description                              | Default      |
+| ---------------------------- | ---------------------------------------- | ------------ |
+| `slashmd.assets.folder`      | Folder for pasted images                 | `assets`     |
+| `slashmd.callouts.style`     | Callout syntax (`admonition` or `emoji`) | `admonition` |
+| `slashmd.toggles.syntax`     | Toggle syntax (`details` or `list`)      | `details`    |
+| `slashmd.theme.codeTheme`    | Code block syntax highlighting theme     | `auto`       |
+| `slashmd.theme.headingColor` | Custom color for headings                | _(none)_     |
+| `slashmd.theme.boldColor`    | Custom color for bold text               | _(none)_     |
+| `slashmd.theme.italicColor`  | Custom color for italic text             | _(none)_     |
 
 ## Requirements
 
