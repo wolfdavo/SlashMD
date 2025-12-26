@@ -2,6 +2,8 @@
 
 A Notion-style block editor for Markdown files. Write beautifully, store as plain Markdown.
 
+![SlashMD Demo](https://github.com/wolfdavo/SlashMD/blob/main/slashmd-example.gif?raw=true)
+
 ## Why SlashMD?
 
 Markdown is powerful but editing raw syntax can be tedious. SlashMD gives you the best of both worlds:
