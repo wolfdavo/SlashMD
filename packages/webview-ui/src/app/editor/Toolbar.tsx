@@ -41,8 +41,15 @@ export function Toolbar() {
   const [editor] = useLexicalComposerContext();
   const [state, setState] = useState<ToolbarState>(initialToolbarState);
   const linkInputRef = useRef<HTMLInputElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const dismissedByClickRef = useRef(false);
 
   const updateToolbar = useCallback(() => {
+    // Don't show toolbar if it was just dismissed by clicking outside
+    if (dismissedByClickRef.current) {
+      return;
+    }
+
     const selection = $getSelection();
 
     if (!$isRangeSelection(selection)) {
@@ -120,6 +127,33 @@ export function Toolbar() {
     };
   }, [editor, updateToolbar]);
 
+  // Dismiss toolbar immediately on mousedown outside
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      // If toolbar is not visible, nothing to do
+      if (!state.isVisible) return;
+
+      // If click is inside the toolbar, don't dismiss
+      if (toolbarRef.current && toolbarRef.current.contains(e.target as Node)) {
+        return;
+      }
+
+      // Set flag to prevent selection change from re-showing toolbar
+      dismissedByClickRef.current = true;
+
+      // Dismiss immediately
+      setState(prev => ({ ...prev, isVisible: false, showLinkInput: false }));
+
+      // Reset flag after selection events have settled
+      setTimeout(() => {
+        dismissedByClickRef.current = false;
+      }, 100);
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [state.isVisible]);
+
   const formatText = useCallback(
     (format: TextFormatType) => {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
@@ -154,6 +188,7 @@ export function Toolbar() {
 
   return (
     <div
+      ref={toolbarRef}
       className="toolbar"
       style={{
         position: 'fixed',
