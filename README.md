@@ -75,15 +75,20 @@ Change this in Settings → `slashmd.theme.codeTheme`
 
 #### Typography Colors
 
-Customize colors for headings, bold, and italic text to make them stand out:
+Customize colors for headings, bold, and italic text:
 
-| Setting                      | Description            | Example Values          |
-| ---------------------------- | ---------------------- | ----------------------- |
-| `slashmd.theme.headingColor` | Color for all headings | `#e06c75`, `coral`      |
-| `slashmd.theme.boldColor`    | Color for bold text    | `#d19a66`, `orange`     |
-| `slashmd.theme.italicColor`  | Color for italic text  | `#98c379`, `lightgreen` |
+- `slashmd.theme.headingColor` — Color for all headings (fallback)
+- `slashmd.theme.h1Color` / `h2Color` / `h3Color` / `h4Color` / `h5Color` — Per-level heading colors (override headingColor)
+- `slashmd.theme.boldColor` — Color for bold text
+- `slashmd.theme.italicColor` — Color for italic text
 
-Leave empty to use your theme's default text color.
+#### Heading Indentation
+
+Add left indentation to create a visual hierarchy:
+
+- `slashmd.theme.h1Indent` / `h2Indent` / `h3Indent` / `h4Indent` / `h5Indent` — e.g., `0`, `16px`, `2em`
+
+Leave any setting empty to use the default.
 
 ## Keyboard Shortcuts
 
@@ -112,9 +117,19 @@ Leave empty to use your theme's default text color.
 | `slashmd.callouts.style`     | Callout syntax (`admonition` or `emoji`) | `admonition` |
 | `slashmd.toggles.syntax`     | Toggle syntax (`details` or `list`)      | `details`    |
 | `slashmd.theme.codeTheme`    | Code block syntax highlighting theme     | `auto`       |
-| `slashmd.theme.headingColor` | Custom color for headings                | *(none)*     |
-| `slashmd.theme.boldColor`    | Custom color for bold text               | *(none)*     |
-| `slashmd.theme.italicColor`  | Custom color for italic text             | *(none)*     |
+| `slashmd.theme.headingColor` | Color for all headings (fallback)        | *(none)*     |
+| `slashmd.theme.h1Color`      | Color for H1 headings                    | *(none)*     |
+| `slashmd.theme.h2Color`      | Color for H2 headings                    | *(none)*     |
+| `slashmd.theme.h3Color`      | Color for H3 headings                    | *(none)*     |
+| `slashmd.theme.h4Color`      | Color for H4 headings                    | *(none)*     |
+| `slashmd.theme.h5Color`      | Color for H5 headings                    | *(none)*     |
+| `slashmd.theme.h1Indent`     | Left indent for H1 headings              | *(none)*     |
+| `slashmd.theme.h2Indent`     | Left indent for H2 headings              | *(none)*     |
+| `slashmd.theme.h3Indent`     | Left indent for H3 headings              | *(none)*     |
+| `slashmd.theme.h4Indent`     | Left indent for H4 headings              | *(none)*     |
+| `slashmd.theme.h5Indent`     | Left indent for H5 headings              | *(none)*     |
+| `slashmd.theme.boldColor`    | Color for bold text                      | *(none)*     |
+| `slashmd.theme.italicColor`  | Color for italic text                    | *(none)*     |
 
 ## Requirements
 

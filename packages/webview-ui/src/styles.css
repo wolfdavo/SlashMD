@@ -21,6 +21,16 @@
 
   /* SlashMD Theme Variables - Typography */
   --slashmd-heading-color: inherit;
+  --slashmd-h1-color: inherit;
+  --slashmd-h2-color: inherit;
+  --slashmd-h3-color: inherit;
+  --slashmd-h4-color: inherit;
+  --slashmd-h5-color: inherit;
+  --slashmd-h1-indent: 0;
+  --slashmd-h2-indent: 0;
+  --slashmd-h3-indent: 0;
+  --slashmd-h4-indent: 0;
+  --slashmd-h5-indent: 0;
   --slashmd-bold-color: inherit;
   --slashmd-italic-color: inherit;
 
@@ -136,7 +146,8 @@ body {
   font-weight: 700;
   margin: 24px 0 16px 0;
   line-height: 1.2;
-  color: var(--slashmd-heading-color);
+  color: var(--slashmd-h1-color);
+  margin-left: var(--slashmd-h1-indent);
 }
 
 .editor-heading-h2 {
@@ -144,7 +155,8 @@ body {
   font-weight: 600;
   margin: 20px 0 12px 0;
   line-height: 1.3;
-  color: var(--slashmd-heading-color);
+  color: var(--slashmd-h2-color);
+  margin-left: var(--slashmd-h2-indent);
 }
 
 .editor-heading-h3 {
@@ -152,7 +164,26 @@ body {
   font-weight: 600;
   margin: 16px 0 8px 0;
   line-height: 1.4;
-  color: var(--slashmd-heading-color);
+  color: var(--slashmd-h3-color);
+  margin-left: var(--slashmd-h3-indent);
+}
+
+.editor-heading-h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 14px 0 6px 0;
+  line-height: 1.4;
+  color: var(--slashmd-h4-color);
+  margin-left: var(--slashmd-h4-indent);
+}
+
+.editor-heading-h5 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 12px 0 4px 0;
+  line-height: 1.4;
+  color: var(--slashmd-h5-color);
+  margin-left: var(--slashmd-h5-indent);
 }
 
 /* Lists */

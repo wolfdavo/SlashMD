@@ -11,6 +11,16 @@ export interface SlashMDSettings {
   mermaidEnabled: boolean;
   codeTheme: CodeTheme;
   headingColor: string;
+  h1Color: string;
+  h2Color: string;
+  h3Color: string;
+  h4Color: string;
+  h5Color: string;
+  h1Indent: string;
+  h2Indent: string;
+  h3Indent: string;
+  h4Indent: string;
+  h5Indent: string;
   boldColor: string;
   italicColor: string;
 }
@@ -82,6 +92,16 @@ export function getSettings(): SlashMDSettings {
     mermaidEnabled: config.get<boolean>('mermaid.enabled', false),
     codeTheme: config.get<CodeTheme>('theme.codeTheme', 'auto'),
     headingColor: config.get<string>('theme.headingColor', ''),
+    h1Color: config.get<string>('theme.h1Color', ''),
+    h2Color: config.get<string>('theme.h2Color', ''),
+    h3Color: config.get<string>('theme.h3Color', ''),
+    h4Color: config.get<string>('theme.h4Color', ''),
+    h5Color: config.get<string>('theme.h5Color', ''),
+    h1Indent: config.get<string>('theme.h1Indent', ''),
+    h2Indent: config.get<string>('theme.h2Indent', ''),
+    h3Indent: config.get<string>('theme.h3Indent', ''),
+    h4Indent: config.get<string>('theme.h4Indent', ''),
+    h5Indent: config.get<string>('theme.h5Indent', ''),
     boldColor: config.get<string>('theme.boldColor', ''),
     italicColor: config.get<string>('theme.italicColor', ''),
   };
@@ -110,8 +130,24 @@ export function getThemeOverrides(settings: SlashMDSettings): ThemeOverrides {
   const effectiveTheme = getEffectiveTheme(settings.codeTheme);
   const overrides: ThemeOverrides = { ...(THEME_PRESETS[effectiveTheme] || THEME_PRESETS.dark) };
 
-  // Always include typography colors - use 'inherit' as default to reset when cleared
+  // General heading color (kept for backwards compatibility)
   overrides['--slashmd-heading-color'] = settings.headingColor || 'inherit';
+
+  // Per-level heading colors - specific color takes precedence, then general headingColor, then inherit
+  overrides['--slashmd-h1-color'] = settings.h1Color || settings.headingColor || 'inherit';
+  overrides['--slashmd-h2-color'] = settings.h2Color || settings.headingColor || 'inherit';
+  overrides['--slashmd-h3-color'] = settings.h3Color || settings.headingColor || 'inherit';
+  overrides['--slashmd-h4-color'] = settings.h4Color || settings.headingColor || 'inherit';
+  overrides['--slashmd-h5-color'] = settings.h5Color || settings.headingColor || 'inherit';
+
+  // Per-level heading indentation - use '0' as default to reset when cleared
+  overrides['--slashmd-h1-indent'] = settings.h1Indent || '0';
+  overrides['--slashmd-h2-indent'] = settings.h2Indent || '0';
+  overrides['--slashmd-h3-indent'] = settings.h3Indent || '0';
+  overrides['--slashmd-h4-indent'] = settings.h4Indent || '0';
+  overrides['--slashmd-h5-indent'] = settings.h5Indent || '0';
+
+  // Other typography colors
   overrides['--slashmd-bold-color'] = settings.boldColor || 'inherit';
   overrides['--slashmd-italic-color'] = settings.italicColor || 'inherit';
 

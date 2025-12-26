@@ -174,7 +174,57 @@
         "slashmd.theme.headingColor": {
           "type": "string",
           "default": "",
-          "description": "Custom color for headings (e.g., '#e06c75' or 'coral'). Leave empty to use default."
+          "description": "Custom color for all headings. Can be overridden per level with h1Color through h5Color."
+        },
+        "slashmd.theme.h1Color": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for H1 headings. Overrides headingColor for H1."
+        },
+        "slashmd.theme.h2Color": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for H2 headings. Overrides headingColor for H2."
+        },
+        "slashmd.theme.h3Color": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for H3 headings. Overrides headingColor for H3."
+        },
+        "slashmd.theme.h4Color": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for H4 headings. Overrides headingColor for H4."
+        },
+        "slashmd.theme.h5Color": {
+          "type": "string",
+          "default": "",
+          "description": "Custom color for H5 headings. Overrides headingColor for H5."
+        },
+        "slashmd.theme.h1Indent": {
+          "type": "string",
+          "default": "",
+          "description": "Left indent for H1 headings (e.g., '16px' or '1em')."
+        },
+        "slashmd.theme.h2Indent": {
+          "type": "string",
+          "default": "",
+          "description": "Left indent for H2 headings (e.g., '16px' or '1em')."
+        },
+        "slashmd.theme.h3Indent": {
+          "type": "string",
+          "default": "",
+          "description": "Left indent for H3 headings (e.g., '32px' or '2em')."
+        },
+        "slashmd.theme.h4Indent": {
+          "type": "string",
+          "default": "",
+          "description": "Left indent for H4 headings (e.g., '48px' or '3em')."
+        },
+        "slashmd.theme.h5Indent": {
+          "type": "string",
+          "default": "",
+          "description": "Left indent for H5 headings (e.g., '64px' or '4em')."
         },
         "slashmd.theme.boldColor": {
           "type": "string",
