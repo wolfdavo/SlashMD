@@ -67,7 +67,7 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
       const text = document.getText();
       console.log('SlashMD: Sending DOC_INIT to webview, text length:', text.length);
 
-      // Generate base URI for resolving relative asset paths
+      // Generate base URI for resolving relative asset paths (workspace root)
       let assetBaseUri: string | undefined;
       if (workspaceFolder) {
         assetBaseUri = webviewPanel.webview.asWebviewUri(workspaceFolder.uri).toString();
@@ -77,12 +77,22 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
         }
       }
 
+      // Generate URI for the document's directory (for document-relative path resolution)
+      let documentDirUri: string | undefined;
+      const documentDir = vscode.Uri.joinPath(document.uri, '..');
+      documentDirUri = webviewPanel.webview.asWebviewUri(documentDir).toString();
+      // Ensure it ends with a slash for proper path joining
+      if (!documentDirUri.endsWith('/')) {
+        documentDirUri += '/';
+      }
+
       const settings = getSettings();
       webviewPanel.webview.postMessage({
         type: 'DOC_INIT',
         text: text,
         settings,
         assetBaseUri,
+        documentDirUri,
         themeOverrides: getThemeOverrides(settings),
       });
     };

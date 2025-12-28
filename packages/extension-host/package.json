@@ -8,7 +8,7 @@
     "color": "#161617",
     "theme": "dark"
   },
-  "version": "0.2.3",
+  "version": "0.2.4",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -116,6 +116,19 @@
           "type": "string",
           "default": "assets",
           "description": "Relative folder for pasted/dragged images."
+        },
+        "slashmd.assets.imagePathResolution": {
+          "type": "string",
+          "enum": [
+            "document",
+            "workspace"
+          ],
+          "default": "document",
+          "description": "How to resolve relative image paths in markdown.",
+          "enumDescriptions": [
+            "Resolve paths relative to the markdown file's directory (recommended, matches standard markdown behavior)",
+            "Resolve paths relative to the workspace root"
+          ]
         },
         "slashmd.format.wrap": {
           "type": "integer",

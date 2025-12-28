@@ -41,11 +41,14 @@ import { importMarkdownToLexical } from '../mapper/mdastToLexical';
 import { exportLexicalToMdast } from '../mapper/lexicalToMdast';
 import { parseMarkdown } from '../../markdown/parse';
 import { stringifyMarkdown } from '../../markdown/stringify';
+import type { ImagePathResolution } from '../../types';
 
 interface EditorProps {
   initialContent: string;
   onChange: (markdown: string) => void;
   assetBaseUri?: string;
+  documentDirUri?: string;
+  imagePathResolution?: ImagePathResolution;
 }
 
 const editorTheme = {
@@ -238,15 +241,15 @@ function ExternalUpdatePlugin({
 // Debounce delay in ms - balances responsiveness with performance
 const DEBOUNCE_DELAY = 100;
 
-export function Editor({ initialContent, onChange, assetBaseUri }: EditorProps) {
+export function Editor({ initialContent, onChange, assetBaseUri, documentDirUri, imagePathResolution }: EditorProps) {
   const lastInternalUpdate = useRef<number>(0);
   const currentContentRef = useRef<string>(initialContent);
   const debounceTimerRef = useRef<number | null>(null);
   const pendingEditorRef = useRef<LexicalEditor | null>(null);
 
   const assetContextValue = useMemo(
-    () => createAssetContextValue(assetBaseUri),
-    [assetBaseUri]
+    () => createAssetContextValue({ assetBaseUri, documentDirUri, imagePathResolution }),
+    [assetBaseUri, documentDirUri, imagePathResolution]
   );
 
   // Cleanup debounce timer on unmount

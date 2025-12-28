@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 
 export type CodeTheme = 'auto' | 'dark' | 'light' | 'github-dark' | 'github-light' | 'monokai';
+export type ImagePathResolution = 'document' | 'workspace';
 
 export interface SlashMDSettings {
   assetsFolder: string;
+  imagePathResolution: ImagePathResolution;
   formatWrap: number;
   calloutsStyle: 'admonition' | 'emoji';
   togglesSyntax: 'details' | 'list';
@@ -85,6 +87,7 @@ export function getSettings(): SlashMDSettings {
   const config = vscode.workspace.getConfiguration('slashmd');
   return {
     assetsFolder: config.get<string>('assets.folder', 'assets'),
+    imagePathResolution: config.get<ImagePathResolution>('assets.imagePathResolution', 'document'),
     formatWrap: config.get<number>('format.wrap', 0),
     calloutsStyle: config.get<'admonition' | 'emoji'>('callouts.style', 'admonition'),
     togglesSyntax: config.get<'details' | 'list'>('toggles.syntax', 'details'),

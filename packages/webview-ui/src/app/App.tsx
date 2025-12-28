@@ -44,6 +44,7 @@ export function App() {
   const [content, setContent] = useState<string | null>(null);
   const [settings, setSettings] = useState<SlashMDSettings | null>(null);
   const [assetBaseUri, setAssetBaseUri] = useState<string | undefined>(undefined);
+  const [documentDirUri, setDocumentDirUri] = useState<string | undefined>(undefined);
   const [themeOverrides, setThemeOverrides] = useState<ThemeOverrides | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const pendingAssetCallback = useRef<((relPath: string) => void) | null>(null);
@@ -61,6 +62,7 @@ export function App() {
           setContent(message.text);
           setSettings(message.settings);
           setAssetBaseUri(message.assetBaseUri);
+          setDocumentDirUri(message.documentDirUri);
           setThemeOverrides(message.themeOverrides);
           break;
 
@@ -137,7 +139,13 @@ export function App() {
           {error}
         </div>
       )}
-      <Editor initialContent={content} onChange={handleChange} assetBaseUri={assetBaseUri} />
+      <Editor
+        initialContent={content}
+        onChange={handleChange}
+        assetBaseUri={assetBaseUri}
+        documentDirUri={documentDirUri}
+        imagePathResolution={settings?.imagePathResolution ?? 'document'}
+      />
     </div>
   );
 }
