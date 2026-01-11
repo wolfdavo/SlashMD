@@ -20,7 +20,43 @@ import {
   HIGHLIGHT,
   // Text match transformers for links
   LINK,
+  type TextMatchTransformer,
 } from '@lexical/markdown';
+import { $createImageNode, ImageNode } from './nodes/ImageNode';
+
+/**
+ * Custom IMAGE transformer for ![alt](url) markdown syntax.
+ * Creates an ImageNode block when the pattern is completed.
+ */
+const IMAGE: TextMatchTransformer = {
+  dependencies: [ImageNode],
+  // Export: convert ImageNode back to markdown
+  export: (node) => {
+    if (node instanceof ImageNode) {
+      const alt = node.getAlt();
+      const src = node.getSrc();
+      const title = node.getTitle();
+      if (title) {
+        return `![${alt}](${src} "${title}")`;
+      }
+      return `![${alt}](${src})`;
+    }
+    return null;
+  },
+  // Import regex for parsing markdown files (more permissive)
+  importRegExp: /!\[([^\]]*)\]\(([^()\s]+)(?:\s"([^"]*)")?\)/,
+  // Trigger regex for live typing (must end at cursor position)
+  regExp: /!\[([^\]]*)\]\(([^()\s]+)(?:\s"([^"]*)")?\)$/,
+  // Replace the matched text with an ImageNode
+  replace: (textNode, match) => {
+    const [, alt, src, title] = match;
+    const imageNode = $createImageNode(src, alt || '', title);
+    textNode.replace(imageNode);
+  },
+  // Trigger character - transform happens when ) is typed
+  trigger: ')',
+  type: 'text-match',
+};
 
 /**
  * Plugin that enables markdown shortcuts for block types and inline formatting.
@@ -44,6 +80,7 @@ import {
  * - ~~text~~ → Strikethrough
  * - ==text== → Highlight
  * - [text](url) → Link
+ * - ![alt](url) → Image
  */
 export function MarkdownShortcutsPlugin(): null {
   const [editor] = useLexicalComposerContext();
@@ -70,7 +107,8 @@ export function MarkdownShortcutsPlugin(): null {
       STRIKETHROUGH,         // ~~text~~ → strikethrough
       INLINE_CODE,           // `text` → code
       HIGHLIGHT,             // ==text== → highlight
-      // Link transformer
+      // Link and image transformers
+      IMAGE,                 // ![alt](url) → image (must come before LINK)
       LINK,                  // [text](url) → link
     ]);
   }, [editor]);
