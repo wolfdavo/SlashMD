@@ -125,7 +125,7 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
     }
   }, [isOpen]);
 
-  // Focus trap and escape key handling
+  // Keyboard handling: Escape to close, Enter to submit
   useEffect(() => {
     if (!isOpen) return;
 
@@ -138,6 +138,7 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
 
   // Handle click outside to close
   useEffect(() => {
@@ -279,6 +280,14 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
     onClose();
   }, [activeTab, url, alt, onInsert, onClose]);
 
+  // Handle Enter key to submit
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleInsert();
+    }
+  }, [handleInsert]);
+
   const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
     setError(null);
@@ -292,7 +301,7 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
 
   return (
     <div className="image-modal-overlay">
-      <div className="image-modal" ref={modalRef}>
+      <div className="image-modal" ref={modalRef} onKeyDown={handleKeyPress}>
         <div className="image-modal-header">
           <h3>Insert Image</h3>
           <button className="image-modal-close" onClick={onClose} aria-label="Close">
