@@ -21,6 +21,7 @@ import {
   $isToggleContentNode,
   $isEquationNode,
   $isMermaidNode,
+  $isFrontmatterNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
@@ -28,6 +29,7 @@ import {
   ToggleContentNode,
   EquationNode,
   MermaidNode,
+  FrontmatterNode,
 } from '../editor/nodes';
 import type {
   Root,
@@ -119,6 +121,10 @@ function convertLexicalNode(node: LexicalNode): Content[] {
 
   if ($isMermaidNode(node)) {
     return [convertMermaidNode(node)];
+  }
+
+  if ($isFrontmatterNode(node)) {
+    return [convertFrontmatterNode(node)];
   }
 
   // Fallback: create paragraph
@@ -360,6 +366,20 @@ function convertMermaidNode(node: MermaidNode): Code {
     type: 'code',
     lang: 'mermaid',
     value: node.getCode(),
+  };
+}
+
+// YAML frontmatter node type from mdast-util-frontmatter
+interface Yaml {
+  type: 'yaml';
+  value: string;
+}
+
+function convertFrontmatterNode(node: FrontmatterNode): Yaml {
+  // Export as yaml mdast node (will be serialized as ---\ncontent\n--- by mdast-util-frontmatter)
+  return {
+    type: 'yaml',
+    value: node.getValue(),
   };
 }
 

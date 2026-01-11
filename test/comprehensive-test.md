@@ -1,3 +1,7 @@
+---
+title: comprehensive test
+---
+
 # Comprehensive Markdown Test File
 
 This file tests all markdown features supported by the SlashMD editor.

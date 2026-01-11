@@ -35,3 +35,6 @@ export type { SerializedEquationNode } from './EquationNode';
 
 export { MermaidNode, $createMermaidNode, $isMermaidNode } from './MermaidNode';
 export type { SerializedMermaidNode } from './MermaidNode';
+
+export { FrontmatterNode, $createFrontmatterNode, $isFrontmatterNode } from './FrontmatterNode';
+export type { SerializedFrontmatterNode } from './FrontmatterNode';

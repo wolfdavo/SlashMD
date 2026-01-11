@@ -20,12 +20,14 @@ import {
   $createToggleContentNode,
   $createEquationNode,
   $createMermaidNode,
+  $createFrontmatterNode,
   HorizontalRuleNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
   EquationNode,
   MermaidNode,
+  FrontmatterNode,
   CalloutType,
 } from '../editor/nodes';
 import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
@@ -44,7 +46,8 @@ type LexicalBlockNode =
   | ToggleContainerNode
   | TableNode
   | EquationNode
-  | MermaidNode;
+  | MermaidNode
+  | FrontmatterNode;
 
 // Convert mdast tree to Lexical editor state
 export function importMarkdownToLexical(
@@ -191,6 +194,9 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
       // Inline math from mdast-util-math: $...$
       // This shouldn't appear at block level, but handle it gracefully
       return [$createEquationNode((node as { value: string }).value, true)];
+    case 'yaml':
+      // YAML frontmatter from mdast-util-frontmatter
+      return [$createFrontmatterNode((node as { value: string }).value)];
     default:
       // For unknown nodes, create a paragraph with their text content
       const paragraph = $createParagraphNode();
