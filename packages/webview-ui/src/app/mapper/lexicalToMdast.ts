@@ -408,6 +408,17 @@ function convertInlineChildren(node: ElementNode): PhrasingContent[] {
       children.push(...convertTextNode(child));
     } else if ($isLinkNode(child)) {
       children.push(convertLinkNode(child as unknown as ElementNode));
+    } else if ($isImageNode(child)) {
+      // Handle ImageNode that ended up inside a paragraph (from markdown shortcut)
+      // Convert to inline mdast image
+      const imageNode = child as ImageNode;
+      const image: Image = {
+        type: 'image',
+        url: imageNode.getSrc(),
+        alt: imageNode.getAlt(),
+        title: imageNode.getTitle(),
+      };
+      children.push(image);
     }
   }
 
