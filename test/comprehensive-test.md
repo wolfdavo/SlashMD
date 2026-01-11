@@ -1,8 +1,6 @@
 ---
 title: comprehensive test
 and: foo
-more: raji
-and: steve
 ---
 
 # Comprehensive Markdown Test File
