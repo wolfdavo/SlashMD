@@ -163,7 +163,7 @@ function preprocessDetailsBlocks(children: Content[]): (Content | ToggleContentM
 function convertBlockNode(node: Content): LexicalBlockNode[] {
   switch (node.type) {
     case 'paragraph':
-      return [convertParagraph(node)];
+      return convertParagraph(node);
     case 'heading':
       return [convertHeading(node)];
     case 'blockquote':
@@ -186,26 +186,69 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
   }
 }
 
-function convertParagraph(node: Paragraph): ParagraphNode | ImageNode {
+function convertParagraph(node: Paragraph): (ParagraphNode | ImageNode)[] {
   // Check if this is just an image - return ImageNode directly
   if (
     node.children.length === 1 &&
     node.children[0].type === 'image'
   ) {
     const img = node.children[0] as Image;
-    return $createImageNode(img.url, img.alt || '', img.title ?? undefined);
+    return [$createImageNode(img.url, img.alt || '', img.title ?? undefined)];
   }
 
-  const paragraph = $createParagraphNode();
+  // Check if paragraph contains any images mixed with text
+  const hasImages = node.children.some(child => child.type === 'image');
+  
+  if (!hasImages) {
+    // Simple case: no images, just create a paragraph
+    const paragraph = $createParagraphNode();
+    for (const child of node.children) {
+      const nodes = convertInlineNode(child);
+      for (const n of nodes) {
+        paragraph.append(n);
+      }
+    }
+    return [paragraph];
+  }
+
+  // Complex case: mixed text and images
+  // Split into multiple blocks: paragraphs for text, ImageNodes for images
+  const result: (ParagraphNode | ImageNode)[] = [];
+  let currentParagraph: ParagraphNode | null = null;
 
   for (const child of node.children) {
-    const nodes = convertInlineNode(child);
-    for (const n of nodes) {
-      paragraph.append(n);
+    if (child.type === 'image') {
+      // Flush current paragraph if it has content
+      if (currentParagraph && currentParagraph.getTextContent().length > 0) {
+        result.push(currentParagraph);
+        currentParagraph = null;
+      }
+      // Add the image as its own block
+      const img = child as Image;
+      result.push($createImageNode(img.url, img.alt || '', img.title ?? undefined));
+    } else {
+      // Text or other inline content
+      if (!currentParagraph) {
+        currentParagraph = $createParagraphNode();
+      }
+      const nodes = convertInlineNode(child);
+      for (const n of nodes) {
+        currentParagraph.append(n);
+      }
     }
   }
 
-  return paragraph;
+  // Flush any remaining paragraph
+  if (currentParagraph && currentParagraph.getTextContent().length > 0) {
+    result.push(currentParagraph);
+  }
+
+  // If nothing was added (shouldn't happen), return empty paragraph
+  if (result.length === 0) {
+    return [$createParagraphNode()];
+  }
+
+  return result;
 }
 
 function convertHeading(node: Heading): HeadingNode {
