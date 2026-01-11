@@ -1,5 +1,6 @@
 import { toMarkdown } from 'mdast-util-to-markdown';
 import { gfmToMarkdown } from 'mdast-util-gfm';
+import { mathToMarkdown } from 'mdast-util-math';
 import type { Root } from 'mdast';
 
 export interface StringifyOptions {
@@ -10,7 +11,7 @@ export interface StringifyOptions {
 
 export function stringifyMarkdown(root: Root, options: StringifyOptions = {}): string {
   let result = toMarkdown(root, {
-    extensions: [gfmToMarkdown()],
+    extensions: [gfmToMarkdown(), mathToMarkdown()],
     bullet: options.bulletStyle || '-',
     fence: options.fenceStyle || '`',
     listItemIndent: 'one',

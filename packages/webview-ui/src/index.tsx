@@ -1,8 +1,8 @@
 // Import Prism before anything else - required by @lexical/code
 import Prism from 'prismjs';
 
-// Import KaTeX CSS for math rendering
-import 'katex/dist/katex.min.css';
+// NOTE: KaTeX CSS is NOT imported globally - it has conflicting global styles.
+// Instead, KaTeX CSS is injected into Shadow DOM in EquationComponent.
 
 // Make Prism available globally for @lexical/code BEFORE importing language components
 (window as unknown as { Prism: typeof Prism }).Prism = Prism;

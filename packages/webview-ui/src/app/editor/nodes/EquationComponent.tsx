@@ -16,9 +16,12 @@ import {
 } from 'lexical';
 import { useCallback, useEffect, useRef, useState, ChangeEvent, forwardRef, RefObject } from 'react';
 import katex from 'katex';
+// Import KaTeX CSS as a string for injection into Shadow DOM (uses raw-css-loader plugin)
+// @ts-ignore - esbuild plugin handles this
+import katexCss from 'katex/dist/katex.min.css?raw';
 import { $isEquationNode } from './EquationNode';
 
-// KaTeX Renderer component
+// KaTeX Renderer component using Shadow DOM for style isolation
 function KatexRenderer({
   equation,
   inline,
@@ -28,23 +31,45 @@ function KatexRenderer({
   inline: boolean;
   onDoubleClick: () => void;
 }): JSX.Element {
-  const katexElementRef = useRef<HTMLSpanElement>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const shadowRootRef = useRef<ShadowRoot | null>(null);
 
   useEffect(() => {
-    const katexElement = katexElementRef.current;
-    if (katexElement !== null) {
-      try {
-        katex.render(equation, katexElement, {
-          displayMode: !inline,
-          errorColor: '#cc0000',
-          output: 'html',
-          strict: 'warn',
-          throwOnError: false,
-          trust: false,
-        });
-      } catch (e) {
-        // KaTeX will handle the error display
-      }
+    const container = containerRef.current;
+    if (container === null) return;
+
+    // Create shadow root if it doesn't exist
+    if (!shadowRootRef.current) {
+      shadowRootRef.current = container.attachShadow({ mode: 'open' });
+      
+      // Inject KaTeX CSS into shadow DOM
+      const style = document.createElement('style');
+      style.textContent = katexCss;
+      shadowRootRef.current.appendChild(style);
+    }
+
+    const shadowRoot = shadowRootRef.current;
+    
+    // Find or create the render target
+    let renderTarget = shadowRoot.querySelector('.katex-render-target');
+    if (!renderTarget) {
+      renderTarget = document.createElement('span');
+      renderTarget.className = 'katex-render-target';
+      shadowRoot.appendChild(renderTarget);
+    }
+
+    // Render the equation
+    try {
+      katex.render(equation, renderTarget as HTMLElement, {
+        displayMode: !inline,
+        errorColor: '#cc0000',
+        output: 'html',
+        strict: 'warn',
+        throwOnError: false,
+        trust: false,
+      });
+    } catch (e) {
+      // KaTeX will handle the error display
     }
   }, [equation, inline]);
 
@@ -53,8 +78,9 @@ function KatexRenderer({
       role="button"
       tabIndex={-1}
       onDoubleClick={onDoubleClick}
-      ref={katexElementRef}
+      ref={containerRef}
       className={`equation-renderer ${inline ? 'inline' : 'block'}`}
+      style={{ display: inline ? 'inline' : 'block', textAlign: inline ? 'inherit' : 'center' }}
     />
   );
 }

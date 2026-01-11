@@ -1,6 +1,8 @@
 import { fromMarkdown } from 'mdast-util-from-markdown';
 import { gfm } from 'micromark-extension-gfm';
 import { gfmFromMarkdown } from 'mdast-util-gfm';
+import { math } from 'micromark-extension-math';
+import { mathFromMarkdown } from 'mdast-util-math';
 import type { Root, Content, PhrasingContent } from 'mdast';
 
 export interface ParseOptions {
@@ -13,8 +15,8 @@ export interface ParseResult {
 
 export function parseMarkdown(text: string, _options: ParseOptions = {}): ParseResult {
   const root = fromMarkdown(text, {
-    extensions: [gfm()],
-    mdastExtensions: [gfmFromMarkdown()],
+    extensions: [gfm(), math()],
+    mdastExtensions: [gfmFromMarkdown(), mathFromMarkdown()],
   });
 
   return { root };

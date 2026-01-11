@@ -181,6 +181,13 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
       return [convertTable(node)];
     case 'html':
       return convertHtml(node);
+    case 'math':
+      // Block math from mdast-util-math: $$...$$
+      return [$createEquationNode((node as { value: string }).value, false)];
+    case 'inlineMath':
+      // Inline math from mdast-util-math: $...$
+      // This shouldn't appear at block level, but handle it gracefully
+      return [$createEquationNode((node as { value: string }).value, true)];
     default:
       // For unknown nodes, create a paragraph with their text content
       const paragraph = $createParagraphNode();
@@ -592,6 +599,9 @@ function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode | Equati
     case 'image':
       // Images in inline context become text placeholder
       return [$createTextNode(`![${node.alt || ''}](${node.url})`)];
+    case 'inlineMath':
+      // Inline math from mdast-util-math: $...$
+      return [$createEquationNode((node as { value: string }).value, true)];
     case 'html': {
       // Check for inline equation: $...$
       const html = (node as Html).value;

@@ -318,25 +318,34 @@ function convertImageNode(node: ImageNode): Paragraph | Html {
   };
 }
 
-function convertEquationNode(node: EquationNode): Paragraph | Html {
+// Math node types from mdast-util-math
+interface InlineMath {
+  type: 'inlineMath';
+  value: string;
+}
+
+interface Math {
+  type: 'math';
+  value: string;
+}
+
+function convertEquationNode(node: EquationNode): Paragraph | Math {
   const equation = node.getEquation();
   const isInline = node.isInline();
 
   if (isInline) {
-    // Inline equation: wrap in $...$, output as paragraph with html content
-    // Use html type to prevent any escaping of the LaTeX
+    // Inline equation: use inlineMath mdast node
     return {
       type: 'paragraph',
-      children: [{ type: 'html', value: `$${equation}$` } as Html],
+      children: [{ type: 'inlineMath', value: equation } as InlineMath as unknown as PhrasingContent],
     };
   }
 
-  // Block equation: wrap in $$...$$
-  // Output as html to preserve exact formatting
+  // Block equation: use math mdast node
   return {
-    type: 'html',
-    value: `$$${equation}$$`,
-  };
+    type: 'math',
+    value: equation,
+  } as Math;
 }
 
 function convertCalloutNode(node: CalloutNode): Blockquote {
@@ -448,12 +457,10 @@ function convertInlineChildren(node: ElementNode): PhrasingContent[] {
       children.push(image);
     } else if ($isEquationNode(child)) {
       // Handle EquationNode that ended up inside a paragraph (from markdown shortcut)
-      // Convert to inline html to preserve exact LaTeX
+      // Convert to inlineMath mdast node
       const equationNode = child as EquationNode;
       const equation = equationNode.getEquation();
-      const isInline = equationNode.isInline();
-      const delimiter = isInline ? '$' : '$$';
-      children.push({ type: 'html', value: `${delimiter}${equation}${delimiter}` } as Html);
+      children.push({ type: 'inlineMath', value: equation } as InlineMath as unknown as PhrasingContent);
     }
   }
 
