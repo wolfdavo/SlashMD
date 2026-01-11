@@ -41,4 +41,8 @@ then it transforms into formatted text.
 
 ## Image Test
 
-Try typing: `![test](assets/image.png)` below this line:
+Try typing ![test](assets/image.png)
+
+Yup that worked well enough. What's the raw text look like? And what about this? Why are these spaces? Good cleanup worked. hah!
+
+<img src="assets/image2.png" alt="" width="90" height="81">
