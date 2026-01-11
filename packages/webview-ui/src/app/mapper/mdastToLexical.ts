@@ -474,6 +474,11 @@ function convertTableCell(
 /**
  * SECURITY: Safely parse HTML content using DOMPurify
  * Only allows specific safe tags and attributes
+ * 
+ * TODO: Current "limited HTML support" only extracts text content from HTML.
+ * HTML attributes like align="center" are not rendered. To properly support
+ * HTML rendering, consider creating an HtmlBlockNode that safely renders
+ * sanitized HTML content while preserving basic styling attributes.
  */
 function convertHtml(node: Html): LexicalBlockNode[] {
   const html = node.value.trim();

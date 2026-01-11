@@ -1,6 +1,11 @@
 /**
  * EquationComponent - React component for rendering and editing LaTeX equations
  * Ported from Lexical playground with modifications for SlashMD
+ * 
+ * TODO: Block math equations should be centered but centering doesn't work properly.
+ * The issue is likely related to Shadow DOM style inheritance - the :host(.block)
+ * selector and text-align: center are set but not taking effect. May need to
+ * investigate the container element structure or use a different centering approach.
  */
 
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
