@@ -42,9 +42,24 @@ function KatexRenderer({
     if (!shadowRootRef.current) {
       shadowRootRef.current = container.attachShadow({ mode: 'open' });
       
-      // Inject KaTeX CSS into shadow DOM
+      // Inject KaTeX CSS into shadow DOM with custom overrides
       const style = document.createElement('style');
-      style.textContent = katexCss;
+      style.textContent = katexCss + `
+        /* Custom overrides for SlashMD */
+        :host {
+          display: block;
+        }
+        :host(.block) .katex-render-target {
+          display: block;
+          text-align: center;
+        }
+        :host(.inline) .katex-render-target {
+          display: inline;
+        }
+        .katex-display {
+          margin: 0;
+        }
+      `;
       shadowRootRef.current.appendChild(style);
     }
 

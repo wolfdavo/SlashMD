@@ -32,3 +32,6 @@ export type { SerializedHorizontalRuleNode } from './HorizontalRuleNode';
 
 export { EquationNode, $createEquationNode, $isEquationNode } from './EquationNode';
 export type { SerializedEquationNode } from './EquationNode';
+
+export { MermaidNode, $createMermaidNode, $isMermaidNode } from './MermaidNode';
+export type { SerializedMermaidNode } from './MermaidNode';

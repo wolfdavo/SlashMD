@@ -19,11 +19,13 @@ import {
   $createToggleTitleNode,
   $createToggleContentNode,
   $createEquationNode,
+  $createMermaidNode,
   HorizontalRuleNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
   EquationNode,
+  MermaidNode,
   CalloutType,
 } from '../editor/nodes';
 import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
@@ -41,7 +43,8 @@ type LexicalBlockNode =
   | CalloutNode
   | ToggleContainerNode
   | TableNode
-  | EquationNode;
+  | EquationNode
+  | MermaidNode;
 
 // Convert mdast tree to Lexical editor state
 export function importMarkdownToLexical(
@@ -404,7 +407,12 @@ function convertListItem(node: ListItem, parentList: List): ListItemNode {
   return listItem;
 }
 
-function convertCode(node: Code): CodeNode {
+function convertCode(node: Code): CodeNode | MermaidNode {
+  // Check if this is a mermaid diagram
+  if (node.lang === 'mermaid') {
+    return $createMermaidNode(node.value);
+  }
+  
   const code = $createCodeNode(node.lang || undefined);
   code.append($createTextNode(node.value));
   return code;
@@ -485,10 +493,26 @@ function convertHtml(node: Html): LexicalBlockNode[] {
   // Toggle/details blocks are handled by preprocessDetailsBlocks
   // This function only handles remaining HTML
 
-  // SECURITY: Sanitize HTML using DOMPurify with strict allowlist
+  // SECURITY: Sanitize HTML using DOMPurify with allowlist
+  // Allows common safe HTML elements for "limited HTML support"
   const sanitized = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['img', 'br', 'hr'],
-    ALLOWED_ATTR: ['src', 'alt', 'title', 'width', 'height'],
+    ALLOWED_TAGS: [
+      // Block elements
+      'div', 'p', 'br', 'hr',
+      // Inline formatting
+      'strong', 'b', 'em', 'i', 'u', 's', 'del', 'ins',
+      'sub', 'sup', 'mark', 'small',
+      // Semantic elements
+      'kbd', 'code', 'samp', 'var', 'abbr', 'cite', 'q',
+      // Media
+      'img',
+      // Spans for styling
+      'span',
+    ],
+    ALLOWED_ATTR: [
+      'src', 'alt', 'title', 'width', 'height',
+      'align', 'class', 'id',
+    ],
     ALLOW_DATA_ATTR: false,
     RETURN_DOM: false,
     RETURN_DOM_FRAGMENT: false,
@@ -543,7 +567,22 @@ function convertHtml(node: Html): LexicalBlockNode[] {
     return [$createHorizontalRuleNode()];
   }
 
-  // For other HTML, create a code block to preserve it
+  // Check for br element (standalone line break)
+  if (sanitized.trim() === '<br>' || sanitized.trim() === '<br/>') {
+    const paragraph = $createParagraphNode();
+    return [paragraph];
+  }
+
+  // For other allowed HTML, render as paragraph with text content
+  // This provides basic HTML support while maintaining security
+  const textContent = doc.body.textContent || '';
+  if (textContent.trim()) {
+    const paragraph = $createParagraphNode();
+    paragraph.append($createTextNode(textContent));
+    return [paragraph];
+  }
+
+  // For empty or unhandled HTML, create a code block to preserve it
   const code = $createCodeNode('html');
   code.append($createTextNode(html));
   return [code];

@@ -11,7 +11,7 @@ import {
 import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
 import { $createListNode, $createListItemNode } from '@lexical/list';
 import { $createCodeNode } from '@lexical/code';
-import { $createHorizontalRuleNode, $createCalloutNode, $createToggleNode, $createEquationNode } from './nodes';
+import { $createHorizontalRuleNode, $createCalloutNode, $createToggleNode, $createEquationNode, $createMermaidNode } from './nodes';
 import {
   $createTableNode,
   $createTableRowNode,
@@ -347,6 +347,25 @@ const BLOCK_OPTIONS: BlockOption[] = [
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
           const node = $createEquationNode('\\int_{a}^{b} f(x) \\, dx', false);
+          selection.insertNodes([node]);
+        }
+      });
+    },
+  },
+  {
+    key: 'mermaid',
+    label: 'Mermaid Diagram',
+    description: 'Flowchart, sequence, or other diagram',
+    icon: '📊',
+    keywords: ['mermaid', 'diagram', 'flowchart', 'sequence', 'graph', 'chart', 'uml'],
+    onSelect: (editor) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const node = $createMermaidNode(`flowchart TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[OK]
+    B -->|No| D[End]`);
           selection.insertNodes([node]);
         }
       });

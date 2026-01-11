@@ -20,12 +20,14 @@ import {
   $isToggleTitleNode,
   $isToggleContentNode,
   $isEquationNode,
+  $isMermaidNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
   ToggleTitleNode,
   ToggleContentNode,
   EquationNode,
+  MermaidNode,
 } from '../editor/nodes';
 import type {
   Root,
@@ -113,6 +115,10 @@ function convertLexicalNode(node: LexicalNode): Content[] {
 
   if ($isEquationNode(node)) {
     return [convertEquationNode(node)];
+  }
+
+  if ($isMermaidNode(node)) {
+    return [convertMermaidNode(node)];
   }
 
   // Fallback: create paragraph
@@ -346,6 +352,15 @@ function convertEquationNode(node: EquationNode): Paragraph | Math {
     type: 'math',
     value: equation,
   } as Math;
+}
+
+function convertMermaidNode(node: MermaidNode): Code {
+  // Export as a fenced code block with lang="mermaid"
+  return {
+    type: 'code',
+    lang: 'mermaid',
+    value: node.getCode(),
+  };
 }
 
 function convertCalloutNode(node: CalloutNode): Blockquote {

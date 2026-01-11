@@ -1535,3 +1535,85 @@ body {
   color: #cc0000;
   font-size: 0.9em;
 }
+
+/* ===== Mermaid Diagram Styles ===== */
+
+.editor-mermaid {
+  margin: 1em 0;
+}
+
+.mermaid-renderer {
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+
+.mermaid-renderer:hover {
+  box-shadow: 0 0 0 2px var(--vscode-link);
+}
+
+.mermaid-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--vscode-foreground);
+  opacity: 0.7;
+}
+
+/* Mermaid Editor Styles */
+.mermaid-editor-container {
+  background: var(--vscode-code-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1em 0;
+}
+
+.mermaid-editor-header,
+.mermaid-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.mermaid-editor-label {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  opacity: 0.7;
+}
+
+.mermaid-editor-close {
+  background: transparent;
+  border: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.mermaid-editor-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mermaid-editor-textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground);
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.mermaid-editor-textarea::placeholder {
+  color: var(--vscode-foreground);
+  opacity: 0.5;
+}
