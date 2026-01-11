@@ -7,10 +7,15 @@ This file tests all markdown features supported by the SlashMD editor.
 ## Headings
 
 # Heading 1
+
 ## Heading 2
+
 ### Heading 3
+
 #### Heading 4
+
 ##### Heading 5
+
 ###### Heading 6
 
 ---
@@ -19,19 +24,19 @@ This file tests all markdown features supported by the SlashMD editor.
 
 This is **bold text** using double asterisks.
 
-This is __bold text__ using double underscores.
+This is **bold text** using double underscores.
 
 This is *italic text* using single asterisks.
 
-This is _italic text_ using single underscores.
+This is *italic text* using single underscores.
 
-This is ***bold and italic*** using triple asterisks.
+This is *bold and italic* using triple asterisks.
 
-This is ___bold and italic___ using triple underscores.
+This is *bold and italic* using triple underscores.
 
 This is ~~strikethrough text~~ using tildes.
 
-This is `inline code` using backticks.
+This is `inline acode` using backticks.
 
 This is ==highlighted text== using double equals (if supported).
 
@@ -41,9 +46,9 @@ This is ==highlighted text== using double equals (if supported).
 
 Here is a [link to Google](https://www.google.com).
 
-Here is a [link with title](https://www.google.com "Google Homepage").
+Here is a [link with title](https://www.google.com).
 
-Here is an auto-linked URL: https://www.example.com
+Here is an auto-linked URL: <https://www.example.com>
 
 ---
 
@@ -59,7 +64,11 @@ Here is an auto-linked URL: https://www.example.com
 
 ### Image with Text Around It
 
-Before the image ![Small Icon](https://picsum.photos/50/50) and after the image.
+Before the image
+
+![Small Icon](https://picsum.photos/50/50)
+
+and after the image.
 
 ---
 
@@ -84,10 +93,10 @@ Before the image ![Small Icon](https://picsum.photos/50/50) and after the image.
 
 ### Task List (Checkboxes)
 
-- [ ] Unchecked task
-- [x] Checked task
-- [ ] Another unchecked task
-- [x] Another checked task
+- Unchecked task
+- Checked task
+- Another unchecked task
+- Another checked task
 
 ### Mixed List
 
@@ -95,7 +104,7 @@ Before the image ![Small Icon](https://picsum.photos/50/50) and after the image.
    - Nested bullet
    - Another bullet
 2. Second ordered item
-   - [ ] Task inside ordered list
+   - Task inside ordered list
 
 ---
 
@@ -108,26 +117,24 @@ Before the image ![Small Icon](https://picsum.photos/50/50) and after the image.
 > And this line too.
 
 > Nested blockquotes:
-> > This is nested
-> > > And even deeper
 
 ---
 
 ## Callouts (Admonitions)
 
-> [!NOTE]
+> \[!NOTE]
 > This is a note callout. Use it for general information.
 
-> [!TIP]
+> \[!TIP]
 > This is a tip callout. Use it for helpful suggestions.
 
-> [!WARNING]
+> \[!WARNING]
 > This is a warning callout. Use it for important warnings.
 
-> [!IMPORTANT]
+> \[!IMPORTANT]
 > This is an important callout. Use it for critical information.
 
-> [!CAUTION]
+> \[!CAUTION]
 > This is a caution callout. Use it for dangerous actions.
 
 ---
@@ -228,7 +235,7 @@ npm test
 
 ### Plain Text (No Syntax Highlighting)
 
-```
+```javascript
 This is plain text in a code block.
 No syntax highlighting is applied.
 Useful for logs or generic output.
@@ -240,33 +247,33 @@ Useful for logs or generic output.
 
 ### Simple Table
 
-| Name | Age | City |
-|------|-----|------|
-| Alice | 28 | New York |
-| Bob | 34 | San Francisco |
-| Charlie | 22 | London |
+| Name    | Age | City          |
+| ------- | --- | ------------- |
+| Alice   | 28  | New York      |
+| Bob     | 34  | San Francisco |
+| Charlie | 22  | London        |
 
 ### Table with Alignment
 
 | Left Aligned | Center Aligned | Right Aligned |
-|:-------------|:--------------:|--------------:|
-| Left | Center | Right |
-| Text | Text | Text |
-| More | More | More |
+| ------------ | -------------- | ------------- |
+| Left         | Center         | Right         |
+| Text         | Text           | Text          |
+| More         | More           | More          |
 
 ### Complex Table
 
-| Feature | Supported | Notes |
-|---------|:---------:|-------|
-| Bold | ✅ | Use `**text**` or `__text__` |
-| Italic | ✅ | Use `*text*` or `_text_` |
-| Strikethrough | ✅ | Use `~~text~~` |
-| Code | ✅ | Use `` `text` `` |
-| Links | ✅ | Use `[text](url)` |
-| Images | ✅ | Use `![alt](url)` |
-| Tables | ✅ | GFM syntax |
-| Math | ⚠️ | Requires extension |
-| Mermaid | ⚠️ | Requires extension |
+| Feature       | Supported | Notes                        |
+| ------------- | --------- | ---------------------------- |
+| Bold          | ✅         | Use `**text**` or `__text__` |
+| Italic        | ✅         | Use `*text*` or `_text_`     |
+| Strikethrough | ✅         | Use `~~text~~`               |
+| Code          | ✅         | Use `` `text` ``             |
+| Links         | ✅         | Use `[text](url)`            |
+| Images        | ✅         | Use `![alt](url)`            |
+| Tables        | ✅         | GFM syntax                   |
+| Math          | ⚠️        | Requires extension           |
+| Mermaid       | ⚠️        | Requires extension           |
 
 ---
 
@@ -278,11 +285,11 @@ Above the rule.
 
 Below the rule.
 
-***
+---
 
 Another style of rule.
 
-___
+---
 
 Yet another style.
 
@@ -295,6 +302,7 @@ Yet another style.
 This content is hidden by default. Click the summary to reveal it.
 
 You can include any markdown here:
+
 - Lists
 - **Bold text**
 - `Code`
@@ -323,11 +331,11 @@ Einstein's famous equation: $E = mc^2$
 
 ### Block Math
 
-$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
+$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$
 
-$$\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}$$
+$\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}$
 
-$$\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}$$
+$\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}$
 
 ---
 
@@ -423,9 +431,9 @@ These characters need escaping in certain contexts:
 - Asterisks: \*not italic\*
 - Underscores: \_not italic\_
 - Backticks: \`not code\`
-- Hash: \# not a heading
-- Brackets: \[not a link\]
-- Pipes in tables need escaping: \|
+- Hash: # not a heading
+- Brackets: \[not a link]
+- Pipes in tables need escaping: |
 
 ---
 
@@ -437,13 +445,9 @@ Common emojis: 🎉 🚀 ✅ ❌ ⚠️ 💡 📝 🔧 🐛 ✨
 
 ## HTML (Limited Support)
 
-<div align="center">
-  <strong>Centered bold text using HTML</strong>
-</div>
+Centered bold text using HTML
 
-<br>
-
-<kbd>Ctrl</kbd> + <kbd>S</kbd> to save
+\<kbd>Ctrl\</kbd> + \<kbd>S\</kbd> to save
 
 ---
 
@@ -451,10 +455,10 @@ Common emojis: 🎉 🚀 ✅ ❌ ⚠️ 💡 📝 🔧 🐛 ✨
 
 ### Empty Elements
 
-- 
-- 
+-
+-
 
-> 
+>
 
 ### Very Long Line
 

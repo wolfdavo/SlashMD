@@ -17,7 +17,6 @@ import {
   ITALIC_UNDERSCORE,
   STRIKETHROUGH,
   INLINE_CODE,
-  HIGHLIGHT,
   // Text match transformers for links
   LINK,
   type TextMatchTransformer,
@@ -130,7 +129,6 @@ const INLINE_EQUATION: TextMatchTransformer = {
  * - ___text___ → Bold + Italic
  * - `text` → Inline code
  * - ~~text~~ → Strikethrough
- * - ==text== → Highlight
  * - [text](url) → Link
  * - ![alt](url) → Image
  * - $equation$ → Inline math (KaTeX)
@@ -160,7 +158,6 @@ export function MarkdownShortcutsPlugin(): null {
       ITALIC_UNDERSCORE,     // _text_ → italic
       STRIKETHROUGH,         // ~~text~~ → strikethrough
       INLINE_CODE,           // `text` → code
-      HIGHLIGHT,             // ==text== → highlight
       // Link and image transformers
       IMAGE,                 // ![alt](url) → image (must come before LINK)
       LINK,                  // [text](url) → link
