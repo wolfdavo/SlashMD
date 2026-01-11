@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, $getNodeByKey, $isElementNode, LexicalNode } from 'lexical';
 import { $isCodeNode, CodeNode } from '@lexical/code';
+import { $isFrontmatterNode } from './nodes';
 
 // Shared helper to recursively find all code nodes in a tree
+// Excludes FrontmatterNode since it shouldn't show the language selector
 function findCodeNodesInTree(node: LexicalNode): CodeNode[] {
   const codeNodes: CodeNode[] = [];
-  if ($isCodeNode(node)) {
+  if ($isCodeNode(node) && !$isFrontmatterNode(node)) {
     codeNodes.push(node);
   }
   if ($isElementNode(node)) {

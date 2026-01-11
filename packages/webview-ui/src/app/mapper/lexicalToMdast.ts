@@ -91,6 +91,11 @@ function convertLexicalNode(node: LexicalNode): Content[] {
     return [convertListNode(node)];
   }
 
+  // Check FrontmatterNode BEFORE CodeNode since FrontmatterNode extends CodeNode
+  if ($isFrontmatterNode(node)) {
+    return [convertFrontmatterNode(node)];
+  }
+
   if ($isCodeNode(node)) {
     return [convertCodeNode(node)];
   }
@@ -121,10 +126,6 @@ function convertLexicalNode(node: LexicalNode): Content[] {
 
   if ($isMermaidNode(node)) {
     return [convertMermaidNode(node)];
-  }
-
-  if ($isFrontmatterNode(node)) {
-    return [convertFrontmatterNode(node)];
   }
 
   // Fallback: create paragraph
@@ -379,7 +380,7 @@ function convertFrontmatterNode(node: FrontmatterNode): Yaml {
   // Export as yaml mdast node (will be serialized as ---\ncontent\n--- by mdast-util-frontmatter)
   return {
     type: 'yaml',
-    value: node.getValue(),
+    value: node.getTextContent(),
   };
 }
 

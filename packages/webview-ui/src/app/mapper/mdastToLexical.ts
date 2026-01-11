@@ -194,9 +194,15 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
       // Inline math from mdast-util-math: $...$
       // This shouldn't appear at block level, but handle it gracefully
       return [$createEquationNode((node as { value: string }).value, true)];
-    case 'yaml':
+    case 'yaml': {
       // YAML frontmatter from mdast-util-frontmatter
-      return [$createFrontmatterNode((node as { value: string }).value)];
+      const frontmatterNode = $createFrontmatterNode();
+      const value = (node as { value: string }).value;
+      if (value) {
+        frontmatterNode.append($createTextNode(value));
+      }
+      return [frontmatterNode];
+    }
     default:
       // For unknown nodes, create a paragraph with their text content
       const paragraph = $createParagraphNode();

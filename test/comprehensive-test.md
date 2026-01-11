@@ -1,5 +1,8 @@
 ---
 title: comprehensive test
+and: foo
+more: raji
+and: steve
 ---
 
 # Comprehensive Markdown Test File
@@ -157,6 +160,7 @@ function greet(name) {
 }
 
 greet('World');
+`
 ```
 
 ### TypeScript
