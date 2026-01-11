@@ -23,6 +23,10 @@ const buildOptions = {
     '.tsx': 'tsx',
     '.ts': 'ts',
     '.css': 'css',
+    // Font files for KaTeX math rendering
+    '.woff': 'dataurl',
+    '.woff2': 'dataurl',
+    '.ttf': 'dataurl',
   },
   define: {
     'process.env.NODE_ENV': isWatch ? '"development"' : '"production"',

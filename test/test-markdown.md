@@ -46,3 +46,15 @@ Try typing ![test](assets/image.png)
 Yup that worked well enough. What's the raw text look like? And what about this? Why are these spaces? Good cleanup worked. hah!
 
 <img src="assets/image2.png" alt="" width="90" height="81">
+
+## Math Test (NEW!)
+
+### Inline Math
+Try typing: `$E = mc^2$` - should render as a math equation
+
+Einstein says $E = mc^2$ and that's physics!
+
+### Block Math
+Try typing: `$$\int_0^1 x^2 dx$$` - should render as centered equation
+
+$$\int_0^1 x^2 dx = \frac{1}{3}$$

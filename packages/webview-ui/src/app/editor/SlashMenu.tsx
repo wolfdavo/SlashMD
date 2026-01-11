@@ -11,7 +11,7 @@ import {
 import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
 import { $createListNode, $createListItemNode } from '@lexical/list';
 import { $createCodeNode } from '@lexical/code';
-import { $createHorizontalRuleNode, $createCalloutNode, $createToggleNode } from './nodes';
+import { $createHorizontalRuleNode, $createCalloutNode, $createToggleNode, $createEquationNode } from './nodes';
 import {
   $createTableNode,
   $createTableRowNode,
@@ -316,6 +316,38 @@ const BLOCK_OPTIONS: BlockOption[] = [
           }
 
           selection.insertNodes([table]);
+        }
+      });
+    },
+  },
+  {
+    key: 'equation-inline',
+    label: 'Inline Equation',
+    description: 'Math formula inline with text',
+    icon: '∑',
+    keywords: ['math', 'equation', 'latex', 'katex', 'formula', 'inline'],
+    onSelect: (editor) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const node = $createEquationNode('E = mc^2', true);
+          selection.insertNodes([node]);
+        }
+      });
+    },
+  },
+  {
+    key: 'equation-block',
+    label: 'Block Equation',
+    description: 'Centered math formula',
+    icon: '∫',
+    keywords: ['math', 'equation', 'latex', 'katex', 'formula', 'block', 'display'],
+    onSelect: (editor) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const node = $createEquationNode('\\int_{a}^{b} f(x) \\, dx', false);
+          selection.insertNodes([node]);
         }
       });
     },

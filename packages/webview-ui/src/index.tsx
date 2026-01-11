@@ -1,6 +1,9 @@
 // Import Prism before anything else - required by @lexical/code
 import Prism from 'prismjs';
 
+// Import KaTeX CSS for math rendering
+import 'katex/dist/katex.min.css';
+
 // Make Prism available globally for @lexical/code BEFORE importing language components
 (window as unknown as { Prism: typeof Prism }).Prism = Prism;
 

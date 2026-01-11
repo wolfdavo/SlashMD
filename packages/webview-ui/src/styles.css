@@ -1457,3 +1457,81 @@ body {
   background: rgba(255, 153, 0, 0.6);
   outline: 2px solid rgba(255, 153, 0, 0.8);
 }
+
+/* ===== Equation / Math Styles ===== */
+
+.editor-equation {
+  cursor: pointer;
+  user-select: none;
+}
+
+.equation-renderer {
+  display: inline;
+}
+
+.equation-renderer.block {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+.equation-renderer.inline {
+  display: inline;
+}
+
+/* Equation Editor Styles */
+.equation-editor-background {
+  background-color: var(--vscode-code-bg);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.equation-dollar-sign {
+  color: var(--vscode-foreground);
+  opacity: 0.5;
+  font-family: monospace;
+  white-space: pre;
+}
+
+.equation-inline-editor {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  color: #8421a2;
+  background-color: inherit;
+  font-family: monospace;
+  font-size: inherit;
+  min-width: 50px;
+}
+
+.equation-block-editor {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  color: #8421a2;
+  background-color: inherit;
+  font-family: monospace;
+  font-size: inherit;
+  resize: vertical;
+  width: 100%;
+  min-height: 60px;
+}
+
+/* KaTeX styling adjustments */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 0.5em 0;
+}
+
+.katex-error {
+  color: #cc0000;
+  font-size: 0.9em;
+}

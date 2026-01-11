@@ -18,10 +18,12 @@ import {
   $createToggleContainerNode,
   $createToggleTitleNode,
   $createToggleContentNode,
+  $createEquationNode,
   HorizontalRuleNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
+  EquationNode,
   CalloutType,
 } from '../editor/nodes';
 import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
@@ -38,7 +40,8 @@ type LexicalBlockNode =
   | ImageNode
   | CalloutNode
   | ToggleContainerNode
-  | TableNode;
+  | TableNode
+  | EquationNode;
 
 // Convert mdast tree to Lexical editor state
 export function importMarkdownToLexical(
@@ -460,6 +463,18 @@ function convertTableCell(
 function convertHtml(node: Html): LexicalBlockNode[] {
   const html = node.value.trim();
 
+  // Check for block equation: $$...$$
+  const blockEquationMatch = html.match(/^\$\$([^$]+)\$\$$/);
+  if (blockEquationMatch) {
+    return [$createEquationNode(blockEquationMatch[1].trim(), false)];
+  }
+
+  // Check for inline equation: $...$
+  const inlineEquationMatch = html.match(/^\$([^$]+)\$$/);
+  if (inlineEquationMatch) {
+    return [$createEquationNode(inlineEquationMatch[1].trim(), true)];
+  }
+
   // Toggle/details blocks are handled by preprocessDetailsBlocks
   // This function only handles remaining HTML
 
@@ -560,7 +575,7 @@ function convertToggleMarker(marker: ToggleContentMarker): ToggleContainerNode[]
   return [container];
 }
 
-function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode)[] {
+function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode | EquationNode)[] {
   switch (node.type) {
     case 'text':
       return [convertText(node)];
@@ -577,6 +592,21 @@ function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode)[] {
     case 'image':
       // Images in inline context become text placeholder
       return [$createTextNode(`![${node.alt || ''}](${node.url})`)];
+    case 'html': {
+      // Check for inline equation: $...$
+      const html = (node as Html).value;
+      const inlineEquationMatch = html.match(/^\$([^$]+)\$$/);
+      if (inlineEquationMatch) {
+        return [$createEquationNode(inlineEquationMatch[1].trim(), true)];
+      }
+      // Check for block equation: $$...$$ (shouldn't be inline, but handle gracefully)
+      const blockEquationMatch = html.match(/^\$\$([^$]+)\$\$$/);
+      if (blockEquationMatch) {
+        return [$createEquationNode(blockEquationMatch[1].trim(), false)];
+      }
+      // Other HTML becomes plain text
+      return [$createTextNode(html)];
+    }
     default:
       return [$createTextNode('')];
   }

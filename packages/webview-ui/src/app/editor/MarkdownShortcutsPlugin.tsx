@@ -23,6 +23,7 @@ import {
   type TextMatchTransformer,
 } from '@lexical/markdown';
 import { $createImageNode, ImageNode } from './nodes/ImageNode';
+import { $createEquationNode, EquationNode } from './nodes/EquationNode';
 
 /**
  * Custom IMAGE transformer for ![alt](url) markdown syntax.
@@ -59,6 +60,57 @@ const IMAGE: TextMatchTransformer = {
 };
 
 /**
+ * Custom BLOCK_EQUATION transformer for $$...$$ markdown syntax.
+ * Creates a block (display) EquationNode when the pattern is completed.
+ */
+const BLOCK_EQUATION: TextMatchTransformer = {
+  dependencies: [EquationNode],
+  export: (node) => {
+    if (node instanceof EquationNode && !node.isInline()) {
+      return `$$${node.getEquation()}$$`;
+    }
+    return null;
+  },
+  // Import regex - matches $$...$$ anywhere
+  importRegExp: /\$\$([^$]+)\$\$/,
+  // Trigger regex - must end at cursor
+  regExp: /\$\$([^$]+)\$\$$/,
+  replace: (textNode, match) => {
+    const [, equation] = match;
+    const equationNode = $createEquationNode(equation.trim(), false);
+    textNode.replace(equationNode);
+  },
+  trigger: '$',
+  type: 'text-match',
+};
+
+/**
+ * Custom INLINE_EQUATION transformer for $...$ markdown syntax.
+ * Creates an inline EquationNode when the pattern is completed.
+ * Note: Must come after BLOCK_EQUATION to avoid premature matching.
+ */
+const INLINE_EQUATION: TextMatchTransformer = {
+  dependencies: [EquationNode],
+  export: (node) => {
+    if (node instanceof EquationNode && node.isInline()) {
+      return `$${node.getEquation()}$`;
+    }
+    return null;
+  },
+  // Import regex - matches $...$ but not $$...$$ (negative lookahead/lookbehind)
+  importRegExp: /(?<!\$)\$([^$]+)\$(?!\$)/,
+  // Trigger regex - matches single $ but not $$
+  regExp: /(?<!\$)\$([^$]+)\$$/,
+  replace: (textNode, match) => {
+    const [, equation] = match;
+    const equationNode = $createEquationNode(equation.trim(), true);
+    textNode.replace(equationNode);
+  },
+  trigger: '$',
+  type: 'text-match',
+};
+
+/**
  * Plugin that enables markdown shortcuts for block types and inline formatting.
  *
  * Block shortcuts (triggered at start of line):
@@ -81,6 +133,8 @@ const IMAGE: TextMatchTransformer = {
  * - ==text== → Highlight
  * - [text](url) → Link
  * - ![alt](url) → Image
+ * - $equation$ → Inline math (KaTeX)
+ * - $$equation$$ → Block math (KaTeX)
  */
 export function MarkdownShortcutsPlugin(): null {
   const [editor] = useLexicalComposerContext();
@@ -110,6 +164,9 @@ export function MarkdownShortcutsPlugin(): null {
       // Link and image transformers
       IMAGE,                 // ![alt](url) → image (must come before LINK)
       LINK,                  // [text](url) → link
+      // Equation transformers (block must come before inline)
+      BLOCK_EQUATION,        // $$equation$$ → block math
+      INLINE_EQUATION,       // $equation$ → inline math
     ]);
   }, [editor]);
 

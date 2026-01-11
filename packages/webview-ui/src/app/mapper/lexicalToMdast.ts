@@ -19,11 +19,13 @@ import {
   $isToggleContainerNode,
   $isToggleTitleNode,
   $isToggleContentNode,
+  $isEquationNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
   ToggleTitleNode,
   ToggleContentNode,
+  EquationNode,
 } from '../editor/nodes';
 import type {
   Root,
@@ -107,6 +109,10 @@ function convertLexicalNode(node: LexicalNode): Content[] {
 
   if ($isToggleContainerNode(node)) {
     return convertToggleContainerNode(node);
+  }
+
+  if ($isEquationNode(node)) {
+    return [convertEquationNode(node)];
   }
 
   // Fallback: create paragraph
@@ -312,6 +318,27 @@ function convertImageNode(node: ImageNode): Paragraph | Html {
   };
 }
 
+function convertEquationNode(node: EquationNode): Paragraph | Html {
+  const equation = node.getEquation();
+  const isInline = node.isInline();
+
+  if (isInline) {
+    // Inline equation: wrap in $...$, output as paragraph with html content
+    // Use html type to prevent any escaping of the LaTeX
+    return {
+      type: 'paragraph',
+      children: [{ type: 'html', value: `$${equation}$` } as Html],
+    };
+  }
+
+  // Block equation: wrap in $$...$$
+  // Output as html to preserve exact formatting
+  return {
+    type: 'html',
+    value: `$$${equation}$$`,
+  };
+}
+
 function convertCalloutNode(node: CalloutNode): Blockquote {
   const calloutType = node.getCalloutType().toUpperCase();
   const children: Paragraph[] = [];
@@ -419,6 +446,14 @@ function convertInlineChildren(node: ElementNode): PhrasingContent[] {
         title: imageNode.getTitle(),
       };
       children.push(image);
+    } else if ($isEquationNode(child)) {
+      // Handle EquationNode that ended up inside a paragraph (from markdown shortcut)
+      // Convert to inline html to preserve exact LaTeX
+      const equationNode = child as EquationNode;
+      const equation = equationNode.getEquation();
+      const isInline = equationNode.isInline();
+      const delimiter = isInline ? '$' : '$$';
+      children.push({ type: 'html', value: `${delimiter}${equation}${delimiter}` } as Html);
     }
   }
 
