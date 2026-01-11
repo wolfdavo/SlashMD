@@ -22,36 +22,83 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const MAX_URL_LENGTH = 2048;
 
 /**
- * SECURITY: Validate image URL
- * - Only allows http/https protocols
- * - Validates URL format
- * - Optionally could block internal/private IPs
+ * Check if a path is a relative/local path (not an absolute URL)
  */
-function validateImageUrl(url: string): { valid: boolean; error?: string } {
+function isRelativePath(path: string): boolean {
+  // Relative paths don't start with a protocol
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path)) {
+    return false;
+  }
+  // Common relative path patterns
+  return path.startsWith('./') || 
+         path.startsWith('../') || 
+         path.startsWith('assets/') ||
+         path.startsWith('images/') ||
+         // Any path that looks like a file path (contains / but no protocol)
+         (/^[^:]+\/[^:]*$/.test(path) && !path.includes('://'));
+}
+
+/**
+ * SECURITY: Validate image URL or path
+ * - Allows http/https protocols for remote images
+ * - Allows relative paths for local images (e.g., assets/image.png)
+ * - Blocks dangerous protocols (javascript:, data:, file:)
+ */
+function validateImageUrl(url: string): { valid: boolean; error?: string; isLocal?: boolean } {
   if (!url) {
-    return { valid: false, error: 'URL is required' };
+    return { valid: false, error: 'URL or path is required' };
   }
 
   if (url.length > MAX_URL_LENGTH) {
-    return { valid: false, error: `URL is too long. Maximum ${MAX_URL_LENGTH} characters.` };
+    return { valid: false, error: `Path is too long. Maximum ${MAX_URL_LENGTH} characters.` };
   }
 
+  // Check if it's a relative/local path
+  if (isRelativePath(url)) {
+    // Basic validation for relative paths
+    // SECURITY: Block path traversal attempts that try to escape the workspace
+    const normalizedPath = url.replace(/\\/g, '/');
+    
+    // Count how many directories up we go vs down
+    const parts = normalizedPath.split('/');
+    let depth = 0;
+    for (const part of parts) {
+      if (part === '..') {
+        depth--;
+        if (depth < -2) {
+          // Allow some traversal (e.g., ../assets/) but not excessive
+          return { valid: false, error: 'Path traversal not allowed' };
+        }
+      } else if (part && part !== '.') {
+        depth++;
+      }
+    }
+    
+    return { valid: true, isLocal: true };
+  }
+
+  // It's an absolute URL - validate it
   try {
     const parsed = new URL(url);
 
-    // Only allow http/https protocols
+    // SECURITY: Block dangerous protocols
+    const blockedProtocols = ['javascript:', 'data:', 'file:', 'vbscript:'];
+    if (blockedProtocols.includes(parsed.protocol)) {
+      return { valid: false, error: 'This URL protocol is not allowed' };
+    }
+
+    // Only allow http/https protocols for remote URLs
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return { valid: false, error: 'Only http:// and https:// URLs are allowed' };
+      return { valid: false, error: 'Only http:// and https:// URLs are allowed for remote images' };
     }
 
-    // Block javascript: and data: URIs (extra safety)
-    if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') {
-      return { valid: false, error: 'Invalid URL protocol' };
-    }
-
-    return { valid: true };
+    return { valid: true, isLocal: false };
   } catch {
-    return { valid: false, error: 'Invalid URL format' };
+    // If URL parsing fails but it looks like a path, treat as relative
+    if (url.includes('/') || url.includes('.')) {
+      return { valid: true, isLocal: true };
+    }
+    return { valid: false, error: 'Invalid URL or path format' };
   }
 }
 
@@ -180,7 +227,15 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
     if (newUrl) {
       const validation = validateImageUrl(newUrl);
       if (validation.valid) {
-        setPreviewUrl(newUrl);
+        // For local paths, we can't preview them directly in the modal
+        // (they need to be resolved through the asset context)
+        // For remote URLs, show the preview
+        if (!validation.isLocal) {
+          setPreviewUrl(newUrl);
+        } else {
+          // Local path - no preview available, but it's valid
+          setPreviewUrl(null);
+        }
       } else {
         setPreviewUrl(null);
         // Don't show error while typing, only on submit
@@ -193,21 +248,21 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
   const handleInsert = useCallback(() => {
     if (activeTab === 'url') {
       if (!url) {
-        setError('Please enter an image URL');
+        setError('Please enter an image URL or local path');
         return;
       }
 
       // SECURITY: Validate URL before inserting
       const validation = validateImageUrl(url);
       if (!validation.valid) {
-        setError(validation.error || 'Invalid URL');
+        setError(validation.error || 'Invalid URL or path');
         return;
       }
 
       onInsert({
         src: url,
         alt: alt || '',
-        isLocal: false,
+        isLocal: validation.isLocal || false,
       });
     } else {
       if (!selectedFileRef.current) {
@@ -256,7 +311,7 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
             className={`image-modal-tab ${activeTab === 'url' ? 'active' : ''}`}
             onClick={() => handleTabChange('url')}
           >
-            URL
+            URL / Path
           </button>
         </div>
 
@@ -289,9 +344,9 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
           ) : (
             <div className="image-modal-url-section">
               <input
-                type="url"
+                type="text"
                 className="image-modal-input"
-                placeholder="https://example.com/image.png"
+                placeholder="assets/image.png or https://example.com/image.png"
                 value={url}
                 onChange={handleUrlChange}
                 autoFocus
