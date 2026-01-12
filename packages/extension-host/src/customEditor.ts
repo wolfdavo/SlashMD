@@ -34,8 +34,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    console.log('SlashMD: resolveCustomTextEditor called for', document.uri.toString());
-
     // Get workspace folder for asset service
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     const assetService = new AssetService(workspaceFolder);
@@ -55,9 +53,7 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     };
 
     // Set initial HTML
-    const html = this.getHtmlForWebview(webviewPanel.webview);
-    console.log('SlashMD: Setting webview HTML, length:', html.length);
-    webviewPanel.webview.html = html;
+    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
     // Track if we're currently applying edits from the webview
     let isApplyingEdits = false;
@@ -65,7 +61,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     // Send document content to webview
     const sendDocumentToWebview = () => {
       const text = document.getText();
-      console.log('SlashMD: Sending DOC_INIT to webview, text length:', text.length);
 
       // Generate base URI for resolving relative asset paths (workspace root)
       let assetBaseUri: string | undefined;
@@ -108,7 +103,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
         }
 
         const message = parseResult.data;
-        console.log('SlashMD: Received validated message from webview:', message.type);
 
         switch (message.type) {
           case 'REQUEST_INIT':
@@ -250,11 +244,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.css')
     );
 
-    console.log('SlashMD: Extension URI:', this.context.extensionUri.toString());
-    console.log('SlashMD: Script URI:', scriptUri.toString());
-    console.log('SlashMD: Style URI:', styleUri.toString());
-    console.log('SlashMD: CSP:', csp);
-
     // SECURITY: Use safe DOM APIs for error display instead of innerHTML
     // The error handler uses textContent to prevent XSS
     return `<!DOCTYPE html>
@@ -271,7 +260,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     <div style="padding: 20px; color: #888;">Loading SlashMD editor...</div>
   </div>
   <script nonce="${nonce}">
-    console.log('SlashMD inline script running');
     window.onerror = function(msg, url, line, col, error) {
       console.error('SlashMD error:', msg, url, line, col, error);
       var root = document.getElementById('root');

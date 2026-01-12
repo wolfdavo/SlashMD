@@ -2,6 +2,7 @@ import { toMarkdown } from 'mdast-util-to-markdown';
 import { gfmToMarkdown } from 'mdast-util-gfm';
 import { mathToMarkdown } from 'mdast-util-math';
 import { frontmatterToMarkdown } from 'mdast-util-frontmatter';
+import * as wikiLinkMdast from 'mdast-util-wiki-link';
 import type { Root } from 'mdast';
 
 export interface StringifyOptions {
@@ -10,9 +11,12 @@ export interface StringifyOptions {
   fenceStyle?: '`' | '~';
 }
 
+// Wiki-link options: use | as the alias divider (Obsidian/Foam style)
+const wikiLinkOptions = { aliasDivider: '|' };
+
 export function stringifyMarkdown(root: Root, options: StringifyOptions = {}): string {
   let result = toMarkdown(root, {
-    extensions: [gfmToMarkdown(), mathToMarkdown(), frontmatterToMarkdown(['yaml'])],
+    extensions: [gfmToMarkdown(), mathToMarkdown(), frontmatterToMarkdown(['yaml']), wikiLinkMdast.toMarkdown(wikiLinkOptions)],
     bullet: options.bulletStyle || '-',
     fence: options.fenceStyle || '`',
     listItemIndent: 'one',

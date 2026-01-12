@@ -57,13 +57,18 @@ export function App() {
       console.log('SlashMD App: Handling message:', message.type);
       switch (message.type) {
         case 'DOC_INIT':
+          try {
           console.log('SlashMD App: Received DOC_INIT with', message.text?.length, 'chars');
+            console.log('SlashMD App: DOC_INIT text preview:', message.text?.substring(0, 200));
           lastDocumentContent.current = message.text;
           setContent(message.text);
           setSettings(message.settings);
           setAssetBaseUri(message.assetBaseUri);
           setDocumentDirUri(message.documentDirUri);
           setThemeOverrides(message.themeOverrides);
+          } catch (error) {
+            console.error('SlashMD App: Error in DOC_INIT handler:', error);
+          }
           break;
 
         case 'DOC_CHANGED':

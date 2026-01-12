@@ -5,6 +5,8 @@ import { math } from 'micromark-extension-math';
 import { mathFromMarkdown } from 'mdast-util-math';
 import { frontmatter } from 'micromark-extension-frontmatter';
 import { frontmatterFromMarkdown } from 'mdast-util-frontmatter';
+import { syntax as wikiLinkSyntax } from 'micromark-extension-wiki-link';
+import * as wikiLinkMdast from 'mdast-util-wiki-link';
 import type { Root, Content, PhrasingContent } from 'mdast';
 
 export interface ParseOptions {
@@ -15,10 +17,13 @@ export interface ParseResult {
   root: Root;
 }
 
+// Wiki-link options: use | as the alias divider (Obsidian/Foam style)
+const wikiLinkOptions = { aliasDivider: '|' };
+
 export function parseMarkdown(text: string, _options: ParseOptions = {}): ParseResult {
   const root = fromMarkdown(text, {
-    extensions: [gfm(), math(), frontmatter(['yaml'])],
-    mdastExtensions: [gfmFromMarkdown(), mathFromMarkdown(), frontmatterFromMarkdown(['yaml'])],
+    extensions: [gfm(), math(), frontmatter(['yaml']), wikiLinkSyntax(wikiLinkOptions)],
+    mdastExtensions: [gfmFromMarkdown(), mathFromMarkdown(), frontmatterFromMarkdown(['yaml']), wikiLinkMdast.fromMarkdown(wikiLinkOptions)],
   });
 
   return { root };

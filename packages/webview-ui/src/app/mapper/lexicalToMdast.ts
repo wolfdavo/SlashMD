@@ -537,7 +537,33 @@ function convertTextNode(node: TextNode): PhrasingContent[] {
   return [result];
 }
 
-function convertLinkNode(node: ElementNode): Link {
+// Wiki-link node type for mdast-util-wiki-link
+interface WikiLinkMdast {
+  type: 'wikiLink';
+  value: string;
+  data?: {
+    alias?: string;
+  };
+}
+
+// Check if a URL looks like a wiki-link (relative .md path or anchor, no protocol)
+function isWikiLinkUrl(url: string): boolean {
+  // Has protocol = not a wiki-link
+  if (url.includes('://') || url.startsWith('mailto:')) {
+    return false;
+  }
+  // Anchor-only link = wiki-link
+  if (url.startsWith('#')) {
+    return true;
+  }
+  // Contains .md (possibly with anchor after) = likely a wiki-link
+  if (url.includes('.md')) {
+    return true;
+  }
+  return false;
+}
+
+function convertLinkNode(node: ElementNode): Link | WikiLinkMdast {
   const url = (node as unknown as { getURL: () => string }).getURL();
   const children: PhrasingContent[] = [];
 
@@ -545,6 +571,46 @@ function convertLinkNode(node: ElementNode): Link {
     if ($isTextNode(child)) {
       children.push(...convertTextNode(child));
     }
+  }
+
+  // Check if this should be a wiki-link
+  if (isWikiLinkUrl(url)) {
+    // Convert URL back to wiki-link target
+    let target: string;
+    
+    if (url.startsWith('#')) {
+      // Anchor-only: #anchor → #anchor
+      target = url;
+    } else if (url.includes('.md#')) {
+      // Path with anchor: page.md#anchor → page#anchor
+      target = url.replace('.md#', '#');
+    } else if (url.endsWith('.md')) {
+      // Simple path: page.md → page
+      target = url.slice(0, -3);
+    } else {
+      target = url;
+    }
+    
+    const linkText = children.length > 0 && children[0].type === 'text' 
+      ? (children[0] as Text).value 
+      : '';
+    
+    // If link text differs from target, use alias
+    // Only include data.alias if there actually is an alias
+    if (linkText && linkText !== target) {
+      return {
+        type: 'wikiLink',
+        value: target,
+        data: { alias: linkText },
+      };
+    }
+    
+    // No alias - don't include data.alias at all
+    return {
+      type: 'wikiLink',
+      value: target,
+      data: {},
+    };
   }
 
   return {

@@ -169,8 +169,16 @@ function InitializePlugin({ content }: { content: string }) {
     hasInitialized.current = true;
 
     if (content) {
+      try {
+        console.log('[SlashMD] InitializePlugin: parsing markdown, length:', content.length);
       const { root } = parseMarkdown(content);
+        console.log('[SlashMD] InitializePlugin: parsed, children:', root.children?.length);
       importMarkdownToLexical(editor, root);
+        console.log('[SlashMD] InitializePlugin: import complete');
+      } catch (error) {
+        console.error('[SlashMD] InitializePlugin: Error during initialization:', error);
+        console.error('[SlashMD] Stack:', error instanceof Error ? error.stack : 'no stack');
+      }
     }
   }, [editor, content]);
 
@@ -237,8 +245,16 @@ function ExternalUpdatePlugin({
     }
     lastContentHashRef.current = contentHash;
 
+    try {
+      console.log('[SlashMD] ExternalUpdatePlugin: parsing markdown, length:', content.length);
     const { root } = parseMarkdown(content);
+      console.log('[SlashMD] ExternalUpdatePlugin: parsed, children:', root.children?.length);
     importMarkdownToLexical(editor, root);
+      console.log('[SlashMD] ExternalUpdatePlugin: import complete');
+    } catch (error) {
+      console.error('[SlashMD] ExternalUpdatePlugin: Error during update:', error);
+      console.error('[SlashMD] Stack:', error instanceof Error ? error.stack : 'no stack');
+    }
   }, [editor, content, lastInternalUpdate]);
 
   return null;
