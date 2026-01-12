@@ -57,13 +57,13 @@ Here is an auto-linked URL: <https://www.example.com>
 
 ### Wiki-Links (Obsidian/Foam Style)
 
-Wiki-links use double brackets: [[path/to/document|Display Text]]
+Wiki-links use double brackets: [[notes|Display Text]]
 
-Here's a wiki-link with alias: [[projects/my-project|My Project]]
+Here's a wiki-link with alias: [[my-project|My Project]]
 
-Here's a wiki-link without alias: \[\[daily/2025-01-05|]]
+Simple wiki-link without alias: [[notes|]]
 
-Multiple wiki-links in a sentence: See [[concepts/architecture|Architecture]] and [[concepts/design|Design]] for details.
+Multiple wiki-links in a sentence: See [[architecture|Architecture]] and [[design|Design]] for details.
 
 ### Reference-Style Link Definitions
 

@@ -10,7 +10,8 @@ import {
 import { $createHeadingNode, $createQuoteNode, HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { $createListNode, $createListItemNode, ListNode, ListItemNode } from '@lexical/list';
 import { $createCodeNode, CodeNode } from '@lexical/code';
-import { $createLinkNode, LinkNode } from '@lexical/link';
+import { LinkNode } from '@lexical/link';
+import { $createCustomLinkNode } from '../editor/nodes';
 import {
   $createHorizontalRuleNode,
   $createImageNode,
@@ -719,7 +720,7 @@ function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode | Equati
         url = target.endsWith('.md') ? target : `${target}.md`;
       }
       
-      const link = $createLinkNode(url);
+      const link = $createCustomLinkNode(url);
       link.append($createTextNode(displayText));
       return [link];
     }
@@ -782,7 +783,7 @@ function convertInlineCode(node: InlineCode): TextNode {
 }
 
 function convertLink(node: Link): LinkNode {
-  const link = $createLinkNode(node.url);
+  const link = $createCustomLinkNode(node.url);
 
   for (const child of node.children) {
     const nodes = convertInlineNode(child);

@@ -22,7 +22,8 @@ import {
   type TextMatchTransformer,
 } from '@lexical/markdown';
 import { $createTextNode } from 'lexical';
-import { $createLinkNode, LinkNode } from '@lexical/link';
+import { LinkNode } from '@lexical/link';
+import { $createCustomLinkNode } from './nodes';
 import { $createImageNode, ImageNode } from './nodes/ImageNode';
 import { $createEquationNode, EquationNode } from './nodes/EquationNode';
 
@@ -130,10 +131,10 @@ const WIKI_LINK: TextMatchTransformer = {
     // which detects .md URLs and exports as wiki-links
     return null;
   },
-  // Import regex - matches [[target|alias]] or [[target]]
-  importRegExp: /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/,
+  // Import regex - matches [[target|alias]], [[target|]] (empty alias), or [[target]]
+  importRegExp: /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/,
   // Trigger regex - must end at cursor position
-  regExp: /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/,
+  regExp: /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]$/,
   replace: (textNode, match) => {
     const [, target, alias] = match;
     
@@ -153,7 +154,7 @@ const WIKI_LINK: TextMatchTransformer = {
     }
     
     const displayText = alias || target;
-    const linkNode = $createLinkNode(url);
+    const linkNode = $createCustomLinkNode(url);
     linkNode.append($createTextNode(displayText));
     textNode.replace(linkNode);
   },

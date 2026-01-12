@@ -38,3 +38,6 @@ export type { SerializedMermaidNode } from './MermaidNode';
 
 export { FrontmatterNode, $createFrontmatterNode, $isFrontmatterNode } from './FrontmatterNode';
 export type { SerializedFrontmatterNode } from './FrontmatterNode';
+
+export { CustomLinkNode, $createCustomLinkNode, $isCustomLinkNode } from './CustomLinkNode';
+export type { SerializedCustomLinkNode } from './CustomLinkNode';

@@ -417,10 +417,21 @@ body {
 .editor-link {
   color: var(--vscode-link);
   text-decoration: none;
+  cursor: text; /* Normal text cursor for editing */
 }
 
 .editor-link:hover {
   text-decoration: underline;
+}
+
+/* When Cmd/Ctrl is held, show pointer cursor on links to indicate they can be opened */
+.modifier-held .editor-link {
+  cursor: pointer;
+}
+
+.modifier-held .editor-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
 }
 
 /* Tables */

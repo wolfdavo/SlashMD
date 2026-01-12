@@ -20,8 +20,20 @@ export interface ParseResult {
 // Wiki-link options: use | as the alias divider (Obsidian/Foam style)
 const wikiLinkOptions = { aliasDivider: '|' };
 
+/**
+ * Normalize wiki-links with empty aliases: [[target|]] → [[target]]
+ * The micromark parser doesn't handle empty aliases, so we pre-process them.
+ */
+function normalizeWikiLinks(text: string): string {
+  // Match [[target|]] and convert to [[target]]
+  return text.replace(/\[\[([^\]|]+)\|\]\]/g, '[[$1]]');
+}
+
 export function parseMarkdown(text: string, _options: ParseOptions = {}): ParseResult {
-  const root = fromMarkdown(text, {
+  // Pre-process to handle edge cases
+  const normalizedText = normalizeWikiLinks(text);
+  
+  const root = fromMarkdown(normalizedText, {
     extensions: [gfm(), math(), frontmatter(['yaml']), wikiLinkSyntax(wikiLinkOptions)],
     mdastExtensions: [gfmFromMarkdown(), mathFromMarkdown(), frontmatterFromMarkdown(['yaml']), wikiLinkMdast.fromMarkdown(wikiLinkOptions)],
   });

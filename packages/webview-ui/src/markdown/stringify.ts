@@ -28,5 +28,11 @@ export function stringifyMarkdown(root: Root, options: StringifyOptions = {}): s
   // boundaries as &#x20; which looks ugly in raw markdown
   result = result.replace(/&#x20;/g, ' ');
 
+  // Post-process: unescape wiki-link brackets that were escaped
+  // mdast-util-to-markdown escapes [ to \[ to prevent link interpretation
+  // Pattern: \[\[content]] or \[\[content\]\] → [[content]]
+  result = result.replace(/\\\[\\\[([^\]\n]+?)\]\]/g, '[[$1]]');
+  result = result.replace(/\\\[\\\[([^\]\n]+?)\\\]\\\]/g, '[[$1]]');
+
   return result;
 }

@@ -168,6 +168,12 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
             }
             break;
 
+          case 'OPEN_LINK':
+            if (message.url) {
+              await this.openLink(message.url, document.uri);
+            }
+            break;
+
         }
       }
     );
@@ -230,6 +236,50 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     setTimeout(() => {
       sendDocumentToWebview();
     }, 100);
+  }
+
+  /**
+   * Open a link from the webview.
+   * - Relative .md links: Open in VS Code editor
+   * - Anchor-only links (#anchor): Ignored (handled in webview)
+   * - External URLs (http/https): Open in default browser
+   */
+  private async openLink(url: string, documentUri: vscode.Uri): Promise<void> {
+    // Handle anchor-only links (in-page navigation) - nothing to do
+    if (url.startsWith('#')) {
+      return;
+    }
+
+    // Handle external URLs
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      await vscode.env.openExternal(vscode.Uri.parse(url));
+      return;
+    }
+
+    // Handle relative links (wiki-links to other markdown files)
+    // Resolve relative to the current document's directory
+    const documentDir = vscode.Uri.joinPath(documentUri, '..');
+    
+    // Remove any anchor from the URL for file resolution
+    const [filePath, anchor] = url.split('#', 2);
+    
+    // Resolve the file path relative to the document
+    const targetUri = vscode.Uri.joinPath(documentDir, filePath);
+    
+    try {
+      // Check if the file exists
+      await vscode.workspace.fs.stat(targetUri);
+      
+      // Open the document
+      // Use showTextDocument to ensure it opens (works with custom editors too)
+      const doc = await vscode.workspace.openTextDocument(targetUri);
+      await vscode.window.showTextDocument(doc);
+      
+      // TODO: If anchor is present, could scroll to heading with that id
+    } catch (error) {
+      // File doesn't exist - show error
+      vscode.window.showWarningMessage(`File not found: ${filePath}`);
+    }
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {

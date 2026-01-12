@@ -14,7 +14,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { CodeNode, CodeHighlightNode, registerCodeHighlighting } from '@lexical/code';
-import { LinkNode, AutoLinkNode } from '@lexical/link';
+import { AutoLinkNode } from '@lexical/link';
 import { TableNode, TableRowNode, TableCellNode } from '@lexical/table';
 import { EditorState, LexicalEditor } from 'lexical';
 
@@ -27,6 +27,7 @@ import { CodeBlockPlugin } from './CodeBlockPlugin';
 import { TogglePlugin } from './TogglePlugin';
 import { ImagePlugin } from './ImagePlugin';
 import { BlockClickPlugin } from './BlockClickPlugin';
+import { LinkClickPlugin } from './LinkClickPlugin';
 import { SearchPlugin } from './SearchPlugin';
 import { AssetContext, createAssetContextValue } from './AssetContext';
 import {
@@ -39,6 +40,7 @@ import {
   EquationNode,
   MermaidNode,
   FrontmatterNode,
+  CustomLinkNode,
 } from './nodes';
 import { importMarkdownToLexical } from '../mapper/mdastToLexical';
 import { exportLexicalToMdast } from '../mapper/lexicalToMdast';
@@ -132,7 +134,7 @@ const editorNodes = [
   ListItemNode,
   CodeNode,
   CodeHighlightNode,
-  LinkNode,
+  CustomLinkNode,
   AutoLinkNode,
   TableNode,
   TableRowNode,
@@ -358,6 +360,7 @@ export function Editor({ initialContent, onChange, assetBaseUri, documentDirUri,
             <TogglePlugin />
             <ImagePlugin />
             <BlockClickPlugin />
+            <LinkClickPlugin />
             <Toolbar />
             <SearchPlugin />
           </div>
