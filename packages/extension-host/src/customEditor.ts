@@ -34,8 +34,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ): Promise<void> {
-    console.log('SlashMD: resolveCustomTextEditor called for', document.uri.toString());
-
     // Get workspace folder for asset service
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     const assetService = new AssetService(workspaceFolder);
@@ -55,9 +53,7 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     };
 
     // Set initial HTML
-    const html = this.getHtmlForWebview(webviewPanel.webview);
-    console.log('SlashMD: Setting webview HTML, length:', html.length);
-    webviewPanel.webview.html = html;
+    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
     // Track if we're currently applying edits from the webview
     let isApplyingEdits = false;
@@ -65,7 +61,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     // Send document content to webview
     const sendDocumentToWebview = () => {
       const text = document.getText();
-      console.log('SlashMD: Sending DOC_INIT to webview, text length:', text.length);
 
       // Generate base URI for resolving relative asset paths (workspace root)
       let assetBaseUri: string | undefined;
@@ -108,7 +103,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
         }
 
         const message = parseResult.data;
-        console.log('SlashMD: Received validated message from webview:', message.type);
 
         switch (message.type) {
           case 'REQUEST_INIT':
@@ -171,6 +165,12 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
                   message: error instanceof Error ? error.message : 'Failed to write asset',
                 });
               }
+            }
+            break;
+
+          case 'OPEN_LINK':
+            if (message.url) {
+              await this.openLink(message.url, document.uri);
             }
             break;
 
@@ -238,6 +238,50 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     }, 100);
   }
 
+  /**
+   * Open a link from the webview.
+   * - Relative .md links: Open in VS Code editor
+   * - Anchor-only links (#anchor): Ignored (handled in webview)
+   * - External URLs (http/https): Open in default browser
+   */
+  private async openLink(url: string, documentUri: vscode.Uri): Promise<void> {
+    // Handle anchor-only links (in-page navigation) - nothing to do
+    if (url.startsWith('#')) {
+      return;
+    }
+
+    // Handle external URLs
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      await vscode.env.openExternal(vscode.Uri.parse(url));
+      return;
+    }
+
+    // Handle relative links (wiki-links to other markdown files)
+    // Resolve relative to the current document's directory
+    const documentDir = vscode.Uri.joinPath(documentUri, '..');
+    
+    // Remove any anchor from the URL for file resolution
+    const [filePath, anchor] = url.split('#', 2);
+    
+    // Resolve the file path relative to the document
+    const targetUri = vscode.Uri.joinPath(documentDir, filePath);
+    
+    try {
+      // Check if the file exists
+      await vscode.workspace.fs.stat(targetUri);
+      
+      // Open the document
+      // Use showTextDocument to ensure it opens (works with custom editors too)
+      const doc = await vscode.workspace.openTextDocument(targetUri);
+      await vscode.window.showTextDocument(doc);
+      
+      // TODO: If anchor is present, could scroll to heading with that id
+    } catch (error) {
+      // File doesn't exist - show error
+      vscode.window.showWarningMessage(`File not found: ${filePath}`);
+    }
+  }
+
   private getHtmlForWebview(webview: vscode.Webview): string {
     const nonce = generateNonce();
     const csp = buildCsp(webview, nonce);
@@ -249,11 +293,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.css')
     );
-
-    console.log('SlashMD: Extension URI:', this.context.extensionUri.toString());
-    console.log('SlashMD: Script URI:', scriptUri.toString());
-    console.log('SlashMD: Style URI:', styleUri.toString());
-    console.log('SlashMD: CSP:', csp);
 
     // SECURITY: Use safe DOM APIs for error display instead of innerHTML
     // The error handler uses textContent to prevent XSS
@@ -271,7 +310,6 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
     <div style="padding: 20px; color: #888;">Loading SlashMD editor...</div>
   </div>
   <script nonce="${nonce}">
-    console.log('SlashMD inline script running');
     window.onerror = function(msg, url, line, col, error) {
       console.error('SlashMD error:', msg, url, line, col, error);
       var root = document.getElementById('root');

@@ -23,7 +23,47 @@ const buildOptions = {
     '.tsx': 'tsx',
     '.ts': 'ts',
     '.css': 'css',
+    // Font files for KaTeX math rendering (embedded as data URLs)
+    '.woff': 'dataurl',
+    '.woff2': 'dataurl',
+    '.ttf': 'dataurl',
   },
+  // Plugin to handle ?raw imports for CSS as text
+  plugins: [{
+    name: 'raw-css-loader',
+    setup(build) {
+      // Handle imports ending with ?raw
+      build.onResolve({ filter: /\?raw$/ }, args => ({
+        path: args.path.replace(/\?raw$/, ''),
+        namespace: 'raw-css',
+        pluginData: { resolveDir: args.resolveDir },
+      }));
+      
+      build.onLoad({ filter: /.*/, namespace: 'raw-css' }, async (args) => {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        
+        // Resolve the actual path
+        let filePath = args.path;
+        if (!path.default.isAbsolute(filePath)) {
+          // Try to resolve from node_modules
+          const { createRequire } = await import('module');
+          const require = createRequire(import.meta.url);
+          try {
+            filePath = require.resolve(args.path);
+          } catch {
+            filePath = path.default.resolve(args.pluginData.resolveDir, args.path);
+          }
+        }
+        
+        const contents = await fs.readFile(filePath, 'utf8');
+        return {
+          contents: `export default ${JSON.stringify(contents)};`,
+          loader: 'js',
+        };
+      });
+    },
+  }],
   define: {
     'process.env.NODE_ENV': isWatch ? '"development"' : '"production"',
   },

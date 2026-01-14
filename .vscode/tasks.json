@@ -3,20 +3,9 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "dev",
-      "group": "build",
-      "problemMatcher": [],
-      "isBackground": true,
-      "label": "npm: dev",
-      "runOptions": {
-        "runOn": "folderOpen"
-      }
-    },
-    {
-      "type": "npm",
       "script": "build",
       "group": "build",
-      "problemMatcher": ["$tsc"],
+      "problemMatcher": [],
       "label": "npm: build"
     }
   ]

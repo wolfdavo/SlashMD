@@ -10,7 +10,8 @@ import {
 import { $createHeadingNode, $createQuoteNode, HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { $createListNode, $createListItemNode, ListNode, ListItemNode } from '@lexical/list';
 import { $createCodeNode, CodeNode } from '@lexical/code';
-import { $createLinkNode, LinkNode } from '@lexical/link';
+import { LinkNode } from '@lexical/link';
+import { $createCustomLinkNode } from '../editor/nodes';
 import {
   $createHorizontalRuleNode,
   $createImageNode,
@@ -18,14 +19,20 @@ import {
   $createToggleContainerNode,
   $createToggleTitleNode,
   $createToggleContentNode,
+  $createEquationNode,
+  $createMermaidNode,
+  $createFrontmatterNode,
   HorizontalRuleNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
+  EquationNode,
+  MermaidNode,
+  FrontmatterNode,
   CalloutType,
 } from '../editor/nodes';
 import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
-import type { Root, Content, PhrasingContent, List, ListItem, Table, TableRow, TableCell, Heading, Paragraph, Blockquote, Code, ThematicBreak, Image, Link, Text, Strong, Emphasis, InlineCode, Delete, Html } from 'mdast';
+import type { Root, Content, PhrasingContent, List, ListItem, Table, TableRow, TableCell, Heading, Paragraph, Blockquote, Code, ThematicBreak, Image, Link, Text, Strong, Emphasis, InlineCode, Delete, Html, Definition } from 'mdast';
 import DOMPurify from 'dompurify';
 
 type LexicalBlockNode =
@@ -38,7 +45,10 @@ type LexicalBlockNode =
   | ImageNode
   | CalloutNode
   | ToggleContainerNode
-  | TableNode;
+  | TableNode
+  | EquationNode
+  | MermaidNode
+  | FrontmatterNode;
 
 // Convert mdast tree to Lexical editor state
 export function importMarkdownToLexical(
@@ -161,9 +171,15 @@ function preprocessDetailsBlocks(children: Content[]): (Content | ToggleContentM
 }
 
 function convertBlockNode(node: Content): LexicalBlockNode[] {
+  // Defensive: handle null/undefined nodes
+  if (!node || !node.type) {
+    console.warn('[mdastToLexical] convertBlockNode received invalid node:', node);
+    return [$createParagraphNode()];
+  }
+
   switch (node.type) {
     case 'paragraph':
-      return [convertParagraph(node)];
+      return convertParagraph(node);
     case 'heading':
       return [convertHeading(node)];
     case 'blockquote':
@@ -178,6 +194,28 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
       return [convertTable(node)];
     case 'html':
       return convertHtml(node);
+    case 'math':
+      // Block math from mdast-util-math: $$...$$
+      return [$createEquationNode((node as { value: string }).value, false)];
+    case 'inlineMath':
+      // Inline math from mdast-util-math: $...$
+      // This shouldn't appear at block level, but handle it gracefully
+      return [$createEquationNode((node as { value: string }).value, true)];
+    case 'yaml': {
+      // YAML frontmatter from mdast-util-frontmatter
+      const frontmatterNode = $createFrontmatterNode();
+      const value = (node as { value: string }).value;
+      if (value) {
+        frontmatterNode.append($createTextNode(value));
+      }
+      return [frontmatterNode];
+    }
+    case 'definition': {
+      // Reference-style link definitions like [ref]: url "title"
+      // These are metadata nodes used for resolving link references
+      // They don't render visibly - return empty array to hide them
+      return [];
+    }
     default:
       // For unknown nodes, create a paragraph with their text content
       const paragraph = $createParagraphNode();
@@ -186,26 +224,74 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
   }
 }
 
-function convertParagraph(node: Paragraph): ParagraphNode | ImageNode {
+function convertParagraph(node: Paragraph): (ParagraphNode | ImageNode)[] {
+  // Defensive: handle empty or missing children
+  if (!node.children || node.children.length === 0) {
+    return [$createParagraphNode()];
+  }
+
   // Check if this is just an image - return ImageNode directly
   if (
     node.children.length === 1 &&
     node.children[0].type === 'image'
   ) {
     const img = node.children[0] as Image;
-    return $createImageNode(img.url, img.alt || '', img.title ?? undefined);
+    return [$createImageNode(img.url, img.alt || '', img.title ?? undefined)];
   }
 
-  const paragraph = $createParagraphNode();
+  // Check if paragraph contains any images mixed with text
+  const hasImages = node.children.some(child => child.type === 'image');
+  
+  if (!hasImages) {
+    // Simple case: no images, just create a paragraph
+    const paragraph = $createParagraphNode();
+    for (const child of node.children) {
+      const nodes = convertInlineNode(child);
+      for (const n of nodes) {
+        paragraph.append(n);
+      }
+    }
+    return [paragraph];
+  }
+
+  // Complex case: mixed text and images
+  // Split into multiple blocks: paragraphs for text, ImageNodes for images
+  const result: (ParagraphNode | ImageNode)[] = [];
+  let currentParagraph: ParagraphNode | null = null;
 
   for (const child of node.children) {
-    const nodes = convertInlineNode(child);
-    for (const n of nodes) {
-      paragraph.append(n);
+    if (child.type === 'image') {
+      // Flush current paragraph if it has content
+      if (currentParagraph && currentParagraph.getTextContent().length > 0) {
+        result.push(currentParagraph);
+        currentParagraph = null;
+      }
+      // Add the image as its own block
+      const img = child as Image;
+      result.push($createImageNode(img.url, img.alt || '', img.title ?? undefined));
+    } else {
+      // Text or other inline content
+      if (!currentParagraph) {
+        currentParagraph = $createParagraphNode();
+      }
+      const nodes = convertInlineNode(child);
+      for (const n of nodes) {
+        currentParagraph.append(n);
+      }
     }
   }
 
-  return paragraph;
+  // Flush any remaining paragraph
+  if (currentParagraph && currentParagraph.getTextContent().length > 0) {
+    result.push(currentParagraph);
+  }
+
+  // If nothing was added (shouldn't happen), return empty paragraph
+  if (result.length === 0) {
+    return [$createParagraphNode()];
+  }
+
+  return result;
 }
 
 function convertHeading(node: Heading): HeadingNode {
@@ -351,7 +437,12 @@ function convertListItem(node: ListItem, parentList: List): ListItemNode {
   return listItem;
 }
 
-function convertCode(node: Code): CodeNode {
+function convertCode(node: Code): CodeNode | MermaidNode {
+  // Check if this is a mermaid diagram
+  if (node.lang === 'mermaid') {
+    return $createMermaidNode(node.value);
+  }
+  
   const code = $createCodeNode(node.lang || undefined);
   code.append($createTextNode(node.value));
   return code;
@@ -413,17 +504,50 @@ function convertTableCell(
 /**
  * SECURITY: Safely parse HTML content using DOMPurify
  * Only allows specific safe tags and attributes
+ * 
+ * TODO: Current "limited HTML support" only extracts text content from HTML.
+ * HTML attributes like align="center" are not rendered. To properly support
+ * HTML rendering, consider creating an HtmlBlockNode that safely renders
+ * sanitized HTML content while preserving basic styling attributes.
  */
 function convertHtml(node: Html): LexicalBlockNode[] {
   const html = node.value.trim();
 
+  // Check for block equation: $$...$$
+  const blockEquationMatch = html.match(/^\$\$([^$]+)\$\$$/);
+  if (blockEquationMatch) {
+    return [$createEquationNode(blockEquationMatch[1].trim(), false)];
+  }
+
+  // Check for inline equation: $...$
+  const inlineEquationMatch = html.match(/^\$([^$]+)\$$/);
+  if (inlineEquationMatch) {
+    return [$createEquationNode(inlineEquationMatch[1].trim(), true)];
+  }
+
   // Toggle/details blocks are handled by preprocessDetailsBlocks
   // This function only handles remaining HTML
 
-  // SECURITY: Sanitize HTML using DOMPurify with strict allowlist
+  // SECURITY: Sanitize HTML using DOMPurify with allowlist
+  // Allows common safe HTML elements for "limited HTML support"
   const sanitized = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['img', 'br', 'hr'],
-    ALLOWED_ATTR: ['src', 'alt', 'title', 'width', 'height'],
+    ALLOWED_TAGS: [
+      // Block elements
+      'div', 'p', 'br', 'hr',
+      // Inline formatting
+      'strong', 'b', 'em', 'i', 'u', 's', 'del', 'ins',
+      'sub', 'sup', 'mark', 'small',
+      // Semantic elements
+      'kbd', 'code', 'samp', 'var', 'abbr', 'cite', 'q',
+      // Media
+      'img',
+      // Spans for styling
+      'span',
+    ],
+    ALLOWED_ATTR: [
+      'src', 'alt', 'title', 'width', 'height',
+      'align', 'class', 'id',
+    ],
     ALLOW_DATA_ATTR: false,
     RETURN_DOM: false,
     RETURN_DOM_FRAGMENT: false,
@@ -478,7 +602,22 @@ function convertHtml(node: Html): LexicalBlockNode[] {
     return [$createHorizontalRuleNode()];
   }
 
-  // For other HTML, create a code block to preserve it
+  // Check for br element (standalone line break)
+  if (sanitized.trim() === '<br>' || sanitized.trim() === '<br/>') {
+    const paragraph = $createParagraphNode();
+    return [paragraph];
+  }
+
+  // For other allowed HTML, render as paragraph with text content
+  // This provides basic HTML support while maintaining security
+  const textContent = doc.body.textContent || '';
+  if (textContent.trim()) {
+    const paragraph = $createParagraphNode();
+    paragraph.append($createTextNode(textContent));
+    return [paragraph];
+  }
+
+  // For empty or unhandled HTML, create a code block to preserve it
   const code = $createCodeNode('html');
   code.append($createTextNode(html));
   return [code];
@@ -517,7 +656,23 @@ function convertToggleMarker(marker: ToggleContentMarker): ToggleContainerNode[]
   return [container];
 }
 
-function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode)[] {
+// Wiki-link node type from mdast-util-wiki-link
+interface WikiLink {
+  type: 'wikiLink';
+  value: string;
+  data?: {
+    alias?: string;
+    permalink?: string;
+  };
+}
+
+function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode | EquationNode)[] {
+  // Defensive: handle null/undefined nodes
+  if (!node || !node.type) {
+    console.warn('[mdastToLexical] convertInlineNode received invalid node:', node);
+    return [$createTextNode('')];
+  }
+
   switch (node.type) {
     case 'text':
       return [convertText(node)];
@@ -534,6 +689,56 @@ function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode)[] {
     case 'image':
       // Images in inline context become text placeholder
       return [$createTextNode(`![${node.alt || ''}](${node.url})`)];
+    case 'inlineMath':
+      // Inline math from mdast-util-math: $...$
+      return [$createEquationNode((node as { value: string }).value, true)];
+    case 'wikiLink': {
+      // Wiki-links from mdast-util-wiki-link: [[path|alias]]
+      const wikiLink = node as unknown as WikiLink;
+      const target = wikiLink.value;
+      
+      // Defensive: handle undefined/null target
+      if (!target) {
+        console.warn('[mdastToLexical] wikiLink with undefined target:', wikiLink);
+        return [$createTextNode('[[]]')];
+      }
+      
+      const displayText = wikiLink.data?.alias || target;
+      
+      // Convert to URL, handling anchors properly
+      let url: string;
+      if (target.startsWith('#')) {
+        // Anchor-only: #anchor → #anchor
+        url = target;
+      } else if (target.includes('#')) {
+        // Path with anchor: page#anchor → page.md#anchor
+        const [path, anchor] = target.split('#', 2);
+        const pathWithExt = path.endsWith('.md') ? path : `${path}.md`;
+        url = `${pathWithExt}#${anchor}`;
+      } else {
+        // Simple path: page → page.md
+        url = target.endsWith('.md') ? target : `${target}.md`;
+      }
+      
+      const link = $createCustomLinkNode(url);
+      link.append($createTextNode(displayText));
+      return [link];
+    }
+    case 'html': {
+      // Check for inline equation: $...$
+      const html = (node as Html).value;
+      const inlineEquationMatch = html.match(/^\$([^$]+)\$$/);
+      if (inlineEquationMatch) {
+        return [$createEquationNode(inlineEquationMatch[1].trim(), true)];
+      }
+      // Check for block equation: $$...$$ (shouldn't be inline, but handle gracefully)
+      const blockEquationMatch = html.match(/^\$\$([^$]+)\$\$$/);
+      if (blockEquationMatch) {
+        return [$createEquationNode(blockEquationMatch[1].trim(), false)];
+      }
+      // Other HTML becomes plain text
+      return [$createTextNode(html)];
+    }
     default:
       return [$createTextNode('')];
   }
@@ -578,7 +783,7 @@ function convertInlineCode(node: InlineCode): TextNode {
 }
 
 function convertLink(node: Link): LinkNode {
-  const link = $createLinkNode(node.url);
+  const link = $createCustomLinkNode(node.url);
 
   for (const child of node.children) {
     const nodes = convertInlineNode(child);

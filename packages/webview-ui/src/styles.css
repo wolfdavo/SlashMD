@@ -417,10 +417,21 @@ body {
 .editor-link {
   color: var(--vscode-link);
   text-decoration: none;
+  cursor: text; /* Normal text cursor for editing */
 }
 
 .editor-link:hover {
   text-decoration: underline;
+}
+
+/* When Cmd/Ctrl is held, show pointer cursor on links to indicate they can be opened */
+.modifier-held .editor-link {
+  cursor: pointer;
+}
+
+.modifier-held .editor-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
 }
 
 /* Tables */
@@ -1456,4 +1467,171 @@ body {
 .search-highlight.current {
   background: rgba(255, 153, 0, 0.6);
   outline: 2px solid rgba(255, 153, 0, 0.8);
+}
+
+/* ===== Equation / Math Styles ===== */
+
+.editor-equation {
+  cursor: pointer;
+  user-select: none;
+}
+
+.equation-renderer {
+  display: inline;
+}
+
+.equation-renderer.block {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+.equation-renderer.inline {
+  display: inline;
+}
+
+/* Equation Editor Styles */
+.equation-editor-background {
+  background-color: var(--vscode-code-bg);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.equation-dollar-sign {
+  color: var(--vscode-foreground);
+  opacity: 0.5;
+  font-family: monospace;
+  white-space: pre;
+}
+
+.equation-inline-editor {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  color: #8421a2;
+  background-color: inherit;
+  font-family: monospace;
+  font-size: inherit;
+  min-width: 50px;
+}
+
+.equation-block-editor {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  color: #8421a2;
+  background-color: inherit;
+  font-family: monospace;
+  font-size: inherit;
+  resize: vertical;
+  width: 100%;
+  min-height: 60px;
+}
+
+/* KaTeX styling adjustments */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 0.5em 0;
+}
+
+.katex-error {
+  color: #cc0000;
+  font-size: 0.9em;
+}
+
+/* ===== Mermaid Diagram Styles ===== */
+
+.editor-mermaid {
+  margin: 1em 0;
+}
+
+.mermaid-renderer {
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+
+.mermaid-renderer:hover {
+  box-shadow: 0 0 0 2px var(--vscode-link);
+}
+
+.mermaid-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--vscode-foreground);
+  opacity: 0.7;
+}
+
+/* Mermaid Editor Styles */
+.mermaid-editor-container {
+  background: var(--vscode-code-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1em 0;
+}
+
+.mermaid-editor-header,
+.mermaid-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.mermaid-editor-label {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  opacity: 0.7;
+}
+
+.mermaid-editor-close {
+  background: transparent;
+  border: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.mermaid-editor-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mermaid-editor-textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground);
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.mermaid-editor-textarea::placeholder {
+  color: var(--vscode-foreground);
+  opacity: 0.5;
+}
+
+/* ===== Frontmatter Styles ===== */
+
+/* Frontmatter uses CodeNode styling - this class just adds any differentiation if needed */
+.frontmatter-code {
+  /* Frontmatter looks identical to code blocks */
 }

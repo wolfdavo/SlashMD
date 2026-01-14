@@ -14,7 +14,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListNode, ListItemNode } from '@lexical/list';
 import { CodeNode, CodeHighlightNode, registerCodeHighlighting } from '@lexical/code';
-import { LinkNode, AutoLinkNode } from '@lexical/link';
+import { AutoLinkNode } from '@lexical/link';
 import { TableNode, TableRowNode, TableCellNode } from '@lexical/table';
 import { EditorState, LexicalEditor } from 'lexical';
 
@@ -27,6 +27,7 @@ import { CodeBlockPlugin } from './CodeBlockPlugin';
 import { TogglePlugin } from './TogglePlugin';
 import { ImagePlugin } from './ImagePlugin';
 import { BlockClickPlugin } from './BlockClickPlugin';
+import { LinkClickPlugin } from './LinkClickPlugin';
 import { SearchPlugin } from './SearchPlugin';
 import { AssetContext, createAssetContextValue } from './AssetContext';
 import {
@@ -36,6 +37,10 @@ import {
   ToggleContentNode,
   ImageNode,
   HorizontalRuleNode,
+  EquationNode,
+  MermaidNode,
+  FrontmatterNode,
+  CustomLinkNode,
 } from './nodes';
 import { importMarkdownToLexical } from '../mapper/mdastToLexical';
 import { exportLexicalToMdast } from '../mapper/lexicalToMdast';
@@ -129,7 +134,7 @@ const editorNodes = [
   ListItemNode,
   CodeNode,
   CodeHighlightNode,
-  LinkNode,
+  CustomLinkNode,
   AutoLinkNode,
   TableNode,
   TableRowNode,
@@ -140,6 +145,9 @@ const editorNodes = [
   ToggleContentNode,
   ImageNode,
   HorizontalRuleNode,
+  EquationNode,
+  MermaidNode,
+  FrontmatterNode,
 ];
 
 // Plugin to enable syntax highlighting in code blocks
@@ -163,8 +171,16 @@ function InitializePlugin({ content }: { content: string }) {
     hasInitialized.current = true;
 
     if (content) {
+      try {
+        console.log('[SlashMD] InitializePlugin: parsing markdown, length:', content.length);
       const { root } = parseMarkdown(content);
+        console.log('[SlashMD] InitializePlugin: parsed, children:', root.children?.length);
       importMarkdownToLexical(editor, root);
+        console.log('[SlashMD] InitializePlugin: import complete');
+      } catch (error) {
+        console.error('[SlashMD] InitializePlugin: Error during initialization:', error);
+        console.error('[SlashMD] Stack:', error instanceof Error ? error.stack : 'no stack');
+      }
     }
   }, [editor, content]);
 
@@ -231,8 +247,16 @@ function ExternalUpdatePlugin({
     }
     lastContentHashRef.current = contentHash;
 
+    try {
+      console.log('[SlashMD] ExternalUpdatePlugin: parsing markdown, length:', content.length);
     const { root } = parseMarkdown(content);
+      console.log('[SlashMD] ExternalUpdatePlugin: parsed, children:', root.children?.length);
     importMarkdownToLexical(editor, root);
+      console.log('[SlashMD] ExternalUpdatePlugin: import complete');
+    } catch (error) {
+      console.error('[SlashMD] ExternalUpdatePlugin: Error during update:', error);
+      console.error('[SlashMD] Stack:', error instanceof Error ? error.stack : 'no stack');
+    }
   }, [editor, content, lastInternalUpdate]);
 
   return null;
@@ -336,6 +360,7 @@ export function Editor({ initialContent, onChange, assetBaseUri, documentDirUri,
             <TogglePlugin />
             <ImagePlugin />
             <BlockClickPlugin />
+            <LinkClickPlugin />
             <Toolbar />
             <SearchPlugin />
           </div>

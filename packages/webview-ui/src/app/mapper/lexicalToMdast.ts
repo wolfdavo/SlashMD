@@ -19,11 +19,17 @@ import {
   $isToggleContainerNode,
   $isToggleTitleNode,
   $isToggleContentNode,
+  $isEquationNode,
+  $isMermaidNode,
+  $isFrontmatterNode,
   ImageNode,
   CalloutNode,
   ToggleContainerNode,
   ToggleTitleNode,
   ToggleContentNode,
+  EquationNode,
+  MermaidNode,
+  FrontmatterNode,
 } from '../editor/nodes';
 import type {
   Root,
@@ -85,6 +91,11 @@ function convertLexicalNode(node: LexicalNode): Content[] {
     return [convertListNode(node)];
   }
 
+  // Check FrontmatterNode BEFORE CodeNode since FrontmatterNode extends CodeNode
+  if ($isFrontmatterNode(node)) {
+    return [convertFrontmatterNode(node)];
+  }
+
   if ($isCodeNode(node)) {
     return [convertCodeNode(node)];
   }
@@ -107,6 +118,14 @@ function convertLexicalNode(node: LexicalNode): Content[] {
 
   if ($isToggleContainerNode(node)) {
     return convertToggleContainerNode(node);
+  }
+
+  if ($isEquationNode(node)) {
+    return [convertEquationNode(node)];
+  }
+
+  if ($isMermaidNode(node)) {
+    return [convertMermaidNode(node)];
   }
 
   // Fallback: create paragraph
@@ -312,6 +331,59 @@ function convertImageNode(node: ImageNode): Paragraph | Html {
   };
 }
 
+// Math node types from mdast-util-math
+interface InlineMath {
+  type: 'inlineMath';
+  value: string;
+}
+
+interface Math {
+  type: 'math';
+  value: string;
+}
+
+function convertEquationNode(node: EquationNode): Paragraph | Math {
+  const equation = node.getEquation();
+  const isInline = node.isInline();
+
+  if (isInline) {
+    // Inline equation: use inlineMath mdast node
+    return {
+      type: 'paragraph',
+      children: [{ type: 'inlineMath', value: equation } as InlineMath as unknown as PhrasingContent],
+    };
+  }
+
+  // Block equation: use math mdast node
+  return {
+    type: 'math',
+    value: equation,
+  } as Math;
+}
+
+function convertMermaidNode(node: MermaidNode): Code {
+  // Export as a fenced code block with lang="mermaid"
+  return {
+    type: 'code',
+    lang: 'mermaid',
+    value: node.getCode(),
+  };
+}
+
+// YAML frontmatter node type from mdast-util-frontmatter
+interface Yaml {
+  type: 'yaml';
+  value: string;
+}
+
+function convertFrontmatterNode(node: FrontmatterNode): Yaml {
+  // Export as yaml mdast node (will be serialized as ---\ncontent\n--- by mdast-util-frontmatter)
+  return {
+    type: 'yaml',
+    value: node.getTextContent(),
+  };
+}
+
 function convertCalloutNode(node: CalloutNode): Blockquote {
   const calloutType = node.getCalloutType().toUpperCase();
   const children: Paragraph[] = [];
@@ -408,6 +480,23 @@ function convertInlineChildren(node: ElementNode): PhrasingContent[] {
       children.push(...convertTextNode(child));
     } else if ($isLinkNode(child)) {
       children.push(convertLinkNode(child as unknown as ElementNode));
+    } else if ($isImageNode(child)) {
+      // Handle ImageNode that ended up inside a paragraph (from markdown shortcut)
+      // Convert to inline mdast image
+      const imageNode = child as ImageNode;
+      const image: Image = {
+        type: 'image',
+        url: imageNode.getSrc(),
+        alt: imageNode.getAlt(),
+        title: imageNode.getTitle(),
+      };
+      children.push(image);
+    } else if ($isEquationNode(child)) {
+      // Handle EquationNode that ended up inside a paragraph (from markdown shortcut)
+      // Convert to inlineMath mdast node
+      const equationNode = child as EquationNode;
+      const equation = equationNode.getEquation();
+      children.push({ type: 'inlineMath', value: equation } as InlineMath as unknown as PhrasingContent);
     }
   }
 
@@ -448,7 +537,33 @@ function convertTextNode(node: TextNode): PhrasingContent[] {
   return [result];
 }
 
-function convertLinkNode(node: ElementNode): Link {
+// Wiki-link node type for mdast-util-wiki-link
+interface WikiLinkMdast {
+  type: 'wikiLink';
+  value: string;
+  data?: {
+    alias?: string;
+  };
+}
+
+// Check if a URL looks like a wiki-link (relative .md path or anchor, no protocol)
+function isWikiLinkUrl(url: string): boolean {
+  // Has protocol = not a wiki-link
+  if (url.includes('://') || url.startsWith('mailto:')) {
+    return false;
+  }
+  // Anchor-only link = wiki-link
+  if (url.startsWith('#')) {
+    return true;
+  }
+  // Contains .md (possibly with anchor after) = likely a wiki-link
+  if (url.includes('.md')) {
+    return true;
+  }
+  return false;
+}
+
+function convertLinkNode(node: ElementNode): Link | WikiLinkMdast {
   const url = (node as unknown as { getURL: () => string }).getURL();
   const children: PhrasingContent[] = [];
 
@@ -456,6 +571,45 @@ function convertLinkNode(node: ElementNode): Link {
     if ($isTextNode(child)) {
       children.push(...convertTextNode(child));
     }
+  }
+
+  // Check if this should be a wiki-link
+  if (isWikiLinkUrl(url)) {
+    // Convert URL back to wiki-link target
+    let target: string;
+    
+    if (url.startsWith('#')) {
+      // Anchor-only: #anchor → #anchor
+      target = url;
+    } else if (url.includes('.md#')) {
+      // Path with anchor: page.md#anchor → page#anchor
+      target = url.replace('.md#', '#');
+    } else if (url.endsWith('.md')) {
+      // Simple path: page.md → page
+      target = url.slice(0, -3);
+    } else {
+      target = url;
+    }
+    
+    const linkText = children.length > 0 && children[0].type === 'text' 
+      ? (children[0] as Text).value 
+      : '';
+    
+    // If link text differs from target, use alias
+    // Only include data.alias if there actually is an alias
+    if (linkText && linkText !== target) {
+      return {
+        type: 'wikiLink',
+        value: target,
+        data: { alias: linkText },
+      };
+    }
+    
+    // No alias - omit data property entirely
+    return {
+      type: 'wikiLink',
+      value: target,
+    };
   }
 
   return {
