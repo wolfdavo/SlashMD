@@ -21,6 +21,9 @@ import {
   LINK,
   type TextMatchTransformer,
 } from '@lexical/markdown';
+import { $createTextNode } from 'lexical';
+import { LinkNode } from '@lexical/link';
+import { $createCustomLinkNode } from './nodes';
 import { $createImageNode, ImageNode } from './nodes/ImageNode';
 import { $createEquationNode, EquationNode } from './nodes/EquationNode';
 
@@ -110,6 +113,56 @@ const INLINE_EQUATION: TextMatchTransformer = {
 };
 
 /**
+ * Custom WIKI_LINK transformer for [[target|alias]] and [[target]] markdown syntax.
+ * Creates a LinkNode that will be exported back as a wiki-link.
+ * The URL is set to target.md so the exporter knows it's a wiki-link.
+ *
+ * Supports:
+ * - [[page]] → page.md
+ * - [[page|alias]] → page.md with display text "alias"
+ * - [[#anchor]] → #anchor (anchor-only, no .md)
+ * - [[page#anchor]] → page.md#anchor
+ * - [[page#anchor|alias]] → page.md#anchor with display text "alias"
+ */
+const WIKI_LINK: TextMatchTransformer = {
+  dependencies: [LinkNode],
+  export: (node) => {
+    // Export is handled by lexicalToMdast.ts convertLinkNode
+    // which detects .md URLs and exports as wiki-links
+    return null;
+  },
+  // Import regex - matches [[target|alias]], [[target|]] (empty alias), or [[target]]
+  importRegExp: /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/,
+  // Trigger regex - must end at cursor position
+  regExp: /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]$/,
+  replace: (textNode, match) => {
+    const [, target, alias] = match;
+    
+    // Handle anchors properly
+    let url: string;
+    if (target.startsWith('#')) {
+      // Anchor-only link: [[#anchor]] → #anchor
+      url = target;
+    } else if (target.includes('#')) {
+      // Path with anchor: [[page#anchor]] → page.md#anchor
+      const [path, anchor] = target.split('#', 2);
+      const pathWithExt = path.endsWith('.md') ? path : `${path}.md`;
+      url = `${pathWithExt}#${anchor}`;
+    } else {
+      // Simple path: [[page]] → page.md
+      url = target.endsWith('.md') ? target : `${target}.md`;
+    }
+    
+    const displayText = alias || target;
+    const linkNode = $createCustomLinkNode(url);
+    linkNode.append($createTextNode(displayText));
+    textNode.replace(linkNode);
+  },
+  trigger: ']',
+  type: 'text-match',
+};
+
+/**
  * Plugin that enables markdown shortcuts for block types and inline formatting.
  *
  * Block shortcuts (triggered at start of line):
@@ -130,6 +183,7 @@ const INLINE_EQUATION: TextMatchTransformer = {
  * - `text` → Inline code
  * - ~~text~~ → Strikethrough
  * - [text](url) → Link
+ * - [[target|alias]] → Wiki-link (Obsidian/Foam style)
  * - ![alt](url) → Image
  * - $equation$ → Inline math (KaTeX)
  * - $$equation$$ → Block math (KaTeX)
@@ -160,6 +214,7 @@ export function MarkdownShortcutsPlugin(): null {
       INLINE_CODE,           // `text` → code
       // Link and image transformers
       IMAGE,                 // ![alt](url) → image (must come before LINK)
+      WIKI_LINK,             // [[target|alias]] → wiki-link (must come before LINK)
       LINK,                  // [text](url) → link
       // Equation transformers (block must come before inline)
       BLOCK_EQUATION,        // $$equation$$ → block math

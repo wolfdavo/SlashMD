@@ -8,10 +8,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Register commands
   registerCommands(context);
-
-  console.log('SlashMD extension activated');
 }
 
 export function deactivate(): void {
-  console.log('SlashMD extension deactivated');
+  // Nothing to clean up
 }

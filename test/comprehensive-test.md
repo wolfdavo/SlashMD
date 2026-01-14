@@ -55,6 +55,20 @@ Here is a [link with title](https://www.google.com).
 
 Here is an auto-linked URL: <https://www.example.com>
 
+### Wiki-Links (Obsidian/Foam Style)
+
+Wiki-links use double brackets: [[notes|Display Text]]
+
+Here's a wiki-link with alias: [[my-project|My Project]]
+
+Simple wiki-link without alias: [[notes|]]
+
+Multiple wiki-links in a sentence: See [[architecture|Architecture]] and [[design|Design]] for details.
+
+### Reference-Style Link Definitions
+
+These are metadata used by Foam and should be hidden from view (not rendered).
+
 ---
 
 ## Images

@@ -116,7 +116,8 @@ export type UIToHostMessage =
   | { type: 'APPLY_TEXT_EDITS'; edits: TextEdit[]; reason: 'typing' | 'drag' | 'paste' | 'format' }
   | { type: 'WRITE_ASSET'; dataUri: string; suggestedName?: string }
   | { type: 'REQUEST_INIT' }
-  | { type: 'REQUEST_SETTINGS' };
+  | { type: 'REQUEST_SETTINGS' }
+  | { type: 'OPEN_LINK'; url: string };
 
 // =============================================================================
 // VALIDATION HELPER

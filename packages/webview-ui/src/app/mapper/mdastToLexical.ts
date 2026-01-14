@@ -10,7 +10,8 @@ import {
 import { $createHeadingNode, $createQuoteNode, HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { $createListNode, $createListItemNode, ListNode, ListItemNode } from '@lexical/list';
 import { $createCodeNode, CodeNode } from '@lexical/code';
-import { $createLinkNode, LinkNode } from '@lexical/link';
+import { LinkNode } from '@lexical/link';
+import { $createCustomLinkNode } from '../editor/nodes';
 import {
   $createHorizontalRuleNode,
   $createImageNode,
@@ -31,7 +32,7 @@ import {
   CalloutType,
 } from '../editor/nodes';
 import { $createTableNode, $createTableRowNode, $createTableCellNode, TableNode, TableRowNode, TableCellNode, TableCellHeaderStates } from '@lexical/table';
-import type { Root, Content, PhrasingContent, List, ListItem, Table, TableRow, TableCell, Heading, Paragraph, Blockquote, Code, ThematicBreak, Image, Link, Text, Strong, Emphasis, InlineCode, Delete, Html } from 'mdast';
+import type { Root, Content, PhrasingContent, List, ListItem, Table, TableRow, TableCell, Heading, Paragraph, Blockquote, Code, ThematicBreak, Image, Link, Text, Strong, Emphasis, InlineCode, Delete, Html, Definition } from 'mdast';
 import DOMPurify from 'dompurify';
 
 type LexicalBlockNode =
@@ -170,6 +171,12 @@ function preprocessDetailsBlocks(children: Content[]): (Content | ToggleContentM
 }
 
 function convertBlockNode(node: Content): LexicalBlockNode[] {
+  // Defensive: handle null/undefined nodes
+  if (!node || !node.type) {
+    console.warn('[mdastToLexical] convertBlockNode received invalid node:', node);
+    return [$createParagraphNode()];
+  }
+
   switch (node.type) {
     case 'paragraph':
       return convertParagraph(node);
@@ -203,6 +210,12 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
       }
       return [frontmatterNode];
     }
+    case 'definition': {
+      // Reference-style link definitions like [ref]: url "title"
+      // These are metadata nodes used for resolving link references
+      // They don't render visibly - return empty array to hide them
+      return [];
+    }
     default:
       // For unknown nodes, create a paragraph with their text content
       const paragraph = $createParagraphNode();
@@ -212,6 +225,11 @@ function convertBlockNode(node: Content): LexicalBlockNode[] {
 }
 
 function convertParagraph(node: Paragraph): (ParagraphNode | ImageNode)[] {
+  // Defensive: handle empty or missing children
+  if (!node.children || node.children.length === 0) {
+    return [$createParagraphNode()];
+  }
+
   // Check if this is just an image - return ImageNode directly
   if (
     node.children.length === 1 &&
@@ -638,7 +656,23 @@ function convertToggleMarker(marker: ToggleContentMarker): ToggleContainerNode[]
   return [container];
 }
 
+// Wiki-link node type from mdast-util-wiki-link
+interface WikiLink {
+  type: 'wikiLink';
+  value: string;
+  data?: {
+    alias?: string;
+    permalink?: string;
+  };
+}
+
 function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode | EquationNode)[] {
+  // Defensive: handle null/undefined nodes
+  if (!node || !node.type) {
+    console.warn('[mdastToLexical] convertInlineNode received invalid node:', node);
+    return [$createTextNode('')];
+  }
+
   switch (node.type) {
     case 'text':
       return [convertText(node)];
@@ -658,6 +692,38 @@ function convertInlineNode(node: PhrasingContent): (TextNode | LinkNode | Equati
     case 'inlineMath':
       // Inline math from mdast-util-math: $...$
       return [$createEquationNode((node as { value: string }).value, true)];
+    case 'wikiLink': {
+      // Wiki-links from mdast-util-wiki-link: [[path|alias]]
+      const wikiLink = node as unknown as WikiLink;
+      const target = wikiLink.value;
+      
+      // Defensive: handle undefined/null target
+      if (!target) {
+        console.warn('[mdastToLexical] wikiLink with undefined target:', wikiLink);
+        return [$createTextNode('[[]]')];
+      }
+      
+      const displayText = wikiLink.data?.alias || target;
+      
+      // Convert to URL, handling anchors properly
+      let url: string;
+      if (target.startsWith('#')) {
+        // Anchor-only: #anchor → #anchor
+        url = target;
+      } else if (target.includes('#')) {
+        // Path with anchor: page#anchor → page.md#anchor
+        const [path, anchor] = target.split('#', 2);
+        const pathWithExt = path.endsWith('.md') ? path : `${path}.md`;
+        url = `${pathWithExt}#${anchor}`;
+      } else {
+        // Simple path: page → page.md
+        url = target.endsWith('.md') ? target : `${target}.md`;
+      }
+      
+      const link = $createCustomLinkNode(url);
+      link.append($createTextNode(displayText));
+      return [link];
+    }
     case 'html': {
       // Check for inline equation: $...$
       const html = (node as Html).value;
@@ -717,7 +783,7 @@ function convertInlineCode(node: InlineCode): TextNode {
 }
 
 function convertLink(node: Link): LinkNode {
-  const link = $createLinkNode(node.url);
+  const link = $createCustomLinkNode(node.url);
 
   for (const child of node.children) {
     const nodes = convertInlineNode(child);

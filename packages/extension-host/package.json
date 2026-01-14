@@ -48,7 +48,7 @@
             "filenamePattern": "*.markdown"
           }
         ],
-        "priority": "default"
+        "priority": "option"
       }
     ],
     "commands": [
@@ -83,6 +83,15 @@
         "command": "slashmd.insertBlock",
         "title": "Insert Block…",
         "category": "SlashMD"
+      },
+      {
+        "command": "slashmd.safeOpen",
+        "title": "Open in SlashMD",
+        "category": "SlashMD",
+        "icon": {
+          "light": "media/blocks-light.svg",
+          "dark": "media/blocks-dark.svg"
+        }
       }
     ],
     "menus": {
@@ -105,6 +114,13 @@
         {
           "command": "slashmd.openAsSlashMD",
           "when": "resourceLangId == markdown && activeCustomEditorId != slashmd.editor",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "slashmd.safeOpen",
+          "when": "resourceExtname == .md || resourceExtname == .markdown",
           "group": "navigation"
         }
       ]
