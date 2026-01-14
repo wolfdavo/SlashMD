@@ -232,7 +232,7 @@ export function ImageModal({ isOpen, onClose, onInsert }: ImageModalProps) {
         // (they need to be resolved through the asset context)
         // For remote URLs, show the preview
         if (!validation.isLocal) {
-        setPreviewUrl(newUrl);
+          setPreviewUrl(newUrl);
         } else {
           // Local path - no preview available, but it's valid
           setPreviewUrl(null);

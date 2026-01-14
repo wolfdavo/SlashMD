@@ -244,13 +244,13 @@ function convertParagraph(node: Paragraph): (ParagraphNode | ImageNode)[] {
   
   if (!hasImages) {
     // Simple case: no images, just create a paragraph
-  const paragraph = $createParagraphNode();
-  for (const child of node.children) {
-    const nodes = convertInlineNode(child);
-    for (const n of nodes) {
-      paragraph.append(n);
+    const paragraph = $createParagraphNode();
+    for (const child of node.children) {
+      const nodes = convertInlineNode(child);
+      for (const n of nodes) {
+        paragraph.append(n);
+      }
     }
-  }
     return [paragraph];
   }
 

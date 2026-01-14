@@ -605,11 +605,10 @@ function convertLinkNode(node: ElementNode): Link | WikiLinkMdast {
       };
     }
     
-    // No alias - don't include data.alias at all
+    // No alias - omit data property entirely
     return {
       type: 'wikiLink',
       value: target,
-      data: {},
     };
   }
 
