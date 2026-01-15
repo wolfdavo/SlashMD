@@ -1,0 +1,298 @@
+*slashmd.txt*  Notion-style block-based Markdown editing for Neo-Vim
+
+==============================================================================
+CONTENTS                                                    *slashmd-contents*
+
+    1. Introduction ................................. |slashmd-introduction|
+    2. Requirements ................................. |slashmd-requirements|
+    3. Installation ................................. |slashmd-installation|
+    4. Configuration ................................ |slashmd-configuration|
+    5. Commands ..................................... |slashmd-commands|
+    6. Keymaps ...................................... |slashmd-keymaps|
+    7. Block Types .................................. |slashmd-blocks|
+    8. Slash Menu ................................... |slashmd-slash-menu|
+    9. Highlights ................................... |slashmd-highlights|
+   10. API .......................................... |slashmd-api|
+
+==============================================================================
+1. INTRODUCTION                                         *slashmd-introduction*
+
+SlashMD transforms plain Markdown files into a Notion-style block-based
+editing experience in Neo-Vim. It renders headings, callouts, code blocks,
+and other elements with visual enhancements while keeping files as standard
+Markdown.
+
+Features:~
+- Beautiful block rendering with icons and colors
+- Slash menu for quick block insertion
+- Block-aware navigation and manipulation
+- Todo list checkboxes with visual feedback
+- Callout blocks with GitHub-style syntax
+- Code blocks with language labels
+
+==============================================================================
+2. REQUIREMENTS                                         *slashmd-requirements*
+
+- Neo-Vim 0.9.0 or later
+- Tree-sitter markdown parser (recommended)
+- A Nerd Font for icons (optional but recommended)
+
+==============================================================================
+3. INSTALLATION                                         *slashmd-installation*
+
+Using lazy.nvim:~
+>lua
+    {
+        "slashmd/neovim-plugin",
+        ft = { "markdown" },
+        opts = {},
+    }
+<
+
+Using packer.nvim:~
+>lua
+    use {
+        "slashmd/neovim-plugin",
+        ft = { "markdown" },
+        config = function()
+            require("slashmd").setup()
+        end,
+    }
+<
+
+Manual:~
+Clone the repository to your Neo-Vim packages directory and add to your
+config:
+>lua
+    require("slashmd").setup()
+<
+
+==============================================================================
+4. CONFIGURATION                                       *slashmd-configuration*
+
+                                                           *slashmd.setup()*
+Call `require("slashmd").setup(opts)` with an options table:
+
+>lua
+    require("slashmd").setup({
+        auto_enable = true,  -- Auto-enable for markdown files
+
+        features = {
+            slash_menu = true,       -- Enable slash menu
+            block_navigation = true, -- Enable block navigation
+            conceal = true,          -- Conceal markdown syntax
+            icons = true,            -- Use icons (requires nerd font)
+            images = "none",         -- Image mode: "kitty", "iterm", "ascii", "none"
+        },
+
+        theme = {
+            heading_colors = {
+                h1 = "#FF6B6B",
+                h2 = "#4ECDC4",
+                h3 = "#45B7D1",
+                h4 = "#96CEB4",
+                h5 = "#FFEAA7",
+                h6 = "#DDA0DD",
+            },
+            callout_colors = {
+                note = "#61AFEF",
+                tip = "#98C379",
+                warning = "#E5C07B",
+                important = "#C678DD",
+                caution = "#E06C75",
+            },
+        },
+
+        keymaps = {
+            next_block = "]b",
+            prev_block = "[b",
+            toggle_fold = "<Tab>",
+            delete_block = "<leader>bd",
+            move_block_up = "<leader>bk",
+            move_block_down = "<leader>bj",
+            transform_block = "<leader>bt",
+        },
+    })
+<
+
+==============================================================================
+5. COMMANDS                                                 *slashmd-commands*
+
+:SlashMD                                                            *:SlashMD*
+    Toggle SlashMD for the current buffer.
+
+:SlashMD enable                                              *:SlashMD-enable*
+    Enable SlashMD for the current buffer.
+
+:SlashMD disable                                            *:SlashMD-disable*
+    Disable SlashMD for the current buffer.
+
+:SlashMD refresh                                            *:SlashMD-refresh*
+    Re-render all blocks in the current buffer.
+
+:SlashMDNextBlock                                            *:SlashMDNextBlock*
+    Jump to the next block.
+
+:SlashMDPrevBlock                                            *:SlashMDPrevBlock*
+    Jump to the previous block.
+
+:SlashMDDeleteBlock                                        *:SlashMDDeleteBlock*
+    Delete the block under the cursor.
+
+:SlashMDMoveBlockUp                                        *:SlashMDMoveBlockUp*
+    Move the current block up.
+
+:SlashMDMoveBlockDown                                    *:SlashMDMoveBlockDown*
+    Move the current block down.
+
+:SlashMDToggleCheckbox                                  *:SlashMDToggleCheckbox*
+    Toggle checkbox state for todo items.
+
+:SlashMDTransformBlock [type]                          *:SlashMDTransformBlock*
+    Transform the current block to a different type.
+    If [type] is not provided, shows a selection menu.
+
+:SlashMDSlashMenu                                            *:SlashMDSlashMenu*
+    Open the slash menu.
+
+==============================================================================
+6. KEYMAPS                                                   *slashmd-keymaps*
+
+Default keymaps (can be customized in config):
+
+Normal mode:~
+    `]b`           Go to next block
+    `[b`           Go to previous block
+    `<Tab>`        Toggle fold/checkbox
+    `<leader>bd`   Delete current block
+    `<leader>bk`   Move block up
+    `<leader>bj`   Move block down
+    `<leader>bt`   Transform block type
+    `<leader>bh`   Insert heading
+    `<leader>bc`   Insert code block
+    `<leader>bl`   Insert bullet list
+    `<leader>bn`   Insert callout (note)
+
+Insert mode:~
+    `/`            Open slash menu (at line start)
+
+Slash menu:~
+    `<Down>`, `j`, `<C-n>`   Select next item
+    `<Up>`, `k`, `<C-p>`     Select previous item
+    `<CR>`, `<Tab>`          Execute selection
+    `<Esc>`, `q`             Close menu
+    Type to filter items
+
+==============================================================================
+7. BLOCK TYPES                                               *slashmd-blocks*
+
+SlashMD recognizes and renders these block types:
+
+Heading                                                  *slashmd-block-heading*
+    Markdown: `# Heading 1`, `## Heading 2`, etc.
+    Rendered with colorful icons and styling.
+
+Code Block                                            *slashmd-block-code-block*
+    Markdown: ```language ... ```
+    Rendered with box borders and language label.
+
+Bullet List                                          *slashmd-block-bullet-list*
+    Markdown: `- item`, `* item`, `+ item`
+    Rendered with styled bullets.
+
+Numbered List                                      *slashmd-block-numbered-list*
+    Markdown: `1. item`
+    Rendered with highlighted numbers.
+
+Todo List                                              *slashmd-block-todo-list*
+    Markdown: `- [ ] unchecked`, `- [x] checked`
+    Rendered with checkboxes and strikethrough for completed items.
+
+Blockquote                                            *slashmd-block-blockquote*
+    Markdown: `> quote`
+    Rendered with styled border.
+
+Callout                                                  *slashmd-block-callout*
+    Markdown: `> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, etc.
+    Rendered with icon, colored background, and title.
+
+Horizontal Rule                                            *slashmd-block-hr*
+    Markdown: `---`, `***`, `___`
+    Rendered as a full-width line.
+
+Image                                                      *slashmd-block-image*
+    Markdown: `![alt](path)`
+    Rendered with icon and path preview.
+
+==============================================================================
+8. SLASH MENU                                             *slashmd-slash-menu*
+
+Type `/` at the start of a line to open the slash menu. The menu provides
+quick access to all block types:
+
+    h1          Heading 1
+    h2          Heading 2
+    h3          Heading 3
+    ul          Bullet List
+    ol          Numbered List
+    todo        Todo List
+    code        Code Block
+    quote       Blockquote
+    note        Callout
+    hr          Horizontal Rule
+    img         Image
+    table       Table
+
+Type to filter items, use arrow keys to navigate, Enter to select.
+
+==============================================================================
+9. HIGHLIGHTS                                             *slashmd-highlights*
+
+SlashMD defines these highlight groups that you can customize:
+
+Headings:~
+    SlashMDHeading1 ... SlashMDHeading6
+    SlashMDHeadingIcon1 ... SlashMDHeadingIcon6
+
+Callouts:~
+    SlashMDCalloutNote, SlashMDCalloutTip, SlashMDCalloutWarning
+    SlashMDCalloutImportant, SlashMDCalloutCaution
+    SlashMDCalloutNoteBg, SlashMDCalloutTipBg, etc.
+
+Code blocks:~
+    SlashMDCodeBlockBorder, SlashMDCodeBlockBg, SlashMDCodeBlockLang
+
+Todo items:~
+    SlashMDTodoChecked, SlashMDTodoUnchecked
+    SlashMDTodoCheckbox, SlashMDTodoCheckboxEmpty
+
+Other:~
+    SlashMDBullet, SlashMDNumberedList
+    SlashMDBlockquote, SlashMDBlockquoteBorder
+    SlashMDHorizontalRule
+    SlashMDImage, SlashMDImagePath
+    SlashMDToggle, SlashMDToggleIcon
+
+Menu:~
+    SlashMDMenuNormal, SlashMDMenuBorder, SlashMDMenuSelected
+
+==============================================================================
+10. API                                                         *slashmd-api*
+
+require("slashmd").setup({opts})                           *slashmd.setup()*
+    Initialize SlashMD with configuration options.
+
+require("slashmd").enable({bufnr})                        *slashmd.enable()*
+    Enable SlashMD for a buffer. Defaults to current buffer.
+
+require("slashmd").disable({bufnr})                      *slashmd.disable()*
+    Disable SlashMD for a buffer. Defaults to current buffer.
+
+require("slashmd").toggle({bufnr})                        *slashmd.toggle()*
+    Toggle SlashMD for a buffer. Defaults to current buffer.
+
+require("slashmd").refresh({bufnr})                      *slashmd.refresh()*
+    Re-parse and re-render a buffer. Defaults to current buffer.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
