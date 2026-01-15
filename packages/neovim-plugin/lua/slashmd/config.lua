@@ -75,6 +75,7 @@ local defaults = {
   },
 
   keymaps = {
+    toggle_render = "<leader>sm", -- Toggle SlashMD rendering on/off
     next_block = "]b",
     prev_block = "[b",
     toggle_fold = "<Tab>",

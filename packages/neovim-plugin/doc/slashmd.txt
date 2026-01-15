@@ -107,6 +107,7 @@ Call `require("slashmd").setup(opts)` with an options table:
         },
 
         keymaps = {
+            toggle_render = "<leader>sm", -- Toggle rendered/plain view
             next_block = "]b",
             prev_block = "[b",
             toggle_fold = "<Tab>",
@@ -179,6 +180,7 @@ Call `require("slashmd").setup(opts)` with an options table:
 Default keymaps (can be customized in config):
 
 Normal mode:~
+    `<leader>sm`   Toggle SlashMD (rendered ↔ plain markdown)
     `]b`           Go to next block
     `[b`           Go to previous block
     `<Tab>`        Toggle fold/checkbox

@@ -32,9 +32,20 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = { "markdown", "markdown.mdx" },
   callback = function(args)
     local config = require("slashmd.config")
-    if config.get().auto_enable then
+    local cfg = config.get()
+
+    -- Setup toggle keymap (works whether SlashMD is enabled or not)
+    vim.keymap.set("n", cfg.keymaps.toggle_render, function()
+      require("slashmd").toggle(args.buf)
+    end, {
+      buffer = args.buf,
+      desc = "SlashMD: Toggle rendering (plain markdown ↔ rendered)",
+    })
+
+    -- Auto-enable if configured
+    if cfg.auto_enable then
       require("slashmd").enable(args.buf)
     end
   end,
-  desc = "Auto-enable SlashMD for markdown files",
+  desc = "Setup SlashMD for markdown files",
 })
