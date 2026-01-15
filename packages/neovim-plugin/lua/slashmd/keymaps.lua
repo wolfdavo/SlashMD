@@ -113,6 +113,38 @@ function M.setup(bufnr)
     buffer = bufnr,
     desc = "SlashMD: Insert callout (note)",
   })
+
+  -- Inline formatting shortcuts
+  local inline = require("slashmd.inline")
+
+  vim.keymap.set("n", "<leader>mb", function()
+    inline.toggle_bold(bufnr)
+  end, {
+    buffer = bufnr,
+    desc = "SlashMD: Toggle bold",
+  })
+
+  vim.keymap.set("n", "<leader>mi", function()
+    inline.toggle_italic(bufnr)
+  end, {
+    buffer = bufnr,
+    desc = "SlashMD: Toggle italic",
+  })
+
+  vim.keymap.set("n", "<leader>mc", function()
+    inline.toggle_code(bufnr)
+  end, {
+    buffer = bufnr,
+    desc = "SlashMD: Toggle inline code",
+  })
+
+  vim.keymap.set("n", "<leader>ml", function()
+    inline.insert_link(bufnr)
+    vim.cmd("startinsert")
+  end, {
+    buffer = bufnr,
+    desc = "SlashMD: Insert link",
+  })
 end
 
 --- Remove keymaps from a buffer
@@ -135,6 +167,10 @@ function M.remove(bufnr)
     { "n", "<leader>bc" },
     { "n", "<leader>bl" },
     { "n", "<leader>bn" },
+    { "n", "<leader>mb" },
+    { "n", "<leader>mi" },
+    { "n", "<leader>mc" },
+    { "n", "<leader>ml" },
   }
 
   for _, key in ipairs(keys_to_remove) do

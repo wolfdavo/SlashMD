@@ -19,6 +19,9 @@ local blocks = {
   toggle = require("slashmd.blocks.toggle"),
 }
 
+-- Import inline formatter
+local inline = require("slashmd.inline")
+
 local ns = state.namespace
 
 --- Clear all rendering for a buffer
@@ -73,14 +76,18 @@ function M.render_block(bufnr, block, opts)
     blocks.code.render(bufnr, block, opts)
   elseif block_type == parser.BlockType.BULLET_LIST then
     blocks.list.render_bullet(bufnr, block, opts)
+    inline.render_block(bufnr, block, opts)
   elseif block_type == parser.BlockType.NUMBERED_LIST then
     blocks.list.render_numbered(bufnr, block, opts)
+    inline.render_block(bufnr, block, opts)
   elseif block_type == parser.BlockType.TODO_LIST then
     blocks.list.render_todo(bufnr, block, opts)
   elseif block_type == parser.BlockType.BLOCKQUOTE then
     M.render_blockquote(bufnr, block, opts)
+    inline.render_block(bufnr, block, opts)
   elseif block_type == parser.BlockType.CALLOUT then
     blocks.callout.render(bufnr, block, opts)
+    inline.render_block(bufnr, block, opts)
   elseif block_type == parser.BlockType.THEMATIC_BREAK then
     M.render_horizontal_rule(bufnr, block, opts)
   elseif block_type == parser.BlockType.IMAGE then
@@ -89,6 +96,9 @@ function M.render_block(bufnr, block, opts)
     blocks.table.render(bufnr, block, opts)
   elseif block_type == parser.BlockType.TOGGLE then
     blocks.toggle.render(bufnr, block, opts)
+  elseif block_type == parser.BlockType.PARAGRAPH then
+    -- Paragraphs only need inline formatting
+    inline.render_block(bufnr, block, opts)
   end
 end
 

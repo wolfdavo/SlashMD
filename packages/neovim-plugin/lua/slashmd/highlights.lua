@@ -74,6 +74,7 @@ function M.setup()
   -- Inline formatting
   vim.api.nvim_set_hl(0, "SlashMDBold", { bold = true })
   vim.api.nvim_set_hl(0, "SlashMDItalic", { italic = true })
+  vim.api.nvim_set_hl(0, "SlashMDBoldItalic", { bold = true, italic = true })
   vim.api.nvim_set_hl(0, "SlashMDStrikethrough", { strikethrough = true })
   vim.api.nvim_set_hl(0, "SlashMDCode", { bg = "#3E4451", fg = "#E5C07B" })
   vim.api.nvim_set_hl(0, "SlashMDLink", { fg = "#61AFEF", underline = true })

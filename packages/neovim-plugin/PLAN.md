@@ -340,35 +340,36 @@ require("slashmd").setup({
 
 ## Implementation Phases
 
-### Phase 1: Foundation
-- [ ] Plugin structure and configuration system
-- [ ] Tree-sitter markdown parsing integration
-- [ ] Basic block state representation
-- [ ] Simple rendering (headings, paragraphs with conceal)
+### Phase 1: Foundation ✅
+- [x] Plugin structure and configuration system
+- [x] Tree-sitter markdown parsing integration
+- [x] Basic block state representation
+- [x] Simple rendering (headings, paragraphs with conceal)
 
-### Phase 2: Core Blocks
-- [ ] Code blocks with language labels
-- [ ] Lists (bullet, numbered, todo with checkboxes)
-- [ ] Blockquotes
-- [ ] Horizontal rules
-- [ ] Tables with box-drawing characters
+### Phase 2: Core Blocks ✅
+- [x] Code blocks with language labels
+- [x] Lists (bullet, numbered, todo with checkboxes)
+- [x] Blockquotes
+- [x] Horizontal rules
+- [x] Tables with box-drawing characters
 
-### Phase 3: Rich Blocks
-- [ ] Callout detection and rendering (`> [!NOTE]`)
-- [ ] Toggle/details blocks with collapse
-- [ ] Image placeholders (path display)
+### Phase 3: Rich Blocks ✅
+- [x] Callout detection and rendering (`> [!NOTE]`)
+- [x] Toggle/details blocks with collapse
+- [x] Image placeholders (path display)
 
-### Phase 4: Interactions
-- [ ] Slash menu with floating window
-- [ ] Block navigation motions
-- [ ] Block move operations
-- [ ] Transform block type commands
+### Phase 4: Interactions ✅
+- [x] Slash menu with floating window
+- [x] Block navigation motions
+- [x] Block move operations
+- [x] Transform block type commands
 
-### Phase 5: Advanced
-- [ ] Kitty/iTerm image protocol support
+### Phase 5: Advanced (In Progress)
+- [x] Kitty/iTerm image protocol support (skeleton)
 - [ ] Clipboard image paste
 - [ ] Live preview sync
 - [ ] LSP integration (completions, diagnostics)
+- [ ] Inline formatting (bold, italic, strikethrough, links)
 
 ---
 
