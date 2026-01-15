@@ -83,6 +83,9 @@ Call `require("slashmd").setup(opts)` with an options table:
             conceal = true,          -- Conceal markdown syntax
             icons = true,            -- Use icons (requires nerd font)
             images = "none",         -- Image mode: "kitty", "iterm", "ascii", "none"
+            auto_pairs = true,       -- Auto-pair markdown formatting
+            diagnostics = true,      -- Enable diagnostics
+            smart_enter = true,      -- Auto-continue lists on Enter
         },
 
         theme = {
@@ -155,6 +158,21 @@ Call `require("slashmd").setup(opts)` with an options table:
 :SlashMDSlashMenu                                            *:SlashMDSlashMenu*
     Open the slash menu.
 
+:SlashMDPasteImage                                          *:SlashMDPasteImage*
+    Paste image from clipboard and insert markdown reference.
+
+:SlashMDPickImage                                            *:SlashMDPickImage*
+    Open image picker to select from assets folder.
+
+:SlashMDPreview                                                *:SlashMDPreview*
+    Open markdown preview in external viewer (grip, glow, etc.).
+
+:SlashMDExportHTML [path]                                  *:SlashMDExportHTML*
+    Export current buffer to HTML using pandoc.
+
+:SlashMDExportPDF [path]                                    *:SlashMDExportPDF*
+    Export current buffer to PDF using pandoc.
+
 ==============================================================================
 6. KEYMAPS                                                   *slashmd-keymaps*
 
@@ -172,9 +190,17 @@ Normal mode:~
     `<leader>bc`   Insert code block
     `<leader>bl`   Insert bullet list
     `<leader>bn`   Insert callout (note)
+    `<leader>mb`   Toggle bold on word under cursor
+    `<leader>mi`   Toggle italic on word under cursor
+    `<leader>mc`   Toggle inline code on word under cursor
+    `<leader>ml`   Insert link
 
 Insert mode:~
     `/`            Open slash menu (at line start)
+    `<CR>`         Smart enter (auto-continue lists)
+    `<Tab>`        Indent list item
+    `<S-Tab>`      Outdent list item
+    `<BS>`         Smart backspace (remove list marker)
 
 Slash menu:~
     `<Down>`, `j`, `<C-n>`   Select next item

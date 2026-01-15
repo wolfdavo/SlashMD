@@ -19,6 +19,11 @@ function M.setup(opts)
 
   -- Setup commands
   commands.setup()
+
+  -- Try to setup nvim-cmp integration
+  pcall(function()
+    require("slashmd.lsp").setup_cmp()
+  end)
 end
 
 --- Enable SlashMD for a buffer
@@ -43,6 +48,18 @@ function M.enable(bufnr)
 
   -- Setup keymaps
   keymaps.setup(bufnr)
+
+  -- Setup clipboard commands
+  require("slashmd.clipboard").setup_commands(bufnr)
+
+  -- Setup preview commands
+  require("slashmd.preview").setup_commands(bufnr)
+
+  -- Setup LSP features (diagnostics, etc.)
+  require("slashmd.lsp").setup(bufnr)
+
+  -- Setup markdown shortcuts
+  require("slashmd.shortcuts").setup(bufnr)
 
   -- Parse and render
   M.refresh(bufnr)
@@ -86,6 +103,18 @@ function M.disable(bufnr)
   -- Remove keymaps
   keymaps.remove(bufnr)
 
+  -- Remove clipboard commands
+  require("slashmd.clipboard").remove_commands(bufnr)
+
+  -- Remove preview commands
+  require("slashmd.preview").remove_commands(bufnr)
+
+  -- Remove LSP features
+  require("slashmd.lsp").remove(bufnr)
+
+  -- Remove shortcuts
+  require("slashmd.shortcuts").remove(bufnr)
+
   -- Clear state
   state.clear(bufnr)
 
@@ -125,6 +154,32 @@ function M.refresh(bufnr)
 
   -- Render blocks
   renderer.render(bufnr, blocks)
+end
+
+--- Paste image from clipboard
+---@param bufnr number|nil Buffer number
+function M.paste_image(bufnr)
+  require("slashmd.clipboard").paste_image_at_cursor(bufnr)
+end
+
+--- Open preview in browser
+---@param bufnr number|nil Buffer number
+function M.preview(bufnr)
+  require("slashmd.preview").open_in_browser(bufnr)
+end
+
+--- Export to HTML
+---@param bufnr number|nil Buffer number
+---@param output_path string|nil Output path
+function M.export_html(bufnr, output_path)
+  require("slashmd.preview").export_html(bufnr, output_path)
+end
+
+--- Export to PDF
+---@param bufnr number|nil Buffer number
+---@param output_path string|nil Output path
+function M.export_pdf(bufnr, output_path)
+  require("slashmd.preview").export_pdf(bufnr, output_path)
 end
 
 return M

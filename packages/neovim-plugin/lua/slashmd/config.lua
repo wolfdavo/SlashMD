@@ -42,6 +42,9 @@ local defaults = {
     conceal = true,
     icons = true,
     images = "none", -- Start conservative, can enable kitty/iterm later
+    auto_pairs = true, -- Auto-pair markdown formatting characters
+    diagnostics = true, -- Enable diagnostics (broken links, etc.)
+    smart_enter = true, -- Auto-continue lists on Enter
   },
 
   theme = {

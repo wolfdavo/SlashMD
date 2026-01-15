@@ -364,12 +364,14 @@ require("slashmd").setup({
 - [x] Block move operations
 - [x] Transform block type commands
 
-### Phase 5: Advanced (In Progress)
+### Phase 5: Advanced ✅
 - [x] Kitty/iTerm image protocol support (skeleton)
-- [ ] Clipboard image paste
-- [ ] Live preview sync
-- [ ] LSP integration (completions, diagnostics)
-- [ ] Inline formatting (bold, italic, strikethrough, links)
+- [x] Clipboard image paste
+- [x] Live preview sync (external viewer integration)
+- [x] LSP integration (completions, diagnostics)
+- [x] Inline formatting (bold, italic, strikethrough, links)
+- [x] Smart markdown shortcuts (auto-continue lists, etc.)
+- [x] Export to HTML/PDF (via pandoc)
 
 ---
 
