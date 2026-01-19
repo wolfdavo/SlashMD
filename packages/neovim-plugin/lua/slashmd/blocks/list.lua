@@ -16,34 +16,39 @@ function M.render_bullet(bufnr, block, opts)
   opts = opts or {}
 
   local bullet = config.get_icon("bullet")
-  local line = vim.api.nvim_buf_get_lines(bufnr, block.start_line, block.start_line + 1, false)[1]
 
-  if not line then
-    return
+  -- Render all lines in the block range
+  for line_num = block.start_line, block.end_line do
+    local line = vim.api.nvim_buf_get_lines(bufnr, line_num, line_num + 1, false)[1]
+
+    if not line then
+      goto continue
+    end
+
+    -- Find the bullet marker and indentation
+    local indent, marker_end = line:match("^(%s*)[%-*+]%s()")
+    if not marker_end then
+      goto continue
+    end
+
+    local indent_level = #(indent or "")
+
+    -- Conceal the original marker
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, indent_level, {
+      end_col = marker_end - 1,
+      conceal = "",
+      priority = 100,
+    })
+
+    -- Add styled bullet with proper indentation
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, indent_level, {
+      virt_text = { { bullet .. " ", "SlashMDBullet" } },
+      virt_text_pos = "inline",
+      priority = 100,
+    })
+
+    ::continue::
   end
-
-  -- Find the bullet marker and indentation
-  local indent, marker_end = line:match("^(%s*)[%-*+]%s()")
-  if not marker_end then
-    return
-  end
-
-  local indent_level = #(indent or "")
-
-  -- Conceal the original marker
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, indent_level, {
-    end_col = marker_end - 1,
-    conceal = "",
-    priority = 100,
-  })
-
-  -- Add styled bullet with proper indentation
-  local indent_str = string.rep(" ", indent_level)
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, indent_level, {
-    virt_text = { { bullet .. " ", "SlashMDBullet" } },
-    virt_text_pos = "inline",
-    priority = 100,
-  })
 end
 
 --- Render a numbered list item
@@ -53,26 +58,31 @@ end
 function M.render_numbered(bufnr, block, opts)
   opts = opts or {}
 
-  local line = vim.api.nvim_buf_get_lines(bufnr, block.start_line, block.start_line + 1, false)[1]
+  -- Render all lines in the block range
+  for line_num = block.start_line, block.end_line do
+    local line = vim.api.nvim_buf_get_lines(bufnr, line_num, line_num + 1, false)[1]
 
-  if not line then
-    return
+    if not line then
+      goto continue
+    end
+
+    -- Find the number marker
+    local indent, number, marker_end = line:match("^(%s*)(%d+)[.)]%s()")
+    if not marker_end then
+      goto continue
+    end
+
+    local indent_level = #(indent or "")
+
+    -- Highlight the number (keep it visible but styled)
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, indent_level, {
+      end_col = marker_end - 1,
+      hl_group = "SlashMDNumberedList",
+      priority = 100,
+    })
+
+    ::continue::
   end
-
-  -- Find the number marker
-  local indent, number, marker_end = line:match("^(%s*)(%d+)[.)]%s()")
-  if not marker_end then
-    return
-  end
-
-  local indent_level = #(indent or "")
-
-  -- Highlight the number (keep it visible but styled)
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, indent_level, {
-    end_col = marker_end - 1,
-    hl_group = "SlashMDNumberedList",
-    priority = 100,
-  })
 end
 
 --- Render a todo list item
@@ -82,46 +92,52 @@ end
 function M.render_todo(bufnr, block, opts)
   opts = opts or {}
 
-  local checked = block.checked
-  local checkbox_icon = checked and config.get_icon("checkbox_checked") or config.get_icon("checkbox_unchecked")
-  local checkbox_hl = checked and "SlashMDTodoCheckbox" or "SlashMDTodoCheckboxEmpty"
-  local text_hl = checked and "SlashMDTodoChecked" or "SlashMDTodoUnchecked"
+  -- Render all lines in the block range
+  for line_num = block.start_line, block.end_line do
+    local line = vim.api.nvim_buf_get_lines(bufnr, line_num, line_num + 1, false)[1]
 
-  local line = vim.api.nvim_buf_get_lines(bufnr, block.start_line, block.start_line + 1, false)[1]
+    if not line then
+      goto continue
+    end
 
-  if not line then
-    return
+    -- Find the checkbox marker
+    local indent, marker_end = line:match("^(%s*)[%-*+]%s*%[[ xX]%]%s()")
+    if not marker_end then
+      goto continue
+    end
+
+    -- Determine checked state for this specific line
+    local checked = line:match("%[([xX])%]") ~= nil
+    local checkbox_icon = checked and config.get_icon("checkbox_checked") or config.get_icon("checkbox_unchecked")
+    local checkbox_hl = checked and "SlashMDTodoCheckbox" or "SlashMDTodoCheckboxEmpty"
+    local text_hl = checked and "SlashMDTodoChecked" or "SlashMDTodoUnchecked"
+
+    local indent_level = #(indent or "")
+
+    -- Conceal the original marker (- [ ] or - [x])
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, indent_level, {
+      end_col = marker_end - 1,
+      conceal = "",
+      priority = 100,
+    })
+
+    -- Add styled checkbox
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, indent_level, {
+      virt_text = { { checkbox_icon .. " ", checkbox_hl } },
+      virt_text_pos = "inline",
+      priority = 100,
+    })
+
+    -- Apply text styling (strikethrough for checked items)
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, marker_end - 1, {
+      end_row = line_num,
+      end_col = #line,
+      hl_group = text_hl,
+      priority = 50,
+    })
+
+    ::continue::
   end
-
-  -- Find the checkbox marker
-  local indent, marker_end = line:match("^(%s*)[%-*+]%s*%[[ xX]%]%s()")
-  if not marker_end then
-    return
-  end
-
-  local indent_level = #(indent or "")
-
-  -- Conceal the original marker (- [ ] or - [x])
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, indent_level, {
-    end_col = marker_end - 1,
-    conceal = "",
-    priority = 100,
-  })
-
-  -- Add styled checkbox
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, indent_level, {
-    virt_text = { { checkbox_icon .. " ", checkbox_hl } },
-    virt_text_pos = "inline",
-    priority = 100,
-  })
-
-  -- Apply text styling (strikethrough for checked items)
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, marker_end - 1, {
-    end_row = block.start_line,
-    end_col = #line,
-    hl_group = text_hl,
-    priority = 50,
-  })
 end
 
 --- Main render function that dispatches to appropriate renderer

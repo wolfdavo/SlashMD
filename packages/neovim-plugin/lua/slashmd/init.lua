@@ -61,6 +61,10 @@ function M.enable(bufnr)
   -- Setup markdown shortcuts
   require("slashmd.shortcuts").setup(bufnr)
 
+  -- Set window options for concealment (window-local, not buffer-local)
+  vim.wo.conceallevel = 2
+  vim.wo.concealcursor = "nc"
+
   -- Parse and render
   M.refresh(bufnr)
 
@@ -96,6 +100,10 @@ function M.disable(bufnr)
   if not state.is_enabled(bufnr) then
     return
   end
+
+  -- Restore window options
+  vim.wo.conceallevel = 0
+  vim.wo.concealcursor = ""
 
   -- Clear rendering
   renderer.clear(bufnr)

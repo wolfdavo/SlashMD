@@ -262,6 +262,28 @@ function parse_todo_items(node, bufnr)
   return items
 end
 
+--- Recursively collect blocks from a node and its children
+---@param node any Tree-sitter node
+---@param bufnr number Buffer number
+---@param blocks table[] List to append blocks to
+local function collect_blocks(node, bufnr, blocks)
+  local node_type = node:type()
+
+  -- If this node maps to a block type, parse it
+  if node_type_map[node_type] then
+    local block = parse_node(node, bufnr)
+    if block then
+      table.insert(blocks, block)
+    end
+    return -- Don't recurse into parsed blocks
+  end
+
+  -- Otherwise, recurse into children (handles section, document, etc.)
+  for child in node:iter_children() do
+    collect_blocks(child, bufnr, blocks)
+  end
+end
+
 --- Parse a buffer into blocks
 ---@param bufnr number Buffer number
 ---@return SlashMDBlock[] List of blocks
@@ -280,13 +302,8 @@ function M.parse(bufnr)
   local root = tree:root()
   local blocks = {}
 
-  -- Iterate through direct children of the document
-  for node in root:iter_children() do
-    local block = parse_node(node, bufnr)
-    if block then
-      table.insert(blocks, block)
-    end
-  end
+  -- Recursively collect blocks, handling section wrappers
+  collect_blocks(root, bufnr, blocks)
 
   return blocks
 end

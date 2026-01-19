@@ -51,6 +51,112 @@ local function get_language_display(lang)
   return language_names[lang:lower()] or lang
 end
 
+--- Apply tree-sitter syntax highlighting to code block content
+---@param bufnr number Buffer number
+---@param block table Code block
+---@param lang string Language identifier
+local function apply_syntax_highlighting(bufnr, block, lang)
+  if not lang or lang == "" then
+    return
+  end
+
+  -- Map common language aliases
+  local lang_map = {
+    js = "javascript",
+    ts = "typescript",
+    py = "python",
+    rb = "ruby",
+    rs = "rust",
+    sh = "bash",
+    yml = "yaml",
+    zsh = "bash",
+    fish = "bash",
+    shell = "bash",
+  }
+  local ts_lang = lang_map[lang:lower()] or lang:lower()
+
+  -- Check if parser exists for this language
+  local lang_ok = pcall(vim.treesitter.language.inspect, ts_lang)
+  if not lang_ok then
+    -- Try to add the language if it's available
+    pcall(vim.treesitter.language.add, ts_lang)
+    lang_ok = pcall(vim.treesitter.language.inspect, ts_lang)
+    if not lang_ok then
+      return
+    end
+  end
+
+  -- Get the content lines (excluding fences)
+  local start_line = block.start_line + 1
+  local end_line = block.end_line - 1
+
+  if end_line < start_line then
+    return
+  end
+
+  -- Apply highlighting using tree-sitter
+  local success, err = pcall(function()
+    local content_lines = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line + 1, false)
+    if #content_lines == 0 then
+      return
+    end
+
+    local content = table.concat(content_lines, "\n")
+    if content == "" then
+      return
+    end
+
+    local ts_parser = vim.treesitter.get_string_parser(content, ts_lang)
+    if not ts_parser then
+      return
+    end
+
+    local trees = ts_parser:parse()
+    if not trees or #trees == 0 then
+      return
+    end
+
+    local tree = trees[1]
+    if not tree then
+      return
+    end
+
+    local query = vim.treesitter.query.get(ts_lang, "highlights")
+    if not query then
+      return
+    end
+
+    for id, node, _ in query:iter_captures(tree:root(), content) do
+      local name = query.captures[id]
+      if name then
+        -- Try language-specific highlight first, then generic
+        local hl_group = "@" .. name .. "." .. ts_lang
+        if vim.fn.hlexists(hl_group) == 0 then
+          hl_group = "@" .. name
+        end
+
+        local node_start_row, node_start_col, node_end_row, node_end_col = node:range()
+
+        -- Offset by the block start position
+        local buf_start_row = start_line + node_start_row
+        local buf_end_row = start_line + node_end_row
+
+        -- Apply highlight with high priority (higher than background)
+        vim.api.nvim_buf_set_extmark(bufnr, ns, buf_start_row, node_start_col, {
+          end_row = buf_end_row,
+          end_col = node_end_col,
+          hl_group = hl_group,
+          priority = 125, -- Higher than background (10), shows through
+        })
+      end
+    end
+  end)
+
+  if not success and err then
+    -- Silently fail - syntax highlighting is optional
+  end
+end
+
 --- Render a code block
 ---@param bufnr number Buffer number
 ---@param block table Code block
@@ -62,11 +168,43 @@ function M.render(bufnr, block, opts)
   local lang_display = get_language_display(lang)
   local width = opts.width or (utils.get_term_width() - 4)
 
-  -- Get lines
-  local lines = vim.api.nvim_buf_get_lines(bufnr, block.start_line, block.end_line + 1, false)
+  -- Get lines - fetch a few extra to find the closing fence if needed
+  local search_end = math.min(block.end_line + 3, vim.api.nvim_buf_line_count(bufnr) - 1)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, block.start_line, search_end + 1, false)
   if #lines == 0 then
     return
   end
+
+  -- Find the actual closing fence line (search for ```)
+  local closing_line = block.end_line
+  local closing_line_content = ""
+  local closing_line_idx = nil
+
+  for i, line in ipairs(lines) do
+    if i > 1 and line:match("^```%s*$") then
+      closing_line = block.start_line + i - 1
+      closing_line_content = line
+      closing_line_idx = i
+      break
+    end
+  end
+
+  -- If we didn't find a closing fence, use the block end
+  if not closing_line_idx then
+    closing_line = block.end_line
+    local idx = closing_line - block.start_line + 1
+    if idx <= #lines then
+      closing_line_content = lines[idx]
+    end
+    closing_line_idx = idx
+  end
+
+  -- Limit lines to just the code block content
+  local block_lines = {}
+  for i = 1, closing_line_idx do
+    table.insert(block_lines, lines[i])
+  end
+  lines = block_lines
 
   -- Top border with language label
   local top_border = utils.box_line(width, "top", lang_display)
@@ -76,24 +214,27 @@ function M.render(bufnr, block, opts)
     priority = 100,
   })
 
-  -- Conceal opening fence
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, 0, {
-    end_row = block.start_line,
-    end_col = #lines[1],
-    conceal = "",
-    priority = 100,
-  })
+  -- Conceal opening fence (entire line)
+  local opening_line_len = #lines[1]
+  if opening_line_len > 0 then
+    vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, 0, {
+      end_col = opening_line_len,
+      conceal = "",
+      priority = 100,
+    })
+  end
 
-  -- Render content lines
-  for i = 2, #lines - 1 do
+  -- Render content lines (between fences)
+  local content_end = closing_line_idx and (closing_line_idx - 1) or (#lines - 1)
+  for i = 2, content_end do
     local line_num = block.start_line + i - 1
 
-    -- Background highlight
+    -- Background highlight (low priority so syntax highlighting shows through)
     vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, 0, {
       end_row = line_num + 1,
       hl_group = "SlashMDCodeBlockBg",
       hl_eol = true,
-      priority = 25,
+      priority = 10,
     })
 
     -- Left border
@@ -102,49 +243,35 @@ function M.render(bufnr, block, opts)
       virt_text_pos = "inline",
       priority = 100,
     })
-
-    -- Right border (as virtual text at end of line)
-    if opts.right_border then
-      local line_content = lines[i]
-      local padding = math.max(0, width - #line_content - 4)
-      vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, #line_content, {
-        virt_text = { { string.rep(" ", padding) .. " │", "SlashMDCodeBlockBorder" } },
-        virt_text_pos = "eol",
-        priority = 100,
-      })
-    end
   end
 
-  -- Bottom border
-  if #lines > 1 then
+  -- Bottom border and conceal closing fence
+  if closing_line_idx and closing_line_idx > 1 then
     local bottom_border = utils.box_line(width, "bottom")
-    vim.api.nvim_buf_set_extmark(bufnr, ns, block.end_line, 0, {
-      virt_text = { { bottom_border, "SlashMDCodeBlockBorder" } },
+
+    -- Pad the bottom border to ensure it covers the ``` underneath
+    local closing_len = #closing_line_content
+    local padded_border = bottom_border .. string.rep(" ", math.max(0, closing_len - vim.fn.strdisplaywidth(bottom_border) + 5))
+
+    -- Overlay bottom border (padded to cover underlying text)
+    vim.api.nvim_buf_set_extmark(bufnr, ns, closing_line, 0, {
+      virt_text = { { padded_border, "SlashMDCodeBlockBorder" } },
       virt_text_pos = "overlay",
-      priority = 100,
+      priority = 200,
     })
 
-    -- Conceal closing fence
-    vim.api.nvim_buf_set_extmark(bufnr, ns, block.end_line, 0, {
-      end_row = block.end_line,
-      end_col = #lines[#lines],
-      conceal = "",
-      priority = 100,
-    })
-  end
-
-  -- Add line numbers if configured
-  if opts.line_numbers then
-    for i = 2, #lines - 1 do
-      local line_num = block.start_line + i - 1
-      local display_num = tostring(i - 1)
-      vim.api.nvim_buf_set_extmark(bufnr, ns, line_num, 0, {
-        sign_text = display_num,
-        sign_hl_group = "SlashMDCodeBlockLang",
-        priority = 50,
+    -- Conceal the closing fence characters
+    if closing_len > 0 then
+      vim.api.nvim_buf_set_extmark(bufnr, ns, closing_line, 0, {
+        end_col = closing_len,
+        conceal = "",
+        priority = 200,
       })
     end
   end
+
+  -- Note: Syntax highlighting is handled by native tree-sitter markdown injections
+  -- No custom highlighting needed - just ensure tree-sitter is enabled for the buffer
 end
 
 --- Create a code block

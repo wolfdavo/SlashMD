@@ -18,10 +18,6 @@ function M.render(bufnr, block, opts)
   local depth = block.depth or 1
   local text_hl, icon_hl = highlights.get_heading_hl(depth)
 
-  -- Get icon for this heading level
-  local icons = config.get().icons.heading
-  local icon = icons[depth] or icons[1]
-
   -- Get the line content
   local line = vim.api.nvim_buf_get_lines(bufnr, block.start_line, block.start_line + 1, false)[1]
   if not line then
@@ -29,21 +25,24 @@ function M.render(bufnr, block, opts)
   end
 
   -- Calculate where the # markers end
-  local hash_pattern = "^(#+" .. string.rep("#?", 6 - depth) .. ")%s*"
   local _, hash_end = line:find("^#+%s*")
   hash_end = hash_end or depth + 1
 
-  -- Add icon as inline virtual text at the start
-  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, 0, {
-    virt_text = { { icon, icon_hl } },
-    virt_text_pos = "inline",
-    priority = 100,
-  })
+  -- Conceal the # markers and replace with a simple prefix
+  -- Use box-drawing or simple markers that work in all fonts
+  local prefix_chars = { "▍", "▎", "▏", "┃", "│", "╎" }
+  local prefix = prefix_chars[depth] or "│"
 
-  -- Conceal the # markers
   vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, 0, {
     end_col = hash_end,
     conceal = "",
+    priority = 100,
+  })
+
+  -- Add colored prefix marker
+  vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, 0, {
+    virt_text = { { prefix .. " ", icon_hl } },
+    virt_text_pos = "inline",
     priority = 100,
   })
 
@@ -55,10 +54,16 @@ function M.render(bufnr, block, opts)
     priority = 50,
   })
 
-  -- Add underline for h1 and h2 if configured
-  if opts.underline and depth <= 2 then
-    local underline_char = depth == 1 and "═" or "─"
-    local underline = string.rep(underline_char, math.min(#line, 60))
+  -- Add underline for h1 and h2 for visual weight
+  if depth == 1 then
+    local underline = string.rep("━", math.min(#line - hash_end + 2, 60))
+    vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, 0, {
+      virt_lines = { { { underline, text_hl } } },
+      virt_lines_above = false,
+      priority = 100,
+    })
+  elseif depth == 2 then
+    local underline = string.rep("─", math.min(#line - hash_end + 2, 50))
     vim.api.nvim_buf_set_extmark(bufnr, ns, block.start_line, 0, {
       virt_lines = { { { underline, text_hl } } },
       virt_lines_above = false,
