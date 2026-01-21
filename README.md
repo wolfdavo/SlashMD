@@ -137,6 +137,78 @@ Leave any setting empty to use the default.
 
 - VS Code 1.85.0+ or Cursor
 
+## Contributing
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18 or later
+- [VS Code](https://code.visualstudio.com/) or [Cursor](https://cursor.sh/)
+
+### Setup
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/wolfdavo/SlashMD.git
+   cd SlashMD
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Build the extension**
+
+   ```bash
+   npm run build
+   ```
+
+### Development
+
+Run the extension in development mode with auto-rebuild on changes:
+
+```bash
+npm run dev
+```
+
+Then press **F5** in VS Code to launch the Extension Development Host window.
+
+### Testing
+
+Open any `.md` file in the Extension Development Host to test the editor. Changes to the webview code will require a rebuild, but you can reload the webview with **Cmd+Shift+P** → "Developer: Reload Webviews".
+
+### Installing Locally
+
+To install your local build as the active extension (replacing any marketplace version):
+
+1. **Package the extension**
+
+   ```bash
+   cd packages/extension-host
+   npx vsce package --no-dependencies
+   ```
+
+2. **Install the `.vsix` file**
+
+   ```bash
+   code --install-extension slashmd-*.vsix --force
+   ```
+
+3. **Reload VS Code** to activate the new version.
+
+### Project Structure
+
+```
+SlashMD/
+├── packages/
+│   ├── extension-host/   # VS Code extension (Node.js)
+│   ├── webview-ui/       # Editor UI (React + Lexical)
+│   └── shared/           # Shared types and utilities
+└── website/              # Marketing website
+```
+
 ## Links
 
 - [Website](https://slashmd.dev)

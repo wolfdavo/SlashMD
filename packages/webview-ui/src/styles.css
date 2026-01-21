@@ -1,23 +1,43 @@
-/* VS Code theme integration */
+/* GitHub Markdown Theme Integration with VS Code Theme Inheritance */
 :root {
-  --vscode-font-family: var(--vscode-editor-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
-  --vscode-font-size: var(--vscode-editor-font-size, 14px);
-  --vscode-foreground: var(--vscode-editor-foreground, #333);
-  --vscode-background: var(--vscode-editor-background, #fff);
-  --vscode-selection: var(--vscode-editor-selectionBackground, #add6ff);
-  --vscode-border: var(--vscode-panel-border, #e0e0e0);
-  --vscode-link: var(--vscode-textLink-foreground, #0066cc);
-  --vscode-code-bg: var(--vscode-textCodeBlock-background, #f5f5f5);
+  /* GitHub Base Variables */
+  --base-size-4: 0.25rem;
+  --base-size-8: 0.5rem;
+  --base-size-16: 1rem;
+  --base-size-24: 1.5rem;
+  --base-size-40: 2.5rem;
+  --base-text-weight-normal: 400;
+  --base-text-weight-medium: 500;
+  --base-text-weight-semibold: 600;
+  --fontStack-monospace: var(--vscode-editor-font-family, ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace);
 
-  /* SlashMD Theme Variables - Syntax Highlighting */
-  --slashmd-token-comment: #6a9955;
-  --slashmd-token-punctuation: #d4d4d4;
-  --slashmd-token-property: #9cdcfe;
-  --slashmd-token-selector: #ce9178;
-  --slashmd-token-operator: #d4d4d4;
-  --slashmd-token-keyword: #569cd6;
-  --slashmd-token-variable: #4ec9b0;
-  --slashmd-token-function: #dcdcaa;
+  /* Core colors - inherit from VS Code theme */
+  --fgColor-default: var(--vscode-editor-foreground, #1f2328);
+  --fgColor-muted: var(--vscode-descriptionForeground, #59636e);
+  --fgColor-accent: var(--vscode-textLink-foreground, #0969da);
+  --fgColor-success: var(--vscode-terminal-ansiGreen, #1a7f37);
+  --fgColor-attention: var(--vscode-editorWarning-foreground, #9a6700);
+  --fgColor-danger: var(--vscode-errorForeground, #d1242f);
+  --fgColor-done: var(--vscode-terminal-ansiMagenta, #8250df);
+  
+  --bgColor-default: var(--vscode-editor-background, #ffffff);
+  --bgColor-muted: var(--vscode-textCodeBlock-background, #f6f8fa);
+  --bgColor-neutral-muted: var(--vscode-editor-inactiveSelectionBackground, #818b981f);
+  --bgColor-attention-muted: var(--vscode-inputValidation-warningBackground, #fff8c5);
+  
+  --borderColor-default: var(--vscode-panel-border, #d1d9e0);
+  --borderColor-muted: var(--vscode-editorWidget-border, #d1d9e0b3);
+  --borderColor-neutral-muted: var(--vscode-editorWidget-border, #d1d9e0b3);
+  --borderColor-accent-emphasis: var(--vscode-textLink-foreground, #0969da);
+  --borderColor-success-emphasis: var(--vscode-terminal-ansiGreen, #1a7f37);
+  --borderColor-attention-emphasis: var(--vscode-editorWarning-foreground, #9a6700);
+  --borderColor-danger-emphasis: var(--vscode-errorForeground, #cf222e);
+  --borderColor-done-emphasis: var(--vscode-terminal-ansiMagenta, #8250df);
+  
+  --focus-outlineColor: var(--vscode-focusBorder, #0969da);
+  
+  /* Selection */
+  --vscode-selection: var(--vscode-editor-selectionBackground, #add6ff);
 
   /* SlashMD Theme Variables - Typography */
   --slashmd-heading-color: inherit;
@@ -34,17 +54,22 @@
   --slashmd-bold-color: inherit;
   --slashmd-italic-color: inherit;
 
-  /* SlashMD Theme Variables - Callouts */
-  --slashmd-callout-note-bg: rgba(0, 102, 204, 0.1);
-  --slashmd-callout-note-border: #0066cc;
-  --slashmd-callout-tip-bg: rgba(0, 153, 51, 0.1);
-  --slashmd-callout-tip-border: #009933;
-  --slashmd-callout-warning-bg: rgba(255, 153, 0, 0.1);
-  --slashmd-callout-warning-border: #ff9900;
-  --slashmd-callout-important-bg: rgba(153, 51, 255, 0.1);
-  --slashmd-callout-important-border: #9933ff;
-  --slashmd-callout-caution-bg: rgba(255, 51, 51, 0.1);
-  --slashmd-callout-caution-border: #ff3333;
+  /* SlashMD Theme Variables - Syntax Highlighting (legacy, maps to VS Code) */
+  --slashmd-token-comment: var(--vscode-editorLineNumber-foreground, #6a9955);
+  --slashmd-token-punctuation: var(--vscode-editor-foreground, #d4d4d4);
+  --slashmd-token-property: var(--vscode-symbolIcon-propertyForeground, #9cdcfe);
+  --slashmd-token-selector: var(--vscode-symbolIcon-stringForeground, #ce9178);
+  --slashmd-token-operator: var(--vscode-symbolIcon-operatorForeground, #d4d4d4);
+  --slashmd-token-keyword: var(--vscode-symbolIcon-keywordForeground, #569cd6);
+  --slashmd-token-variable: var(--vscode-symbolIcon-variableForeground, #4ec9b0);
+  --slashmd-token-function: var(--vscode-symbolIcon-functionForeground, #dcdcaa);
+  
+  /* Mapped VS Code variables for compatibility */
+  --vscode-foreground: var(--fgColor-default);
+  --vscode-background: var(--bgColor-default);
+  --vscode-border: var(--borderColor-default);
+  --vscode-link: var(--fgColor-accent);
+  --vscode-code-bg: var(--bgColor-muted);
 }
 
 * {
@@ -52,13 +77,16 @@
 }
 
 body {
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
   margin: 0;
   padding: 0;
-  font-family: var(--vscode-font-family);
-  font-size: var(--vscode-font-size);
-  color: var(--vscode-foreground);
-  background: var(--vscode-background);
-  line-height: 1.6;
+  color: var(--fgColor-default);
+  background-color: var(--bgColor-default);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 16px;
+  line-height: 1.5;
+  word-wrap: break-word;
 }
 
 .app {
@@ -138,63 +166,98 @@ body {
 
 /* Typography */
 .editor-paragraph {
-  margin: 0 0 8px 0;
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
 .editor-heading-h1 {
   font-size: 2em;
-  font-weight: 700;
-  margin: 24px 0 16px 0;
-  line-height: 1.2;
+  font-weight: var(--base-text-weight-semibold, 600);
+  margin: 0.67em 0;
+  padding-bottom: 0.3em;
+  line-height: 1.25;
   color: var(--slashmd-h1-color);
   margin-left: var(--slashmd-h1-indent);
+  border-bottom: 1px solid var(--borderColor-muted);
 }
 
 .editor-heading-h2 {
   font-size: 1.5em;
-  font-weight: 600;
-  margin: 20px 0 12px 0;
-  line-height: 1.3;
+  font-weight: var(--base-text-weight-semibold, 600);
+  margin-top: var(--base-size-24);
+  margin-bottom: var(--base-size-16);
+  padding-bottom: 0.3em;
+  line-height: 1.25;
   color: var(--slashmd-h2-color);
   margin-left: var(--slashmd-h2-indent);
+  border-bottom: 1px solid var(--borderColor-muted);
 }
 
 .editor-heading-h3 {
   font-size: 1.25em;
-  font-weight: 600;
-  margin: 16px 0 8px 0;
-  line-height: 1.4;
+  font-weight: var(--base-text-weight-semibold, 600);
+  margin-top: var(--base-size-24);
+  margin-bottom: var(--base-size-16);
+  line-height: 1.25;
   color: var(--slashmd-h3-color);
   margin-left: var(--slashmd-h3-indent);
 }
 
 .editor-heading-h4 {
-  font-size: 1.1em;
-  font-weight: 600;
-  margin: 14px 0 6px 0;
-  line-height: 1.4;
+  font-size: 1em;
+  font-weight: var(--base-text-weight-semibold, 600);
+  margin-top: var(--base-size-24);
+  margin-bottom: var(--base-size-16);
+  line-height: 1.25;
   color: var(--slashmd-h4-color);
   margin-left: var(--slashmd-h4-indent);
 }
 
 .editor-heading-h5 {
-  font-size: 1em;
-  font-weight: 600;
-  margin: 12px 0 4px 0;
-  line-height: 1.4;
+  font-size: 0.875em;
+  font-weight: var(--base-text-weight-semibold, 600);
+  margin-top: var(--base-size-24);
+  margin-bottom: var(--base-size-16);
+  line-height: 1.25;
   color: var(--slashmd-h5-color);
   margin-left: var(--slashmd-h5-indent);
+}
+
+.editor-heading-h6 {
+  font-size: 0.85em;
+  font-weight: var(--base-text-weight-semibold, 600);
+  margin-top: var(--base-size-24);
+  margin-bottom: var(--base-size-16);
+  line-height: 1.25;
+  color: var(--fgColor-muted);
 }
 
 /* Lists */
 .editor-list-ul,
 .editor-list-ol {
-  margin: 8px 0;
-  padding-left: 24px;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-left: 2em;
+}
+
+.editor-list-ol .editor-list-ol,
+.editor-list-ul .editor-list-ol {
+  list-style-type: lower-roman;
+}
+
+.editor-list-ul .editor-list-ul .editor-list-ol,
+.editor-list-ul .editor-list-ol .editor-list-ol,
+.editor-list-ol .editor-list-ul .editor-list-ol,
+.editor-list-ol .editor-list-ol .editor-list-ol {
+  list-style-type: lower-alpha;
 }
 
 .editor-listitem {
-  margin: 4px 0;
+  margin: 0.25em 0;
+}
+
+.editor-listitem + .editor-listitem {
+  margin-top: 0.25em;
 }
 
 .editor-listitem-checked,
@@ -213,14 +276,14 @@ body {
   top: 4px;
   width: 16px;
   height: 16px;
-  border: 1px solid var(--vscode-border);
+  border: 1px solid var(--borderColor-default);
   border-radius: 3px;
   cursor: pointer;
 }
 
 .editor-listitem-checked::before {
-  background: var(--vscode-link);
-  border-color: var(--vscode-link);
+  background: var(--fgColor-accent);
+  border-color: var(--fgColor-accent);
 }
 
 .editor-listitem-checked::after {
@@ -229,7 +292,7 @@ body {
   left: 3px;
   top: 2px;
   font-size: 12px;
-  color: white;
+  color: var(--bgColor-default);
 }
 
 .editor-nested-listitem {
@@ -238,24 +301,34 @@ body {
 
 /* Quote */
 .editor-quote {
-  margin: 8px 0;
-  padding: 8px 16px;
-  border-left: 4px solid var(--vscode-border);
-  background: var(--vscode-code-bg);
-  font-style: italic;
+  margin: 0 0 var(--base-size-16) 0;
+  padding: 0 1em;
+  color: var(--fgColor-muted);
+  border-left: 0.25em solid var(--borderColor-default);
+}
+
+.editor-quote > *:first-child {
+  margin-top: 0;
+}
+
+.editor-quote > *:last-child {
+  margin-bottom: 0;
 }
 
 /* Code */
 .editor-code {
   display: block;
   position: relative;
-  margin: 8px 0;
-  padding: 12px 16px;
-  background: var(--vscode-code-bg);
-  border-radius: 4px;
-  font-family: 'Fira Code', 'Consolas', monospace;
-  font-size: 0.9em;
-  overflow-x: auto;
+  margin: 0 0 var(--base-size-16) 0;
+  padding: var(--base-size-16);
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  color: var(--fgColor-default);
+  background-color: var(--bgColor-muted);
+  border-radius: 6px;
+  font-family: var(--fontStack-monospace);
+  word-wrap: normal;
   white-space: pre;
 }
 
@@ -388,7 +461,7 @@ body {
 
 /* Inline text formatting */
 .editor-text-bold {
-  font-weight: 700;
+  font-weight: var(--base-text-weight-semibold, 600);
   color: var(--slashmd-bold-color);
 }
 
@@ -406,16 +479,19 @@ body {
 }
 
 .editor-text-code {
-  font-family: 'Fira Code', 'Consolas', monospace;
-  background: var(--vscode-code-bg);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  white-space: break-spaces;
+  background-color: var(--bgColor-neutral-muted);
+  border-radius: 6px;
+  font-family: var(--fontStack-monospace);
 }
 
 /* Links */
 .editor-link {
-  color: var(--vscode-link);
+  background-color: transparent;
+  color: var(--fgColor-accent);
   text-decoration: none;
 }
 
@@ -425,54 +501,71 @@ body {
 
 /* Tables */
 .editor-table {
-  width: 100%;
+  border-spacing: 0;
   border-collapse: collapse;
-  margin: 16px 0;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  margin: 0 0 var(--base-size-16) 0;
+  font-variant: tabular-nums;
 }
 
 .editor-table-row {
+  background-color: var(--bgColor-default);
+  border-top: 1px solid var(--borderColor-muted);
+}
+
+.editor-table-row:nth-child(2n) {
+  background-color: var(--bgColor-muted);
 }
 
 .editor-table-cell,
 .editor-table-cell-header {
-  border: 1px solid var(--vscode-border);
-  padding: 8px 12px;
+  padding: 6px 13px;
+  border: 1px solid var(--borderColor-default);
   text-align: left;
 }
 
 .editor-table-cell-header {
-  background: var(--vscode-code-bg);
-  font-weight: 600;
+  font-weight: var(--base-text-weight-semibold, 600);
 }
 
-/* Divider */
+/* Divider / Horizontal Rule */
 .divider-block {
-  border: none;
-  height: 24px;
-  margin: 12px 0;
+  box-sizing: content-box;
+  overflow: hidden;
   background: transparent;
-  position: relative;
+  border: 0;
+  border-bottom: 1px solid var(--borderColor-muted);
+  height: 0.25em;
+  padding: 0;
+  margin: var(--base-size-24) 0;
+  background-color: var(--borderColor-default);
 }
 
 .divider-block::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--vscode-border);
+  display: table;
+  content: "";
+}
+
+.divider-block::after {
+  display: table;
+  clear: both;
+  content: "";
 }
 
 /* Image */
 .image-block {
-  margin: 16px 0;
+  margin: var(--base-size-16) 0;
 }
 
 .image-block img {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
+  box-sizing: content-box;
+  border-style: none;
 }
 
 /* Image wrapper with resize handles */
@@ -553,37 +646,69 @@ body {
   white-space: nowrap;
 }
 
-/* Callout */
+/* Callout - GitHub Markdown Alert Style */
 .callout {
-  margin: 16px 0;
-  padding: 12px 16px;
-  border-radius: 4px;
-  border-left: 4px solid;
+  padding: var(--base-size-8) var(--base-size-16);
+  margin-bottom: var(--base-size-16);
+  color: inherit;
+  border-left: 0.25em solid var(--borderColor-default);
+  border-radius: 0;
+}
+
+.callout > *:first-child {
+  margin-top: 0;
+}
+
+.callout > *:last-child {
+  margin-bottom: 0;
 }
 
 .callout-note {
-  background: var(--slashmd-callout-note-bg);
-  border-left-color: var(--slashmd-callout-note-border);
+  border-left-color: var(--borderColor-accent-emphasis);
+}
+
+.callout-note .callout-title {
+  color: var(--fgColor-accent);
 }
 
 .callout-tip {
-  background: var(--slashmd-callout-tip-bg);
-  border-left-color: var(--slashmd-callout-tip-border);
+  border-left-color: var(--borderColor-success-emphasis);
+}
+
+.callout-tip .callout-title {
+  color: var(--fgColor-success);
 }
 
 .callout-warning {
-  background: var(--slashmd-callout-warning-bg);
-  border-left-color: var(--slashmd-callout-warning-border);
+  border-left-color: var(--borderColor-attention-emphasis);
+}
+
+.callout-warning .callout-title {
+  color: var(--fgColor-attention);
 }
 
 .callout-important {
-  background: var(--slashmd-callout-important-bg);
-  border-left-color: var(--slashmd-callout-important-border);
+  border-left-color: var(--borderColor-done-emphasis);
+}
+
+.callout-important .callout-title {
+  color: var(--fgColor-done);
 }
 
 .callout-caution {
-  background: var(--slashmd-callout-caution-bg);
-  border-left-color: var(--slashmd-callout-caution-border);
+  border-left-color: var(--borderColor-danger-emphasis);
+}
+
+.callout-caution .callout-title {
+  color: var(--fgColor-danger);
+}
+
+.callout-title {
+  display: flex;
+  font-weight: var(--base-text-weight-medium, 500);
+  align-items: center;
+  line-height: 1;
+  margin-bottom: var(--base-size-8);
 }
 
 /* Remove bottom margin from last paragraph in callout */
@@ -982,8 +1107,16 @@ body {
 
 /* Focus styles for accessibility */
 *:focus-visible {
-  outline: 2px solid var(--vscode-link);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus-outlineColor);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+
+a:focus:not(:focus-visible),
+[role=button]:focus:not(:focus-visible),
+input[type=radio]:focus:not(:focus-visible),
+input[type=checkbox]:focus:not(:focus-visible) {
+  outline: solid 1px transparent;
 }
 
 /* Remove focus outline from editor content */
@@ -1066,13 +1199,13 @@ body {
 .editor-table th:focus,
 .editor-table-cell:focus,
 .editor-table-cell-header:focus {
-  outline: 2px solid var(--vscode-link);
+  outline: 2px solid var(--focus-outlineColor);
   outline-offset: -2px;
 }
 
 /* Table hover row highlight */
 .editor-table tr:hover {
-  background: rgba(128, 128, 128, 0.05);
+  background: var(--bgColor-neutral-muted);
 }
 
 /* Table cell min-width for usability */

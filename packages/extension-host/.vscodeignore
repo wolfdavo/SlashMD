@@ -1,6 +1,9 @@
 # Ignore everything
 **/*
 
+# Exclude parent directories explicitly
+../**
+
 # Include only these
 !package.json
 !LICENSE
