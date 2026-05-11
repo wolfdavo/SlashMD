@@ -29,11 +29,17 @@ export const RequestSettingsMessageSchema = z.object({
   type: z.literal('REQUEST_SETTINGS'),
 });
 
+export const OpenUrlMessageSchema = z.object({
+  type: z.literal('OPEN_URL'),
+  url: z.string().max(2048),
+});
+
 export const UIToHostMessageSchema = z.discriminatedUnion('type', [
   ApplyTextEditsMessageSchema,
   WriteAssetMessageSchema,
   RequestInitMessageSchema,
   RequestSettingsMessageSchema,
+  OpenUrlMessageSchema,
 ]);
 
 // Type exports

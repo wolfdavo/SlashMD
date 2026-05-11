@@ -407,11 +407,14 @@ body {
 }
 
 .editor-text-code {
-  font-family: 'Fira Code', 'Consolas', monospace;
-  background: var(--vscode-code-bg);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.9em;
+  font-family: var(--vscode-editor-font-family, 'Fira Code', 'Consolas', monospace);
+  background: var(--vscode-textCodeBlock-background, rgba(135, 131, 120, 0.15));
+  color: var(--vscode-textPreformat-foreground, inherit);
+  border: 1px solid var(--vscode-textSeparator-foreground, rgba(135, 131, 120, 0.3));
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.875em;
+  white-space: nowrap;
 }
 
 /* Links */
@@ -765,6 +768,61 @@ body {
 }
 
 .toolbar-link-input input:focus {
+  border-color: var(--vscode-focus-border, #007acc);
+}
+
+/* Link popup */
+.link-popup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  background: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-editorWidget-border, #454545);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+.link-popup-url {
+  color: var(--vscode-textLink-foreground, #4e94ce);
+  font-size: 12px;
+  text-decoration: none;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.link-popup-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.link-popup-button:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+  opacity: 1;
+}
+
+.link-popup-input {
+  background: var(--vscode-input-background, #3c3c3c);
+  border: 1px solid var(--vscode-input-border, #555);
+  color: var(--vscode-input-foreground, #cccccc);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  min-width: 220px;
+  outline: none;
+}
+
+.link-popup-input:focus {
   border-color: var(--vscode-focus-border, #007acc);
 }
 

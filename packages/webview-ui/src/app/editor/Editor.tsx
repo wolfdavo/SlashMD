@@ -29,6 +29,8 @@ import { TogglePlugin } from './plugins/TogglePlugin';
 import { ImagePlugin } from './plugins/ImagePlugin';
 import { BlockClickPlugin } from './plugins/BlockClickPlugin';
 import { SearchPlugin } from './plugins/SearchPlugin';
+import { PasteLinkPlugin } from './plugins/PasteLinkPlugin';
+import { BacktickWrapPlugin } from './plugins/BacktickWrapPlugin';
 import { AssetContext, createAssetContextValue } from './context/AssetContext';
 import {
   CalloutNode,
@@ -331,6 +333,8 @@ export function Editor({ initialContent, onChange, assetBaseUri, documentDirUri,
             <CodeFencePlugin />
             <TogglePlugin />
             <ImagePlugin />
+            <PasteLinkPlugin />
+            <BacktickWrapPlugin />
             <BlockClickPlugin />
             <Toolbar />
             <SearchPlugin />

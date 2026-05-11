@@ -35,6 +35,10 @@ export function writeAsset(dataUri: string, suggestedName?: string): void {
   postMessage({ type: 'WRITE_ASSET', dataUri, suggestedName });
 }
 
+export function openUrl(url: string): void {
+  postMessage({ type: 'OPEN_URL', url });
+}
+
 // Listen for messages from extension host
 export type MessageHandler = (message: HostToUIMessage) => void;
 

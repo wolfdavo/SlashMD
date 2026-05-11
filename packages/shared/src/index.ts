@@ -68,11 +68,17 @@ export const RequestSettingsMessageSchema = z.object({
   type: z.literal('REQUEST_SETTINGS'),
 });
 
+export const OpenUrlMessageSchema = z.object({
+  type: z.literal('OPEN_URL'),
+  url: z.string().url().max(2048),
+});
+
 export const UIToHostMessageSchema = z.discriminatedUnion('type', [
   ApplyTextEditsMessageSchema,
   WriteAssetMessageSchema,
   RequestInitMessageSchema,
   RequestSettingsMessageSchema,
+  OpenUrlMessageSchema,
 ]);
 
 // Host → UI message schemas
@@ -136,6 +142,7 @@ export type ApplyTextEditsMessage = z.infer<typeof ApplyTextEditsMessageSchema>;
 export type WriteAssetMessage = z.infer<typeof WriteAssetMessageSchema>;
 export type RequestInitMessage = z.infer<typeof RequestInitMessageSchema>;
 export type RequestSettingsMessage = z.infer<typeof RequestSettingsMessageSchema>;
+export type OpenUrlMessage = z.infer<typeof OpenUrlMessageSchema>;
 export type DocInitMessage = z.infer<typeof DocInitMessageSchema>;
 export type DocChangedMessage = z.infer<typeof DocChangedMessageSchema>;
 export type AssetWrittenMessage = z.infer<typeof AssetWrittenMessageSchema>;

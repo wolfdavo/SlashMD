@@ -148,6 +148,10 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
             }
             break;
 
+          case 'OPEN_URL':
+            vscode.env.openExternal(vscode.Uri.parse(message.url));
+            break;
+
           case 'WRITE_ASSET':
             if (message.dataUri) {
               try {

@@ -1,8 +1,9 @@
 ---
+
 name: Project structure and workflows guide
 description: Full guide to the SlashMD codebase structure, data flow, and main development workflows
 type: reference
----
+---------------
 
 # SlashMD — Project Structure & Workflows
 
@@ -14,13 +15,12 @@ A VS Code / Cursor extension that opens `.md` and `.markdown` files in a Notion-
 
 ## Repository layout
 
-```
+```javascript
 slashmd-monorepo/
 ├── packages/
 │   ├── extension-host/     VS Code extension (Node.js, runs in extension host process)
 │   ├── webview-ui/         React editor UI (runs in sandboxed webview process)
 │   └── shared/             Zod schemas + TypeScript types shared across both packages
-├── website/                Next.js marketing site with a live demo editor (standalone)
 ├── .claude/memory/         Project memory files for Claude Code sessions
 └── package.json            npm workspace root
 ```
@@ -29,20 +29,19 @@ slashmd-monorepo/
 
 ## Package: `extension-host`
 
-**Runtime:** Node.js (VS Code extension host process)  
-**Build:** tsup → `dist/extension.js`
+**Runtime:** Node.js (VS Code extension host process)**Build:** tsup → `dist/extension.js`
 
 ### Key files
 
-| File | Role |
-|---|---|
-| `src/extension.ts` | Entry point — `activate()` registers the editor provider and commands |
+| File                  | Role                                                                        |
+| --------------------- | --------------------------------------------------------------------------- |
+| `src/extension.ts`    | Entry point — `activate()` registers the editor provider and commands       |
 | `src/customEditor.ts` | `SlashMDEditorProvider` — webview lifecycle, message routing, document sync |
-| `src/types.ts` | `SlashMDSettings` interface, `getSettings()`, `getThemeOverrides()` |
+| `src/types.ts`        | `SlashMDSettings` interface, `getSettings()`, `getThemeOverrides()`         |
 | `src/assetService.ts` | Handles image paste/drag — validates, sanitizes, writes to `assets/` folder |
-| `src/commands.ts` | `openAsText`, `openAsSlashMD`, `copyContent`, `insertBlock` commands |
-| `src/validation.ts` | Zod schemas for validating messages arriving from the webview |
-| `src/csp.ts` | Builds the Content Security Policy header for the webview HTML |
+| `src/commands.ts`     | `openAsText`, `openAsSlashMD`, `copyContent`, `insertBlock` commands        |
+| `src/validation.ts`   | Zod schemas for validating messages arriving from the webview               |
+| `src/csp.ts`          | Builds the Content Security Policy header for the webview HTML              |
 
 ### What `customEditor.ts` does
 
@@ -59,56 +58,54 @@ slashmd-monorepo/
 
 ## Package: `webview-ui`
 
-**Runtime:** Sandboxed browser context (VS Code webview)  
-**Build:** esbuild → `dist/webview.js` + `dist/webview.css` (copied into `extension-host/dist/`)
+**Runtime:** Sandboxed browser context (VS Code webview)**Build:** esbuild → `dist/webview.js` + `dist/webview.css` (copied into `extension-host/dist/`)
 
 ### Key files
 
-| File | Role |
-|---|---|
-| `src/index.tsx` | React entry point — mounts `<App />` |
-| `src/messaging.ts` | Thin wrapper around `acquireVsCodeApi()` — `postMessage`, `addMessageHandler` |
-| `src/types.ts` | Zod schemas + TS types for Host→UI messages (mirrors `shared/`) |
-| `src/app/App.tsx` | Top-level state: content, settings, theme overrides; computes minimal diffs |
-| `src/app/editor/Editor.tsx` | Lexical config, all plugin registrations, content init & external sync |
-| `src/app/mapper/mdastToLexical.ts` | Converts mdast tree → Lexical editor state (import) |
-| `src/app/mapper/lexicalToMdast.ts` | Converts Lexical editor state → mdast tree (export) |
-| `src/markdown/parse.ts` | `parseMarkdown()` — wraps `mdast-util-from-markdown` + GFM extension |
-| `src/markdown/stringify.ts` | `stringifyMarkdown()` — wraps `mdast-util-to-markdown` + GFM extension |
-| `src/styles.css` | All editor styles — single global stylesheet |
+| File                               | Role                                                                          |
+| ---------------------------------- | ----------------------------------------------------------------------------- |
+| `src/index.tsx`                    | React entry point — mounts `<App />`                                          |
+| `src/messaging.ts`                 | Thin wrapper around `acquireVsCodeApi()` — `postMessage`, `addMessageHandler` |
+| `src/types.ts`                     | Zod schemas + TS types for Host→UI messages (mirrors `shared/`)               |
+| `src/app/App.tsx`                  | Top-level state: content, settings, theme overrides; computes minimal diffs   |
+| `src/app/editor/Editor.tsx`        | Lexical config, all plugin registrations, content init & external sync        |
+| `src/app/mapper/mdastToLexical.ts` | Converts mdast tree → Lexical editor state (import)                           |
+| `src/app/mapper/lexicalToMdast.ts` | Converts Lexical editor state → mdast tree (export)                           |
+| `src/markdown/parse.ts`            | `parseMarkdown()` — wraps `mdast-util-from-markdown` + GFM extension          |
+| `src/markdown/stringify.ts`        | `stringifyMarkdown()` — wraps `mdast-util-to-markdown` + GFM extension        |
+| `src/styles.css`                   | All editor styles — single global stylesheet                                  |
 
 ### Editor plugins (all in `src/app/editor/`)
 
-| Plugin | What it does |
-|---|---|
-| `MarkdownShortcutsPlugin` | `- ` → list, `# ` → heading, `> ` → quote, etc. |
-| `CodeFencePlugin` | `` ``` `` or `` ```lang `` + Enter → code block with language |
-| `CodeBlockPlugin` | Language selector button + copy button floating over each code block |
-| `SlashMenuPlugin` + `SlashMenu` | `/` command palette — inserts any block type |
-| `DragHandlePlugin` | Drag handle + delete button on the left of each block |
-| `Toolbar` | Floating formatting toolbar on text selection |
-| `TableActionsPlugin` | Insert/delete row/column actions on table cells |
-| `TogglePlugin` | Handles open/close state for toggle blocks |
-| `ImagePlugin` | Paste/drop image handling, sends `WRITE_ASSET` to host |
-| `ImageModal` | URL / file upload modal for inserting images |
-| `BlockClickPlugin` | Normalises click handling for custom block nodes |
-| `SearchPlugin` | Ctrl+F find/replace with highlight overlay |
+| Plugin                          | What it does                                                         |
+| ------------------------------- | -------------------------------------------------------------------- |
+| `MarkdownShortcutsPlugin`       | `- ` → list, `# ` → heading, `> ` → quote, etc.                      |
+| `CodeFencePlugin`               | ` ``` ` or ` ```lang ` + Enter → code block with language            |
+| `CodeBlockPlugin`               | Language selector button + copy button floating over each code block |
+| `SlashMenuPlugin` + `SlashMenu` | `/` command palette — inserts any block type                         |
+| `DragHandlePlugin`              | Drag handle + delete button on the left of each block                |
+| `Toolbar`                       | Floating formatting toolbar on text selection                        |
+| `TableActionsPlugin`            | Insert/delete row/column actions on table cells                      |
+| `TogglePlugin`                  | Handles open/close state for toggle blocks                           |
+| `ImagePlugin`                   | Paste/drop image handling, sends `WRITE_ASSET` to host               |
+| `ImageModal`                    | URL / file upload modal for inserting images                         |
+| `BlockClickPlugin`              | Normalises click handling for custom block nodes                     |
+| `SearchPlugin`                  | Ctrl+F find/replace with highlight overlay                           |
 
 ### Custom Lexical nodes (in `src/app/editor/nodes/`)
 
-| Node | Markdown representation |
-|---|---|
-| `CalloutNode` | `> [!NOTE]` admonition syntax or emoji prefix |
+| Node                                                            | Markdown representation                         |
+| --------------------------------------------------------------- | ----------------------------------------------- |
+| `CalloutNode`                                                   | `> [!NOTE]` admonition syntax or emoji prefix   |
 | `ToggleContainerNode` / `ToggleTitleNode` / `ToggleContentNode` | `<details><summary>…</summary>…</details>` HTML |
-| `ImageNode` / `ImageComponent` | `![alt](src)` with resize handles |
-| `HorizontalRuleNode` | `---` |
+| `ImageNode` / `ImageComponent`                                  | `![alt](src)` with resize handles               |
+| `HorizontalRuleNode`                                            | `---`                                           |
 
 ---
 
 ## Package: `shared`
 
-**Runtime:** Build-time only (types are inlined, not bundled at runtime)  
-**Build:** tsc
+**Runtime:** Build-time only (types are inlined, not bundled at runtime)**Build:** tsc
 
 Contains the canonical Zod schemas and inferred TypeScript types for the full messaging protocol. Both `extension-host` and `webview-ui` reference these (the webview also has a local copy in `src/types.ts` for tree-shaking reasons).
 
@@ -116,7 +113,7 @@ Contains the canonical Zod schemas and inferred TypeScript types for the full me
 
 ## Data flow
 
-```
+```javascript
 User edits in Lexical
         ↓
 lexicalToMdast.ts   (Lexical state → mdast tree)
@@ -134,7 +131,7 @@ VS Code TextDocument (the file on disk)
 
 Reverse path (external edit or initial load):
 
-```
+```javascript
 TextDocument text
         ↓
 DOC_INIT / DOC_CHANGED message  (Host → UI)
@@ -154,43 +151,43 @@ All messages are Zod-validated on receipt. Schema definitions live in `shared/sr
 
 **UI → Host**
 
-| Message | When sent |
-|---|---|
-| `REQUEST_INIT` | Webview mounted — requests initial document + settings |
-| `REQUEST_SETTINGS` | Explicit settings refresh |
+| Message            | When sent                                                        |
+| ------------------ | ---------------------------------------------------------------- |
+| `REQUEST_INIT`     | Webview mounted — requests initial document + settings           |
+| `REQUEST_SETTINGS` | Explicit settings refresh                                        |
 | `APPLY_TEXT_EDITS` | User edited content — carries `{start, end, newText}[]` + reason |
-| `WRITE_ASSET` | Image pasted/dropped — carries data URI + optional filename |
+| `WRITE_ASSET`      | Image pasted/dropped — carries data URI + optional filename      |
 
 **Host → UI**
 
-| Message | When sent |
-|---|---|
-| `DOC_INIT` | Initial load — carries full text, settings, asset URIs, theme overrides |
-| `DOC_CHANGED` | External edit detected (file changed outside the editor) |
-| `SETTINGS_CHANGED` | User changed a `slashmd.*` setting or VS Code theme |
-| `ASSET_WRITTEN` | Image saved to disk — carries relative path + webview URI |
-| `ERROR` | Any host-side failure |
+| Message            | When sent                                                               |
+| ------------------ | ----------------------------------------------------------------------- |
+| `DOC_INIT`         | Initial load — carries full text, settings, asset URIs, theme overrides |
+| `DOC_CHANGED`      | External edit detected (file changed outside the editor)                |
+| `SETTINGS_CHANGED` | User changed a `slashmd.*` setting or VS Code theme                     |
+| `ASSET_WRITTEN`    | Image saved to disk — carries relative path + webview URI               |
+| `ERROR`            | Any host-side failure                                                   |
 
 ---
 
 ## Settings reference (`slashmd.*`)
 
-| Setting | Type | Default | Effect |
-|---|---|---|---|
-| `assets.folder` | string | `"assets"` | Subfolder for pasted/dropped images |
-| `assets.imagePathResolution` | `document\|workspace` | `"document"` | Resolve image paths relative to file or workspace root |
-| `format.wrap` | number | `0` | Markdown line wrap width (0 = off) |
-| `callouts.style` | `admonition\|emoji` | `"admonition"` | Callout serialisation style |
-| `toggles.syntax` | `details\|list` | `"details"` | Toggle serialisation syntax |
-| `math.enabled` | boolean | `false` | Math block support (not yet fully wired) |
-| `mermaid.enabled` | boolean | `false` | Mermaid diagram support (not yet fully wired) |
-| `theme.codeTheme` | enum | `"auto"` | Syntax highlight theme for code blocks |
-| `theme.fontScale` | number 0.5–3 | `1` | Font size multiplier on top of VS Code editor font size |
-| `theme.headingColor` | string | `""` | Fallback color for all headings |
-| `theme.h1Color`…`h5Color` | string | `""` | Per-level heading color override |
-| `theme.h1Indent`…`h5Indent` | string | `""` | Per-level heading left indent |
-| `theme.boldColor` | string | `""` | Color for bold text |
-| `theme.italicColor` | string | `""` | Color for italic text |
+| Setting                      | Type                  | Default        | Effect                                                  |
+| ---------------------------- | --------------------- | -------------- | ------------------------------------------------------- |
+| `assets.folder`              | string                | `"assets"`     | Subfolder for pasted/dropped images                     |
+| `assets.imagePathResolution` | `document\|workspace` | `"document"`   | Resolve image paths relative to file or workspace root  |
+| `format.wrap`                | number                | `0`            | Markdown line wrap width (0 = off)                      |
+| `callouts.style`             | `admonition\|emoji`   | `"admonition"` | Callout serialisation style                             |
+| `toggles.syntax`             | `details\|list`       | `"details"`    | Toggle serialisation syntax                             |
+| `math.enabled`               | boolean               | `false`        | Math block support (not yet fully wired)                |
+| `mermaid.enabled`            | boolean               | `false`        | Mermaid diagram support (not yet fully wired)           |
+| `theme.codeTheme`            | enum                  | `"auto"`       | Syntax highlight theme for code blocks                  |
+| `theme.fontScale`            | number 0.5–3          | `1`            | Font size multiplier on top of VS Code editor font size |
+| `theme.headingColor`         | string                | `""`           | Fallback color for all headings                         |
+| `theme.h1Color`…`h5Color`    | string                | `""`           | Per-level heading color override                        |
+| `theme.h1Indent`…`h5Indent`  | string                | `""`           | Per-level heading left indent                           |
+| `theme.boldColor`            | string                | `""`           | Color for bold text                                     |
+| `theme.italicColor`          | string                | `""`           | Color for italic text                                   |
 
 Settings are read in `extension-host/src/types.ts → getSettings()` and sent to the webview as part of `DOC_INIT` and `SETTINGS_CHANGED`. Theme-derived CSS variables are computed in `getThemeOverrides()` and applied by `App.tsx` as inline CSS custom properties on `document.documentElement`.
 
