@@ -7,7 +7,6 @@ import {
   CHECK_LIST,
   HEADING,
   QUOTE,
-  CODE,
 } from '@lexical/markdown';
 
 /**
@@ -19,7 +18,8 @@ import {
  * - "[] " or "[ ] " → Todo/checkbox list
  * - "# ", "## ", "### " → Headings
  * - "> " → Block quote
- * - "```" → Code block
+ *
+ * Code blocks (```) are handled by CodeFencePlugin, which also captures the language name.
  */
 export function MarkdownShortcutsPlugin(): null {
   const [editor] = useLexicalComposerContext();
@@ -33,7 +33,6 @@ export function MarkdownShortcutsPlugin(): null {
       CHECK_LIST,
       HEADING,
       QUOTE,
-      CODE,
     ]);
   }, [editor]);
 

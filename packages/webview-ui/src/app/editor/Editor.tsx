@@ -24,6 +24,7 @@ import { DragHandlePlugin } from './DragHandlePlugin';
 import { MarkdownShortcutsPlugin } from './MarkdownShortcutsPlugin';
 import { TableActionsPlugin } from './TableActionsPlugin';
 import { CodeBlockPlugin } from './CodeBlockPlugin';
+import { CodeFencePlugin } from './CodeFencePlugin';
 import { TogglePlugin } from './TogglePlugin';
 import { ImagePlugin } from './ImagePlugin';
 import { BlockClickPlugin } from './BlockClickPlugin';
@@ -333,6 +334,7 @@ export function Editor({ initialContent, onChange, assetBaseUri, documentDirUri,
             <MarkdownShortcutsPlugin />
             <TableActionsPlugin />
             <CodeBlockPlugin />
+            <CodeFencePlugin />
             <TogglePlugin />
             <ImagePlugin />
             <BlockClickPlugin />

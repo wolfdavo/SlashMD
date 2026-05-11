@@ -25,6 +25,7 @@ export interface SlashMDSettings {
   h5Indent: string;
   boldColor: string;
   italicColor: string;
+  fontScale: number;
 }
 
 export type ThemeOverrides = Record<string, string>;
@@ -107,6 +108,7 @@ export function getSettings(): SlashMDSettings {
     h5Indent: config.get<string>('theme.h5Indent', ''),
     boldColor: config.get<string>('theme.boldColor', ''),
     italicColor: config.get<string>('theme.italicColor', ''),
+    fontScale: config.get<number>('theme.fontScale', 1),
   };
 }
 
@@ -153,6 +155,9 @@ export function getThemeOverrides(settings: SlashMDSettings): ThemeOverrides {
   // Other typography colors
   overrides['--slashmd-bold-color'] = settings.boldColor || 'inherit';
   overrides['--slashmd-italic-color'] = settings.italicColor || 'inherit';
+
+  // Font scale
+  overrides['--slashmd-font-scale'] = String(settings.fontScale ?? 1);
 
   return overrides;
 }

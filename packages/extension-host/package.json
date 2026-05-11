@@ -248,6 +248,13 @@
           "type": "string",
           "default": "",
           "description": "Custom color for italic text (e.g., '#98c379' or 'green'). Leave empty to use default."
+        },
+        "slashmd.theme.fontScale": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0.5,
+          "maximum": 3,
+          "description": "Font size scale multiplier relative to VS Code's editor font size (e.g., 1.2 = 20% larger, 0.9 = 10% smaller)."
         }
       }
     }

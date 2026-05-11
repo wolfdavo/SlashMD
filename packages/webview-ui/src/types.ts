@@ -54,6 +54,7 @@ export const SlashMDSettingsSchema = z.object({
   h5Indent: z.string().max(64),
   boldColor: z.string().max(64),
   italicColor: z.string().max(64),
+  fontScale: z.number().min(0.5).max(3),
 });
 
 // Host → UI message schemas
