@@ -10,7 +10,7 @@ import {
   TextFormatType,
 } from 'lexical';
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
-import { getSelectedNode } from './utils';
+import { getSelectedNode } from '../utils';
 
 // Consolidated toolbar state to batch updates
 interface ToolbarState {

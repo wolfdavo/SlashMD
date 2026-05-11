@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getNodeByKey, NodeKey } from 'lexical';
 import { $isImageNode } from './ImageNode';
-import { useAssetContext } from '../AssetContext';
+import { useAssetContext } from '../context/AssetContext';
 
 interface ImageComponentProps {
   src: string;

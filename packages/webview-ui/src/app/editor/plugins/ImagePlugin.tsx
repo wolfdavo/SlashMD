@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR, createCommand, LexicalCommand } from 'lexical';
-import { ImageModal, ImageData } from './ImageModal';
-import { $createImageNode } from './nodes';
-import { writeAsset, addMessageHandler } from '../../messaging';
-import type { HostToUIMessage } from '../../types';
+import { ImageModal, ImageData } from '../components/ImageModal';
+import { $createImageNode } from '../nodes';
+import { writeAsset, addMessageHandler } from '../../../messaging';
+import type { HostToUIMessage } from '../../../types';
 
 // Command to open the image modal
 export const INSERT_IMAGE_COMMAND: LexicalCommand<void> = createCommand('INSERT_IMAGE_COMMAND');

@@ -7,7 +7,7 @@ import {
   KEY_BACKSPACE_COMMAND,
   TextNode,
 } from 'lexical';
-import { SlashMenu } from './SlashMenu';
+import { SlashMenu } from '../components/SlashMenu';
 
 interface MenuState {
   isOpen: boolean;

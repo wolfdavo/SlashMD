@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { Editor } from './editor';
+import { useCallback, useEffect, useState, useRef } from "react";
+import { Editor } from "./editor";
 import {
   addMessageHandler,
   requestInit,
   applyTextEdits,
   writeAsset,
-} from '../messaging';
-import type { HostToUIMessage, SlashMDSettings, TextEdit, ThemeOverrides } from '../types';
+} from "../messaging";
+import type {
+  HostToUIMessage,
+  SlashMDSettings,
+  TextEdit,
+  ThemeOverrides,
+} from "../types";
 
 // Simple diff algorithm to find the changed region between two strings
 function computeMinimalEdits(oldText: string, newText: string): TextEdit[] {
@@ -23,7 +28,8 @@ function computeMinimalEdits(oldText: string, newText: string): TextEdit[] {
   let suffixLen = 0;
   while (
     suffixLen < minLen - prefixLen &&
-    oldText[oldText.length - 1 - suffixLen] === newText[newText.length - 1 - suffixLen]
+    oldText[oldText.length - 1 - suffixLen] ===
+      newText[newText.length - 1 - suffixLen]
   ) {
     suffixLen++;
   }
@@ -33,31 +39,43 @@ function computeMinimalEdits(oldText: string, newText: string): TextEdit[] {
   const end = oldText.length - suffixLen;
   const newTextContent = newText.slice(prefixLen, newText.length - suffixLen);
 
-  return [{
-    start,
-    end,
-    newText: newTextContent,
-  }];
+  return [
+    {
+      start,
+      end,
+      newText: newTextContent,
+    },
+  ];
 }
 
 export function App() {
   const [content, setContent] = useState<string | null>(null);
   const [settings, setSettings] = useState<SlashMDSettings | null>(null);
-  const [assetBaseUri, setAssetBaseUri] = useState<string | undefined>(undefined);
-  const [documentDirUri, setDocumentDirUri] = useState<string | undefined>(undefined);
-  const [themeOverrides, setThemeOverrides] = useState<ThemeOverrides | undefined>(undefined);
+  const [assetBaseUri, setAssetBaseUri] = useState<string | undefined>(
+    undefined,
+  );
+  const [documentDirUri, setDocumentDirUri] = useState<string | undefined>(
+    undefined,
+  );
+  const [themeOverrides, setThemeOverrides] = useState<
+    ThemeOverrides | undefined
+  >(undefined);
   const [error, setError] = useState<string | null>(null);
   const pendingAssetCallback = useRef<((relPath: string) => void) | null>(null);
   // Track the last known document content for diff computation
-  const lastDocumentContent = useRef<string>('');
+  const lastDocumentContent = useRef<string>("");
 
   useEffect(() => {
-    console.log('SlashMD App: Setting up message handler');
+    console.log("SlashMD App: Setting up message handler");
     const removeHandler = addMessageHandler((message: HostToUIMessage) => {
-      console.log('SlashMD App: Handling message:', message.type);
+      console.log("SlashMD App: Handling message:", message.type);
       switch (message.type) {
-        case 'DOC_INIT':
-          console.log('SlashMD App: Received DOC_INIT with', message.text?.length, 'chars');
+        case "DOC_INIT":
+          console.log(
+            "SlashMD App: Received DOC_INIT with",
+            message.text?.length,
+            "chars",
+          );
           lastDocumentContent.current = message.text;
           setContent(message.text);
           setSettings(message.settings);
@@ -66,24 +84,24 @@ export function App() {
           setThemeOverrides(message.themeOverrides);
           break;
 
-        case 'DOC_CHANGED':
+        case "DOC_CHANGED":
           lastDocumentContent.current = message.text;
           setContent(message.text);
           break;
 
-        case 'SETTINGS_CHANGED':
+        case "SETTINGS_CHANGED":
           setSettings(message.settings);
           setThemeOverrides(message.themeOverrides);
           break;
 
-        case 'ASSET_WRITTEN':
+        case "ASSET_WRITTEN":
           if (pendingAssetCallback.current) {
             pendingAssetCallback.current(message.relPath);
             pendingAssetCallback.current = null;
           }
           break;
 
-        case 'ERROR':
+        case "ERROR":
           setError(message.message);
           setTimeout(() => setError(null), 5000);
           break;
@@ -111,7 +129,7 @@ export function App() {
     const edits = computeMinimalEdits(lastDocumentContent.current, markdown);
     if (edits.length > 0) {
       lastDocumentContent.current = markdown;
-      applyTextEdits(edits, 'typing');
+      applyTextEdits(edits, "typing");
     }
   }, []);
 
@@ -120,7 +138,7 @@ export function App() {
       pendingAssetCallback.current = callback;
       writeAsset(dataUri);
     },
-    []
+    [],
   );
 
   if (content === null) {
@@ -144,7 +162,7 @@ export function App() {
         onChange={handleChange}
         assetBaseUri={assetBaseUri}
         documentDirUri={documentDirUri}
-        imagePathResolution={settings?.imagePathResolution ?? 'document'}
+        imagePathResolution={settings?.imagePathResolution ?? "document"}
       />
     </div>
   );

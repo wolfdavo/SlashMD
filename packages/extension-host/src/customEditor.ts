@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { generateNonce, buildCsp } from './csp';
 import { getSettings, getThemeOverrides } from './types';
 import { AssetService } from './assetService';
@@ -224,12 +225,23 @@ export class SlashMDEditorProvider implements vscode.CustomTextEditorProvider {
       }
     });
 
+    // Hot reload in development: watch the webview bundle and reload on change
+    let devFsWatcher: fs.FSWatcher | undefined;
+    if (this.context.extensionMode === vscode.ExtensionMode.Development) {
+      const bundlePath = vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.js').fsPath;
+      devFsWatcher = fs.watch(bundlePath, () => {
+        webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+        setTimeout(() => sendDocumentToWebview(), 100);
+      });
+    }
+
     // Cleanup on panel dispose
     webviewPanel.onDidDispose(() => {
       messageHandler.dispose();
       changeDocumentSubscription.dispose();
       configChangeSubscription.dispose();
       themeChangeSubscription.dispose();
+      devFsWatcher?.close();
     });
 
     // Send initial content after a short delay to ensure webview is ready

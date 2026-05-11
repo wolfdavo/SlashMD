@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { ImagePathResolution } from '../../types';
+import type { ImagePathResolution } from '../../../types';
 
 interface AssetContextValue {
   assetBaseUri: string | undefined;

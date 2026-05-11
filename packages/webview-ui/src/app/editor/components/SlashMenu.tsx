@@ -11,14 +11,14 @@ import {
 import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
 import { $createListNode, $createListItemNode } from '@lexical/list';
 import { $createCodeNode } from '@lexical/code';
-import { $createHorizontalRuleNode, $createCalloutNode, $createToggleNode } from './nodes';
+import { $createHorizontalRuleNode, $createCalloutNode, $createToggleNode } from '../nodes';
 import {
   $createTableNode,
   $createTableRowNode,
   $createTableCellNode,
   TableCellHeaderStates,
 } from '@lexical/table';
-import { INSERT_IMAGE_COMMAND } from './ImagePlugin';
+import { INSERT_IMAGE_COMMAND } from '../plugins/ImagePlugin';
 
 interface BlockOption {
   key: string;

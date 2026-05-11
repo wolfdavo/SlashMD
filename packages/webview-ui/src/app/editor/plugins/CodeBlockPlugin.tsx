@@ -1,10 +1,9 @@
-'use client';
-
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $getRoot, $getNodeByKey, $isElementNode, LexicalNode } from 'lexical';
 import { $isCodeNode, CodeNode } from '@lexical/code';
 
+// Shared helper to recursively find all code nodes in a tree
 function findCodeNodesInTree(node: LexicalNode): CodeNode[] {
   const codeNodes: CodeNode[] = [];
   if ($isCodeNode(node)) {
@@ -18,6 +17,8 @@ function findCodeNodesInTree(node: LexicalNode): CodeNode[] {
   return codeNodes;
 }
 
+// Popular languages for the dropdown
+// Note: 'plain' is a valid Prism language that provides no syntax highlighting
 const LANGUAGES = [
   { value: 'plain', label: 'Plain Text' },
   { value: 'javascript', label: 'JavaScript' },
@@ -74,10 +75,12 @@ function LanguageSelector({ nodeKey, currentLanguage, position, onClose }: Langu
       lang.value.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -90,15 +93,19 @@ function LanguageSelector({ nodeKey, currentLanguage, position, onClose }: Langu
 
   const selectLanguage = useCallback(
     (language: string) => {
+      // Set the language and wait for the update to complete before closing
       editor.update(
         () => {
           const node = $getNodeByKey(nodeKey);
           if (node && $isCodeNode(node)) {
+            // Use 'plain' for Plain Text - it's a valid Prism language with no highlighting
+            // This avoids Lexical's transform that resets undefined/null languages to 'javascript'
             node.setLanguage(language);
           }
         },
         {
           onUpdate: () => {
+            // Close the selector after the update is committed
             onClose();
           },
         }
@@ -126,6 +133,7 @@ function LanguageSelector({ nodeKey, currentLanguage, position, onClose }: Langu
     [selectLanguage]
   );
 
+  // Normalize for comparison
   const normalizedCurrent = currentLanguage || 'plain';
 
   return (
@@ -183,7 +191,9 @@ export function CodeBlockPlugin() {
 
   const updateScheduledRef = useRef(false);
 
+  // Track code blocks and their positions
   useEffect(() => {
+    // Batched update function that reads all DOM positions in a single frame
     const updateCodeBlocks = () => {
       updateScheduledRef.current = false;
       const editorElement = editor.getRootElement();
@@ -193,6 +203,7 @@ export function CodeBlockPlugin() {
         const root = $getRoot();
         const codeNodes = findCodeNodesInTree(root);
 
+        // Collect node keys, languages, and text content first (no DOM reads)
         const nodeData: Array<{ nodeKey: string; language: string; textContent: string }> = [];
         for (const node of codeNodes) {
           nodeData.push({
@@ -202,6 +213,7 @@ export function CodeBlockPlugin() {
           });
         }
 
+        // Batch DOM reads in a single pass after the read()
         requestAnimationFrame(() => {
           const blocks: CodeBlockInfo[] = [];
           for (const { nodeKey, language, textContent } of nodeData) {
@@ -220,6 +232,7 @@ export function CodeBlockPlugin() {
       });
     };
 
+    // Debounced update scheduler
     const scheduleUpdate = () => {
       if (!updateScheduledRef.current) {
         updateScheduledRef.current = true;
@@ -233,6 +246,7 @@ export function CodeBlockPlugin() {
       scheduleUpdate();
     });
 
+    // Also update on scroll/resize with debouncing
     const handleScrollResize = () => {
       scheduleUpdate();
     };
@@ -262,6 +276,7 @@ export function CodeBlockPlugin() {
     setSelectorState(null);
   }, []);
 
+  // Track which code blocks show "Copied" feedback
   const [copiedNodeKey, setCopiedNodeKey] = useState<string | null>(null);
 
   const handleCopyCode = useCallback((nodeKey: string, textContent: string) => {
@@ -274,6 +289,7 @@ export function CodeBlockPlugin() {
   return (
     <>
       {codeBlocks.map((block) => {
+        // Normalize empty/null/undefined to 'plain' for comparison
         const normalizedLang = block.language || 'plain';
         const langLabel = LANGUAGES.find((l) => l.value === normalizedLang)?.label || normalizedLang;
         const isCopied = copiedNodeKey === block.nodeKey;

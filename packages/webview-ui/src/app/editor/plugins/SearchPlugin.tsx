@@ -9,8 +9,20 @@ interface SearchMatch {
   index: number;
 }
 
-// Debounce delay in ms
 const SEARCH_DEBOUNCE_MS = 150;
+
+function getAllTextNodes(node: LexicalNode): TextNode[] {
+  const textNodes: TextNode[] = [];
+  if ($isTextNode(node)) {
+    textNodes.push(node);
+  }
+  if ('getChildren' in node && typeof node.getChildren === 'function') {
+    for (const child of (node as { getChildren: () => LexicalNode[] }).getChildren()) {
+      textNodes.push(...getAllTextNodes(child));
+    }
+  }
+  return textNodes;
+}
 
 export function SearchPlugin() {
   const [editor] = useLexicalComposerContext();
@@ -41,25 +53,6 @@ export function SearchPlugin() {
     };
   }, [query]);
 
-  // Get all text nodes recursively
-  const getAllTextNodes = useCallback((node: LexicalNode): TextNode[] => {
-    const textNodes: TextNode[] = [];
-
-    if ($isTextNode(node)) {
-      textNodes.push(node);
-    }
-
-    if ('getChildren' in node && typeof node.getChildren === 'function') {
-      const children = (node as { getChildren: () => LexicalNode[] }).getChildren();
-      children.forEach((child: LexicalNode) => {
-        textNodes.push(...getAllTextNodes(child));
-      });
-    }
-
-    return textNodes;
-  }, []);
-
-  // Find all text matches in the editor
   const findMatches = useCallback((searchQuery: string): SearchMatch[] => {
     if (!searchQuery.trim()) return [];
 
@@ -91,7 +84,7 @@ export function SearchPlugin() {
     });
 
     return foundMatches;
-  }, [editor, getAllTextNodes]);
+  }, [editor]);
 
   // Run search when debounced query changes
   useEffect(() => {

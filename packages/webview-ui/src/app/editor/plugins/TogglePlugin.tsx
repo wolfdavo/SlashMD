@@ -14,7 +14,7 @@ import {
   $isToggleTitleNode,
   $isToggleContentNode,
   ToggleContainerNode,
-} from './nodes';
+} from '../nodes';
 
 export function TogglePlugin(): null {
   const [editor] = useLexicalComposerContext();

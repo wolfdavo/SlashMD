@@ -49,17 +49,15 @@ npm run build --workspace=packages/webview-ui
   - Registers `CustomTextEditorProvider` for `*.md` files with `priority: "default"`
   - Handles document lifecycle, messaging bridge, and asset writing
   - Built with `tsup`, outputs to `dist/extension.js`
-
 - **packages/webview-ui/** - React UI running in webview
   - Built with React + Lexical for block editing
   - Markdown parsing via `mdast-util-from-markdown` and `mdast-util-gfm`
   - Built with `esbuild`, outputs to `dist/webview.js` and `dist/webview.css`
-
 - **packages/shared/** - Shared TypeScript types for messaging protocol
 
 ### Data Flow
 
-```
+```javascript
 User ⇄ Webview (Lexical) ⇄ postMessage ⇄ Extension Host ⇄ TextDocument
               ↓                              ↓
         mdast mapper                   WorkspaceEdit
